@@ -148,7 +148,6 @@ See [STATE.md](./STATE.md) for detailed implementation status and technical debt
 - **[docs/API.md](./docs/API.md)** — Endpoint contracts and usage
 - **[docs/DESIGN.md](./docs/DESIGN.md)** — Architecture and design notes
 - **[docs/MIXED_THEME_RATIONALE.md](./docs/MIXED_THEME_RATIONALE.md)** — Evidence-based design defense
-- **[PROJECT_RULES.md](./PROJECT_RULES.md)** — Development guidelines
 
 ## Roadmap
 

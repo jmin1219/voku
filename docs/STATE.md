@@ -115,7 +115,7 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
-| **Renamed to Voku** | Professional branding for portfolio/co-op applications; voku.app domain available | Jan 31 |
+| **Renamed to Voku** | Professional branding; voku.app domain available | Jan 31 |
 | **Goal-anchored philosophy** | Voku is derivative of productivity planning—surfaces self-knowledge that makes productivity possible | Jan 31 |
 | **Self-understanding as anchor** | Goals emerge from seeing yourself clearly; inverts typical planner hierarchy | Jan 31 |
 | **node_purpose field** | Classify nodes as observation/pattern/belief/intention/decision | Jan 31 |

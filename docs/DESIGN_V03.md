@@ -430,7 +430,7 @@ First-class feature solving cold start.
 - PDF (papers, books)
 - Markdown (notes, docs)
 - Obsidian vault (preserves existing links)
-- Conversation exports (Claude, ChatGPT)
+- Conversation exports (LLM chat logs)
 
 **Import flow:**
 ```
