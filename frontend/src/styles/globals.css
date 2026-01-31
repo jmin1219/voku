@@ -1,0 +1,457 @@
+@import "tailwindcss";
+
+/* ===== BILLY v0.2+ — WORKSHOP FOR THOUGHT ===== */
+
+/* Base */
+html {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--level-1);
+  color: var(--text-dark-primary);
+  min-height: 100vh;
+}
+
+/* ===== CUSTOM PROPERTIES — WORKSHOP FOR THOUGHT ===== */
+:root {
+  /* ===== TONAL SYSTEM (7 levels, warm neutrals) ===== */
+  
+  /* Dark surfaces (charcoal, not black) */
+  --level-1: #1a1816;    /* Deep base - background */
+  --level-2: #252321;    /* Elevated - cards on dark */
+  --level-3: #2f2c29;    /* Raised - hover states */
+  --level-4: #3a3734;    /* High - active states */
+  
+  /* Light surfaces (paper, not white) */
+  --level-5: #e8e4df;    /* Content base - paper */
+  --level-6: #f2efea;    /* Content hover - lighter paper */
+  --level-7: #f9f7f4;    /* Content peak - focus/brightest */
+  
+  /* Borders and dividers */
+  --border-dark: #3a3734;      /* Borders on dark surfaces */
+  --border-light: #d4cfc8;     /* Borders on light surfaces */
+  --border-subtle: #c4bfb8;    /* Subtle dividers */
+  
+  /* ===== TYPOGRAPHY ===== */
+  
+  /* Text on dark surfaces */
+  --text-dark-primary: #f2efea;     /* Main text on dark */
+  --text-dark-secondary: #9a9286;   /* Secondary text on dark */
+  --text-dark-muted: #706b62;       /* Muted text on dark */
+  
+  /* Text on light surfaces */
+  --text-light-primary: #252321;    /* Main text on light */
+  --text-light-secondary: #5a564f;  /* Secondary text on light */
+  --text-light-muted: #7a756d;      /* Muted text on light */
+  
+  /* ===== DOMAIN COLORS (selective accent, not dominant) ===== */
+  
+  /* Fitness Domain (burnt orange - warm, energetic) */
+  --fitness-primary: #e6773a;
+  --fitness-secondary: #d4622a;
+  --fitness-muted: #c45520;
+  
+  /* Finance Domain (teal cyan - cooler, serious) */
+  --finance-primary: #36b8c8;
+  --finance-secondary: #2a9fad;
+  --finance-muted: #208793;
+  
+  /* Semantic colors */
+  --color-success: #5a9f6e;
+  --color-warning: #d4a134;
+  --color-error: #c8554e;
+  --color-info: #5d8fb0;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--level-1), 0 0 0 4px var(--finance-primary);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--level-1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--level-3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--level-4);
+}
+
+/* ===== DOMAIN SECTION OVERLAYS ===== */
+
+/* Fitness section gets subtle orange tint */
+.section-fitness {
+  background: 
+    linear-gradient(135deg, rgba(230, 119, 58, 0.04) 0%, transparent 50%),
+    var(--level-1);
+  border-top: 1px solid rgba(230, 119, 58, 0.15);
+}
+
+/* Finance section gets subtle teal tint */
+.section-finance {
+  background: 
+    linear-gradient(135deg, rgba(54, 184, 200, 0.04) 0%, transparent 50%),
+    var(--level-1);
+  border-top: 1px solid rgba(54, 184, 200, 0.15);
+}
+
+/* ===== GRID BACKGROUNDS (subtle on warm charcoal) ===== */
+
+.bg-grid {
+  background-image: 
+    linear-gradient(rgba(242, 239, 234, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 239, 234, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.bg-grid-fitness {
+  background-image: 
+    linear-gradient(rgba(230, 119, 58, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(230, 119, 58, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.bg-grid-finance {
+  background-image: 
+    linear-gradient(rgba(54, 184, 200, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(54, 184, 200, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ===== ELEVATION SHADOWS (soft, not glows) ===== */
+
+.shadow-low {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-medium {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.shadow-high {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Domain accents (subtle, for emphasis) */
+.accent-fitness {
+  box-shadow: 0 0 20px -8px rgba(230, 119, 58, 0.4);
+}
+
+.accent-finance {
+  box-shadow: 0 0 20px -8px rgba(54, 184, 200, 0.4);
+}
+
+/* ===== GRADIENT TEXT (domain identity) ===== */
+
+.gradient-text-fitness {
+  background: linear-gradient(135deg, var(--fitness-primary), var(--fitness-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-finance {
+  background: linear-gradient(135deg, var(--finance-primary), var(--finance-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== GRADIENT BORDERS (selective emphasis) ===== */
+
+.gradient-border-fitness {
+  position: relative;
+}
+
+.gradient-border-fitness::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--fitness-primary), var(--fitness-secondary));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.gradient-border-finance {
+  position: relative;
+}
+
+.gradient-border-finance::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--finance-primary), var(--finance-secondary));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ===== SURFACE UTILITIES ===== */
+
+/* Dark surfaces (charcoal levels) */
+.surface-dark-1 {
+  background: var(--level-1);
+  color: var(--text-dark-primary);
+}
+
+.surface-dark-2 {
+  background: var(--level-2);
+  color: var(--text-dark-primary);
+  border: 1px solid var(--border-dark);
+}
+
+.surface-dark-3 {
+  background: var(--level-3);
+  color: var(--text-dark-primary);
+}
+
+/* Light surfaces (paper levels) */
+.surface-light-5 {
+  background: var(--level-5);
+  color: var(--text-light-primary);
+  border: 1px solid var(--border-light);
+}
+
+.surface-light-6 {
+  background: var(--level-6);
+  color: var(--text-light-primary);
+}
+
+.surface-light-7 {
+  background: var(--level-7);
+  color: var(--text-light-primary);
+}
+
+/* Card utilities */
+.card-dark {
+  background: var(--level-2);
+  color: var(--text-dark-primary);
+  border: 1px solid var(--border-dark);
+}
+
+.card-dark:hover {
+  background: var(--level-3);
+}
+
+.card-light {
+  background: var(--level-5);
+  color: var(--text-light-primary);
+  border: 1px solid var(--border-light);
+}
+
+.card-light:hover {
+  background: var(--level-6);
+}
+
+/* ===== BADGE SYSTEM (for warm backgrounds) ===== */
+
+/* On light surfaces - darker, saturated */
+.badge-fitness-light {
+  background: rgba(212, 98, 42, 0.15);
+  color: #c45520;
+  border: 1px solid rgba(212, 98, 42, 0.3);
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.badge-finance-light {
+  background: rgba(32, 135, 147, 0.15);
+  color: #208793;
+  border: 1px solid rgba(32, 135, 147, 0.3);
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.badge-success-light {
+  background: rgba(90, 159, 110, 0.15);
+  color: #3d7a4e;
+  border: 1px solid rgba(90, 159, 110, 0.3);
+}
+
+.badge-warning-light {
+  background: rgba(212, 161, 52, 0.15);
+  color: #b8872a;
+  border: 1px solid rgba(212, 161, 52, 0.3);
+}
+
+.badge-error-light {
+  background: rgba(200, 85, 78, 0.15);
+  color: #a6443e;
+  border: 1px solid rgba(200, 85, 78, 0.3);
+}
+
+.badge-info-light {
+  background: rgba(93, 143, 176, 0.15);
+  color: #4a7390;
+  border: 1px solid rgba(93, 143, 176, 0.3);
+}
+
+/* On dark surfaces - brighter, desaturated */
+.badge-fitness-dark {
+  background: rgba(230, 119, 58, 0.2);
+  color: #e6773a;
+  border: 1px solid rgba(230, 119, 58, 0.4);
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.badge-finance-dark {
+  background: rgba(54, 184, 200, 0.2);
+  color: #36b8c8;
+  border: 1px solid rgba(54, 184, 200, 0.4);
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.badge-success-dark {
+  background: rgba(90, 159, 110, 0.2);
+  color: #5a9f6e;
+  border: 1px solid rgba(90, 159, 110, 0.4);
+}
+
+.badge-warning-dark {
+  background: rgba(212, 161, 52, 0.2);
+  color: #d4a134;
+  border: 1px solid rgba(212, 161, 52, 0.4);
+}
+
+.badge-error-dark {
+  background: rgba(200, 85, 78, 0.2);
+  color: #c8554e;
+  border: 1px solid rgba(200, 85, 78, 0.4);
+}
+
+/* ===== CATEGORY BADGE COLORS ===== */
+
+/* Food categories (orange variants) */
+.badge-category-food-light {
+  background: rgba(212, 98, 42, 0.15);
+  color: #c45520;
+  border: 1px solid rgba(212, 98, 42, 0.3);
+}
+
+.badge-category-food-dark {
+  background: rgba(230, 119, 58, 0.2);
+  color: #e6773a;
+  border: 1px solid rgba(230, 119, 58, 0.4);
+}
+
+/* Transport (blue) */
+.badge-category-transport-light {
+  background: rgba(93, 143, 176, 0.15);
+  color: #4a7390;
+  border: 1px solid rgba(93, 143, 176, 0.3);
+}
+
+.badge-category-transport-dark {
+  background: rgba(93, 143, 176, 0.2);
+  color: #5d8fb0;
+  border: 1px solid rgba(93, 143, 176, 0.4);
+}
+
+/* Shopping (pink) */
+.badge-category-shopping-light {
+  background: rgba(190, 86, 120, 0.15);
+  color: #a04472;
+  border: 1px solid rgba(190, 86, 120, 0.3);
+}
+
+.badge-category-shopping-dark {
+  background: rgba(214, 98, 136, 0.2);
+  color: #d66288;
+  border: 1px solid rgba(214, 98, 136, 0.4);
+}
+
+/* Health (green) */
+.badge-category-health-light {
+  background: rgba(90, 159, 110, 0.15);
+  color: #3d7a4e;
+  border: 1px solid rgba(90, 159, 110, 0.3);
+}
+
+.badge-category-health-dark {
+  background: rgba(90, 159, 110, 0.2);
+  color: #5a9f6e;
+  border: 1px solid rgba(90, 159, 110, 0.4);
+}
+
+/* Entertainment (violet) */
+.badge-category-entertainment-light {
+  background: rgba(139, 92, 182, 0.15);
+  color: #7542a0;
+  border: 1px solid rgba(139, 92, 182, 0.3);
+}
+
+.badge-category-entertainment-dark {
+  background: rgba(156, 103, 204, 0.2);
+  color: #9c67cc;
+  border: 1px solid rgba(156, 103, 204, 0.4);
+}
+
+/* Vices (amber) */
+.badge-category-vices-light {
+  background: rgba(212, 161, 52, 0.15);
+  color: #b8872a;
+  border: 1px solid rgba(212, 161, 52, 0.3);
+}
+
+.badge-category-vices-dark {
+  background: rgba(212, 161, 52, 0.2);
+  color: #d4a134;
+  border: 1px solid rgba(212, 161, 52, 0.4);
+}
+
+/* Bills/Load (slate/cyan) */
+.badge-category-bills-light {
+  background: rgba(90, 86, 79, 0.1);
+  color: #5a564f;
+  border: 1px solid rgba(90, 86, 79, 0.2);
+}
+
+.badge-category-bills-dark {
+  background: rgba(154, 146, 134, 0.15);
+  color: #9a9286;
+  border: 1px solid rgba(154, 146, 134, 0.3);
+}
+
+.badge-category-load-light {
+  background: rgba(32, 135, 147, 0.15);
+  color: #208793;
+  border: 1px solid rgba(32, 135, 147, 0.3);
+}
+
+.badge-category-load-dark {
+  background: rgba(54, 184, 200, 0.2);
+  color: #36b8c8;
+  border: 1px solid rgba(54, 184, 200, 0.4);
+}
