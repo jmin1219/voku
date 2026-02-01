@@ -51,11 +51,11 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 ## Implementation Phases
 
 ### Phase A: Kuzu Foundation (~4-5 hours)
-- [ ] Install Kuzu, create `voku.kuzu` database
-- [ ] User Space schema: RootNode, InternalNode, LeafNode
-- [ ] Organization Space schema: OrganizationNode (type field)
-- [ ] Edge tables: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES
-- [ ] NodeEmbedding table (node_id, embedding_type, embedding)
+- [x] Install Kuzu, create `voku.kuzu` database
+- [x] User Space schema: RootNode, InternalNode, LeafNode
+- [x] Organization Space schema: OrganizationNode (type field)
+- [x] Edge tables: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES
+- [x] NodeEmbedding table (node_id, embedding_type, embedding)
 - [ ] Basic CRUD operations with Cypher
 - [ ] Tests for graph integrity
 
@@ -107,7 +107,12 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 |------|-------|-----------|
 | Jan 30 | — | Architecture finalized, STATE.md synced |
 | Jan 31 | — | Goal-anchored philosophy defined, schema updated with node_purpose/source_type/signal_valence |
-| | | Implementation Phase A ready to start |
+| Jan 31 | 1.5 | Phase A: Kuzu schema complete (schema.py) |
+| | | - 5 node tables: RootNode, InternalNode, LeafNode, OrganizationNode, NodeEmbedding |
+| | | - 6 edge tables: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES |
+| | | - Data-driven edge generation pattern |
+| | | - init_database() tested and working |
+| | | - Next: operations.py CRUD implementation |
 
 ---
 

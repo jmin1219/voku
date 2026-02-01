@@ -1,196 +1,109 @@
 # Voku
 
-> *Renamed from BillyAI on Jan 31, 2026*
+> A knowledge-first cognitive prosthetic that extracts beliefs from conversation, organizes them into a graph, and shows how your thinking evolves.
 
-Multi-domain personal context architecture for fitness and finance data extraction, normalization, and analysis.
+## What Voku Is
 
-## Overview
+You talk to Voku naturally. It extracts your beliefs into a graph — watch it build as you speak.
 
-Voku is a full-stack AI system that transforms unstructured data sources (workout screenshots, financial PDFs) into queryable structured records. Built with domain-extensibility as a first-class design principle.
+**Core insight:** Productivity planners take goals as input. Voku questions whether stated goals are *real* — or performance, or inherited, or outdated. Self-understanding is the anchor; goals emerge from seeing yourself clearly.
 
-**Core capabilities:**
-- Vision-based data extraction from Apple Watch screenshots and fitness displays
-- PDF transaction parsing and intelligent categorization
-- Variable registry for name normalization across sessions
-- Multi-domain architecture (fitness + finance, extensible to N domains)
-- React frontend with content-driven theming
+**What it surfaces:**
+- Discrepancies between stated intentions and observed patterns
+- How your beliefs evolve over time (contradiction detection, refinement tracking)
+- Gaps in your thinking ("You've discussed X and Y but never Z")
 
-**Use case:** Personal cognitive prosthetic. Upload a workout screenshot or bank statement → structured data with semantic search (v0.3).
+## Key Innovations
+
+| Innovation | Description |
+|------------|-------------|
+| **Research Depth (0-10)** | Not a toggle — every operation behaves differently based on depth |
+| **Dual Space Architecture** | User sees confirmed graph; Voku reasons in hidden workspace before proposing |
+| **Bi-Temporal Model** | When you believed something vs. when Voku learned it |
+| **Multi-Aspect Embeddings** | 4 embeddings per node enable semantic retrieval beyond literal matching |
+| **Ghost Persistence** | Never delete — graduated visibility preserves history |
+| **Goal-Anchored Fields** | node_purpose, source_type, signal_valence enable intention vs. pattern comparison |
 
 ## Architecture
 
-### Backend
-- **Framework:** FastAPI with router-based domain separation
-- **Vision:** Provider abstraction (Groq for speed, Ollama for privacy)
-- **Storage:** SQLite (operational data) + JSON sessions (raw extracts)
-- **Intelligence:** LLM-based merchant categorization with learning cache
-- **Testing:** 64 tests (pytest) across 6 modules
-
-### Frontend
-- **Stack:** Vite + React + TypeScript + Tailwind v4
-- **UI:** shadcn/ui components with custom theming
-- **Design:** Mixed-theme system (light for text-heavy content, dark for metrics)
-- **Pages:** 6 functional routes across fitness and finance domains
-
-### Key Architectural Decisions
-- **Provider abstraction:** Route workloads based on requirements (speed vs. privacy)
-- **Variable registry:** Human-in-the-loop feedback for name normalization
-- **Domain color systems:** Fitness (orange/red), Finance (cyan/violet) for spatial distinction
-- **LangChain-free:** Direct API control for observability and debugging
-
-## Features
-
-### Fitness Domain
-- **Training Session Log:** Drag-drop image upload with extraction display
-- **Session History:** Master-detail view with chronological filtering
-- **Variable Registry:** Auto-normalize metrics (e.g., "Avg HR" → "average_heart_rate")
-
-### Finance Domain
-- **PDF Import:** Batch transaction extraction from bank statements
-- **Transaction List:** Filterable data table with category breakdown
-- **Monthly Summary:** Aggregate spending by category with metrics cards
-- **Smart Categorization:** LLM-powered merchant categorization with learning
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  CHAT (1/3)              │  GRAPH VIEW (2/3)                        │
+│  Conversation + Depth    │  React Flow + Ghost Nodes + Evolution    │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                           FastAPI Backend
+                    Processing Pipeline (5 stages)
+                                    │
+              ┌─────────────────────┴─────────────────────┐
+              │                                           │
+         Kuzu (Graph)                              SQLite (Auxiliary)
+         User + Organization Space                 Conversations, Traces
+         Multi-aspect Embeddings                   Full-text Search
+```
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Python 3.11, FastAPI, Pydantic, SQLite |
-| Vision | Groq API (llama-4-scout), Ollama (local fallback) |
-| Frontend | React 18, TypeScript, Tailwind v4, shadcn/ui |
-| Build | Vite, pnpm |
-| Testing | pytest (backend), 64 passing tests |
-| Deployment | Target: Hugging Face Spaces / Railway (March 2026) |
+| Component | Choice | Rationale |
+|-----------|--------|-----------|
+| Graph Database | Kuzu | Native Cypher, community detection, embedded |
+| Auxiliary Storage | SQLite + FTS5 | Conversations, traces, settings |
+| Frontend | React + React Flow | Graph visualization |
+| LLM (default) | Groq | Fast, free tier |
+| LLM (private) | Ollama | Local, no data leaves machine |
+| Embeddings | bge-base-en-v1.5 | 768 dim, strong retrieval benchmarks |
+
+## Current Status
+
+**v0.3: Knowledge-First Graph** — Implementation in progress
+
+| Phase | Hours | Status |
+|-------|-------|--------|
+| A: Kuzu Foundation | 4-5 | 🔵 Starting |
+| B: Auxiliary Storage | 2-3 | Planned |
+| C: Processing Pipeline | 5-6 | Planned |
+| D: Multi-Aspect Embeddings | 2-3 | Planned |
+| E: Document Import | 2-3 | Planned |
+| F: Chat + Graph UI | 4-5 | Planned |
+
+**Target:** Demo-ready April 2026
 
 ## Setup
 
-### Backend
-
 ```bash
+# Backend
 cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Add GROQ_API_KEY to .env
-
-# Run tests
-python -m pytest -v
-
-# Start server
+cp .env.example .env  # Add GROQ_API_KEY
 uvicorn app.main:app --reload
-# API available at http://localhost:8000
-```
 
-### Frontend
-
-```bash
+# Frontend
 cd frontend
 pnpm install
 pnpm run dev
-# Open http://localhost:5173
 ```
-
-## API Usage
-
-### Fitness
-
-```bash
-# Log training session
-curl -X POST http://localhost:8000/log/training/session \
-  -F "image=@data/test_images/apple_fitness/indoor_cycle_summary.png"
-
-# Get session history
-curl http://localhost:8000/fitness/sessions
-```
-
-### Finance
-
-```bash
-# Import PDF transactions
-curl -X POST http://localhost:8000/finance/import \
-  -F "file=@data/finance/imports/CAD_Toss.pdf"
-
-# List transactions
-curl http://localhost:8000/finance/transactions
-
-# Monthly summary
-curl "http://localhost:8000/finance/summary?month=2026-01"
-```
-
-## Project Status
-
-**Current Phase:** v0.2 UI Development (Target: Feb 21, 2026)
-
-| Milestone | Status | Target |
-|-----------|--------|--------|
-| v0.1: Backend Pipeline | ✅ Complete | — |
-| v0.2: Multi-Domain UI | 🟡 In Progress | Feb 21 |
-| v0.2.5: Production Signals | Planned | Mar 10 |
-| v0.3: Semantic Search (ChromaDB) | Planned | Mar 15 |
-| Demo Deployment | Planned | Mar 31 |
-
-See [STATE.md](./STATE.md) for detailed implementation status and technical debt tracking.
-
-## Development Principles
-
-1. **TDD for core logic** — 64 tests covering extraction, parsing, normalization
-2. **Evidence-based design** — Research-backed UX decisions (see MIXED_THEME_RATIONALE.md)
-3. **Domain extensibility** — Architecture supports N domains, not hardcoded to fitness/finance
-4. **Local-first privacy** — Sensitive data processing via Ollama, no external API calls
-5. **Production-ready thinking** — Health checks, structured logging, request tracing planned for v0.2.5
 
 ## Documentation
 
-- **[STATE.md](./STATE.md)** — Current implementation status, blockers, decisions
-- **[docs/API.md](./docs/API.md)** — Endpoint contracts and usage
-- **[docs/DESIGN.md](./docs/DESIGN.md)** — Architecture and design notes
-- **[docs/MIXED_THEME_RATIONALE.md](./docs/MIXED_THEME_RATIONALE.md)** — Evidence-based design defense
-
-## Roadmap
-
-### Completed ✅
-- Vision extraction from Apple Watch screenshots
-- JSON session persistence with metadata
-- Variable registry with alias support
-- Provider abstraction (Groq + Ollama)
-- Finance PDF parsing and categorization
-- FastAPI router architecture
-- React frontend with 6 functional pages
-- Mixed-theme design system
-- 64 passing tests across 6 modules
-
-### In Progress 🟡
-- UI review flow for unknown variable confirmation
-
-### Planned 📋
-- Health check endpoints (liveness, readiness)
-- Structured JSON logging with request IDs
-- Error path testing and LLM mocking
-- ChromaDB semantic search integration
-- Deployment to Hugging Face Spaces / Railway
-
-### Deferred
-- Docker containerization (May 2026)
-- Multi-image session merging
-- Health app data import
-- Trainer agent (actual vs. planned comparison)
+- **[docs/DESIGN_V03.md](./docs/DESIGN_V03.md)** — Complete architecture specification
+- **[docs/STATE.md](./docs/STATE.md)** — Implementation status, decisions made
+- **[docs/ARCHITECTURE_DIAGRAMS.md](./docs/ARCHITECTURE_DIAGRAMS.md)** — Visual system diagrams
 
 ## Interview Talking Points
 
-**Why no LangChain?**  
-Direct API control provides full observability and debugging capability. 45% of developers who try LangChain never use it in production (2025 survey). Short-term convenience trades for long-term technical debt.
+**"Why Kuzu over SQLite for graph?"**  
+Graph traversal is central — finding paths, detecting communities, measuring centrality. SQLite recursive CTEs work but don't express graph semantics. Kuzu gives native Cypher and built-in algorithms.
 
-**Why SQLite?**  
-Single-user local-first design prioritizing privacy. Configured with WAL mode for concurrency. Migration path to PostgreSQL documented for multi-user scaling.
+**"How does multi-aspect embedding work?"**  
+Four embeddings per node: content, title, context (with parents), and hypothetical queries. Query embedding enables "What guides my decisions?" to match decision principles even without literal keyword overlap.
 
-**Why ChromaDB?**  
-Appropriate for portfolio scale with local-first philosophy. Production horizontal scaling would evaluate Qdrant or managed Pinecone.
+**"What's the organization layer?"**  
+Voku's working memory — pattern detection, hypothesis formation — that shouldn't clutter user's graph. Inspectable: users can ask "why did you suggest this?" and see reasoning.
 
-**Design decisions?**  
-Mixed-theme system is evidence-based: Piepenbrock research shows 20-26% reading speed advantage for positive polarity (light mode for tables). Dark mode for metrics leverages Helmholtz-Kohlrausch effect for data visualization.
+**"What makes this personal, not just a knowledge base?"**  
+node_purpose (observation/pattern/belief/intention/decision) + source_type (explicit/inferred) + signal_valence (positive/negative/neutral) enable the core query: "Where does my behavior contradict my stated intentions?"
 
 ## License
 
@@ -200,5 +113,4 @@ MIT
 
 **Built by:** Jaymin Chang  
 **Portfolio:** [github.com/jmin1219](https://github.com/jmin1219) | [@ChangJaymin](https://twitter.com/ChangJaymin)  
-**Timeline:** v0.1 completed 6 weeks ahead of schedule (Jan 2026)  
 **Repo:** https://github.com/jmin1219/voku
