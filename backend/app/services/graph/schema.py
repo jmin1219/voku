@@ -2,7 +2,7 @@
 Kuzu Graph Schema for Voku v0.3
 
 Phase A implementation:
-- User Space: RootNode, InternalNode, LeafNode
+- User Space: ModuleNode, InternalNode, LeafNode
 - Organization Space: OrganizationNode
 - Edges: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES
 - NodeEmbedding table
@@ -33,18 +33,17 @@ def init_database(db_path: str | Path) -> kuzu.Database:
 
     return db
 
-
 def _create_node_tables(conn: kuzu.Connection) -> None:
     """Create User Space and Organization Space node tables."""
 
-    # RootNode: User-declared focus areas (modules)
+    # ModuleNode: User-declared focus areas (modules)
     # - intentions: JSON {primary, secondary[], definition_of_done, declared_priority}
     # - priority: numeric ranking among modules
     # - research_depth: default depth (0-10) for operations under this module
     # - active: whether module is currently in use
     # - declared_at: when user created this module (may differ from created_at for imports)
     conn.execute("""
-        CREATE NODE TABLE RootNode (
+        CREATE NODE TABLE ModuleNode (
             id STRING,
             title STRING,
             content STRING,
@@ -146,8 +145,8 @@ def _create_edge_tables(conn: kuzu.Connection) -> None:
         {
             "name": "CONTAINS",
             "from_to_pairs": [
-                ("RootNode", "InternalNode"),
-                ("RootNode", "LeafNode"),
+                ("ModuleNode", "InternalNode"),
+                ("ModuleNode", "LeafNode"),
                 ("InternalNode", "InternalNode"),
                 ("InternalNode", "LeafNode"),
             ],
@@ -221,7 +220,7 @@ def _create_edge_tables(conn: kuzu.Connection) -> None:
         {
             "name": "REFERENCES",
             "from_to_pairs": [
-                ("OrganizationNode", "RootNode"),
+                ("OrganizationNode", "ModuleNode"),
                 ("OrganizationNode", "InternalNode"),
                 ("OrganizationNode", "LeafNode"),
             ],

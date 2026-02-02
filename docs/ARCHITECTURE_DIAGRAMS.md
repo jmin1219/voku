@@ -9,7 +9,7 @@
 
 ```mermaid
 erDiagram
-    RootNode {
+    ModuleNode {
         string id PK
         string title
         string content
@@ -69,8 +69,8 @@ erDiagram
         timestamp created_at
     }
     
-    RootNode ||--o{ InternalNode : "CONTAINS"
-    RootNode ||--o{ LeafNode : "CONTAINS"
+    ModuleNode ||--o{ InternalNode : "CONTAINS"
+    ModuleNode ||--o{ LeafNode : "CONTAINS"
     InternalNode ||--o{ InternalNode : "CONTAINS"
     InternalNode ||--o{ LeafNode : "CONTAINS"
     LeafNode ||--o{ LeafNode : "SUPPORTS"

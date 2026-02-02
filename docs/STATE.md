@@ -4,7 +4,7 @@
 
 > Current position, decisions made, blockers. Updated each session.
 
-**Last Updated:** 2026-01-31 (Renamed to Voku)
+**Last Updated:** 2026-02-01
 
 ---
 
@@ -52,11 +52,12 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 
 ### Phase A: Kuzu Foundation (~4-5 hours)
 - [x] Install Kuzu, create `voku.kuzu` database
-- [x] User Space schema: RootNode, InternalNode, LeafNode
+- [x] User Space schema: ModuleNode, InternalNode, LeafNode
 - [x] Organization Space schema: OrganizationNode (type field)
 - [x] Edge tables: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES
 - [x] NodeEmbedding table (node_id, embedding_type, embedding)
-- [ ] Basic CRUD operations with Cypher
+- [x] Basic CRUD operations with Cypher (create_module, create_leaf_node, get_node)
+- [ ] Edge operations (create_edge, get_children)
 - [ ] Tests for graph integrity
 
 ### Phase B: Auxiliary Storage (~2-3 hours)
@@ -108,11 +109,17 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 | Jan 30 | — | Architecture finalized, STATE.md synced |
 | Jan 31 | — | Goal-anchored philosophy defined, schema updated with node_purpose/source_type/signal_valence |
 | Jan 31 | 1.5 | Phase A: Kuzu schema complete (schema.py) |
-| | | - 5 node tables: RootNode, InternalNode, LeafNode, OrganizationNode, NodeEmbedding |
+| | | - 5 node tables: ModuleNode, InternalNode, LeafNode, OrganizationNode, NodeEmbedding |
 | | | - 6 edge tables: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES |
 | | | - Data-driven edge generation pattern |
 | | | - init_database() tested and working |
-| | | - Next: operations.py CRUD implementation |
+| Feb 01 | 1.5 | Phase A: Node CRUD operations complete |
+| | | - create_module() with UUID generation, JSON intentions |
+| | | - create_leaf_node() with UUID generation |
+| | | - get_node() with multi-table search, JSON parsing |
+| | | - 6 tests passing (TDD workflow established) |
+| | | - Fixed: InternalNode schema syntax error |
+| | | - Next: Edge operations (create_edge, get_children) |
 
 ---
 
@@ -136,6 +143,8 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 | **Document import** | Solves cold start, immediate value from existing vault | Jan 30 |
 | **Groq default** | Fast, free tier sufficient for demo | Jan 30 |
 | **Full observability** | Processing traces for every extraction | Jan 30 |
+| **UUIDs for all node IDs** | Internal generation, semantic title separate | Feb 01 |
+| **JSON for intentions field** | json.dumps on write, json.loads on read | Feb 01 |
 
 ---
 
@@ -170,10 +179,11 @@ npm run dev
 
 ## Next Action
 
-**Phase A: Kuzu Foundation**
-1. Install Kuzu Python package
-2. Create schema in `backend/app/services/graph/schema.py`
-3. Implement CRUD in `backend/app/services/graph/operations.py`
-4. Write tests in `backend/tests/test_graph.py`
+**Phase A: Edge Operations**
+1. Write test for `create_edge()` (CONTAINS: module → leaf)
+2. Implement `create_edge()` with Cypher
+3. Write test for `get_children()`
+4. Implement `get_children()`
+5. Test SUPPORTS edge type
 
-See `docs/DESIGN_V03.md` Section 6 for complete Kuzu schema.
+See `backend/app/services/graph/operations.py` for current stubs.

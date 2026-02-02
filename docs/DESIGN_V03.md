@@ -503,7 +503,7 @@ Document → Parse → Chunk (~300 tokens) → Extract propositions
 │  │                      voku.kuzu (Graph DB)                       │    │
 │  │                                                                   │    │
 │  │  User Space:                   Organization Space:               │    │
-│  │  ├── RootNode                  ├── CompressionNode               │    │
+│  │  ├── ModuleNode                 ├── CompressionNode               │    │
 │  │  ├── InternalNode              ├── PriorityNode                  │    │
 │  │  ├── LeafNode                  ├── PatternNode                   │    │
 │  │  └── GhostNode                 ├── HypothesisNode                │    │
@@ -547,7 +547,7 @@ Document → Parse → Chunk (~300 tokens) → Extract propositions
 
 ```cypher
 // User Space Nodes
-CREATE NODE TABLE RootNode (
+CREATE NODE TABLE ModuleNode (
     id STRING,
     title STRING,
     content STRING,
@@ -661,7 +661,7 @@ MATCH (n) WHERE n.node_purpose = 'intention' AND n.source_type = 'explicit'
 MATCH (n) WHERE n.node_purpose = 'pattern' AND n.source_type = 'inferred'
 
 // What's working toward my fitness goal?
-MATCH (r:RootNode {title: 'fitness'})-[:CONTAINS*]->(n)
+MATCH (m:ModuleNode {title: 'fitness'})-[:CONTAINS*]->(n)
 WHERE n.signal_valence = 'positive'
 
 // Where might I be deceiving myself? (stated vs revealed)
@@ -675,7 +675,7 @@ MATCH (revealed) WHERE revealed.node_purpose = 'pattern' AND revealed.source_typ
 ```cypher
 // User Space Edges
 CREATE REL TABLE CONTAINS (
-    FROM RootNode | InternalNode TO InternalNode | LeafNode,
+    FROM ModuleNode | InternalNode TO InternalNode | LeafNode,
     status STRING DEFAULT 'confirmed',
     confidence FLOAT DEFAULT 1.0,
     created_at TIMESTAMP
@@ -712,7 +712,7 @@ CREATE REL TABLE SUPERSEDES (
 
 // Cross-space Edges
 CREATE REL TABLE REFERENCES (
-    FROM OrganizationNode TO RootNode | InternalNode | LeafNode,
+    FROM OrganizationNode TO ModuleNode | InternalNode | LeafNode,
     created_at TIMESTAMP
 )
 
