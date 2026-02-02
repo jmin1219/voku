@@ -4,16 +4,16 @@
 
 > Current position, decisions made, blockers. Updated each session.
 
-**Last Updated:** 2026-02-01
+**Last Updated:** 2026-02-02 (Session 3)
 
 ---
 
 ## Current Phase
 
 **v0.2: Operational Layer** — ✅ COMPLETE (Jan 28)
-**v0.3: Knowledge-First Graph** — 🔵 IMPLEMENTATION STARTING
+**v0.3: Knowledge-First Graph** — ✅ Phase A complete, Phase B next
 
-Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarified. Ready to build.
+Phase A (Kuzu Foundation) complete with 18 tests passing. All node/edge CRUD operations working. Ready for Phase B (Auxiliary Storage) or demo polish.
 
 ---
 
@@ -57,7 +57,10 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 - [x] Edge tables: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES
 - [x] NodeEmbedding table (node_id, embedding_type, embedding)
 - [x] Basic CRUD operations with Cypher (create_module, create_leaf_node, get_node)
-- [ ] Edge operations (create_edge, get_children)
+- [x] Edge operations (create_edge, get_children) ✅ Feb 01
+- [x] constants.py with EDGE_CONSTRAINTS validation ✅ Feb 01
+- [x] create_internal_node() implementation ✅ Feb 02
+- [x] get_related() for non-CONTAINS edges ✅ Feb 02
 - [ ] Tests for graph integrity
 
 ### Phase B: Auxiliary Storage (~2-3 hours)
@@ -119,7 +122,21 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 | | | - get_node() with multi-table search, JSON parsing |
 | | | - 6 tests passing (TDD workflow established) |
 | | | - Fixed: InternalNode schema syntax error |
-| | | - Next: Edge operations (create_edge, get_children) |
+| Feb 01 | 1.0 | Phase A: Edge operations complete |
+| | | - constants.py: VALID_EDGE_TYPES, EDGE_CONSTRAINTS, ALL_NODE_TABLES |
+| | | - _get_node_with_table() helper for multi-table lookup |
+| | | - create_edge() with table validation, dynamic Cypher |
+| | | - get_children() for CONTAINS traversal |
+| | | - 13 tests passing (7 new edge tests) |
+| | | - Fixed: import path backend.app → app |
+| Feb 02 | 0.5 | Phase A: Complete |
+| | | - create_internal_node() with shared _create_content_node() helper |
+| | | - get_related() for SUPPORTS/CONTRADICTS/ENABLES/SUPERSEDES traversal |
+| | | - Direction-aware returns: {node, direction: 'outgoing'|'incoming'} |
+| | | - RELATIONSHIP_EDGE_TYPES constant added |
+| | | - Code refactored: DRY helpers, type aliases, consistent formatting |
+| | | - 18 tests passing, 5 skipped (future work) |
+| | | - Next: Phase B (Auxiliary Storage) or graph integrity tests |
 
 ---
 
@@ -145,6 +162,8 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 | **Full observability** | Processing traces for every extraction | Jan 30 |
 | **UUIDs for all node IDs** | Internal generation, semantic title separate | Feb 01 |
 | **JSON for intentions field** | json.dumps on write, json.loads on read | Feb 01 |
+| **EDGE_CONSTRAINTS validation** | Whitelist (from_table, to_table) pairs per edge type; prevents invalid graph structures | Feb 01 |
+| **_get_node_with_table() pattern** | Kuzu requires explicit table types in MATCH; helper enables dynamic edge creation | Feb 01 |
 
 ---
 
@@ -154,20 +173,22 @@ Architecture finalized in `docs/DESIGN_V03.md`. Goal-anchored philosophy clarifi
 |------|---------|
 | `docs/DESIGN_V03.md` | Complete architecture specification (842 lines) |
 | `docs/ARCHITECTURE_DIAGRAMS.md` | Mermaid visual diagrams |
-| `CONTINUE.md` | Session continuation prompt |
-| `backend/app/services/graph/` | Kuzu operations (to create) |
-| `backend/app/services/extraction/` | Processing pipeline (to create) |
-| `backend/app/services/retrieval/` | Multi-aspect retrieval (to create) |
+| `docs/STATE.md` | This file — implementation status tracker |
+| `docs/CONTINUE.md` | Session continuation prompt |
+| `backend/app/services/graph/schema.py` | Kuzu schema definition |
+| `backend/app/services/graph/constants.py` | Edge constraints, valid types |
+| `backend/app/services/graph/operations.py` | Graph CRUD operations |
+| `backend/tests/test_graph.py` | Graph layer tests (13 passing) |
 
 ---
 
-## How to Run (v0.2 — still works)
+## How to Run
 
 ```bash
 # Backend
 cd backend
 source venv/bin/activate
-python -m pytest -v  # 80 tests should pass
+python -m pytest tests/test_graph.py -v  # 13 passed, 5 skipped
 uvicorn app.main:app --reload
 
 # Frontend
@@ -179,11 +200,9 @@ npm run dev
 
 ## Next Action
 
-**Phase A: Edge Operations**
-1. Write test for `create_edge()` (CONTAINS: module → leaf)
-2. Implement `create_edge()` with Cypher
-3. Write test for `get_children()`
-4. Implement `get_children()`
-5. Test SUPPORTS edge type
+**Phase A: Complete Foundation**
+1. Implement `create_internal_node()` — currently stubbed
+2. Implement `get_related(node_id, rel_type)` — for SUPPORTS/CONTRADICTS/etc traversal
+3. Optional: node_purpose enum validation
 
-See `backend/app/services/graph/operations.py` for current stubs.
+See `docs/CONTINUE.md` for session continuation.

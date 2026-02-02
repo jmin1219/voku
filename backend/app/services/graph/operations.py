@@ -11,8 +11,23 @@ import json
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Literal
 
 import kuzu
+
+from app.services.graph.constants import (
+    ALL_NODE_TABLES,
+    EDGE_CONSTRAINTS,
+    RELATIONSHIP_EDGE_TYPES,
+    USER_SPACE_TABLES,
+    VALID_EDGE_TYPES,
+)
+
+# Type aliases for clarity
+NodePurpose = Literal["observation", "pattern", "belief", "intention", "decision"]
+SourceType = Literal["explicit", "inferred"]
+SignalValence = Literal["positive", "negative", "neutral"]
+EdgeDirection = Literal["outgoing", "incoming"]
 
 
 @dataclass
@@ -24,7 +39,9 @@ class GraphOperations:
     def __post_init__(self):
         self._conn = kuzu.Connection(self.db)
 
-    # --- Node Operations ---
+    # ==========================================================================
+    # Node Operations
+    # ==========================================================================
 
     def create_module(
         self,
@@ -34,10 +51,21 @@ class GraphOperations:
         priority: int = 0,
         research_depth: int = 5,
     ) -> dict:
-        """Create a ModuleNode (user-declared focus area)."""
-        id = str(uuid.uuid4())
-        created_at = datetime.now(timezone.utc)
-        updated_at = created_at
+        """Create a ModuleNode (user-declared focus area).
+
+        Args:
+            title: Module title
+            content: Description of the module
+            intentions: Dict with keys: primary, secondary[], definition_of_done, declared_priority
+            priority: Numeric ranking among modules
+            research_depth: Default depth (0-10) for operations under this module
+
+        Returns:
+            Dict with all node fields including generated 'id'
+        """
+        node_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
+
         self._conn.execute(
             """
             CREATE (n:ModuleNode {
@@ -50,56 +78,78 @@ class GraphOperations:
                 active: true,
                 declared_at: $declared_at,
                 created_at: $created_at,
-                updated_at: $updated_at})
-        """,
+                updated_at: $updated_at
+            })
+            """,
             {
-                "id": id,
+                "id": node_id,
                 "title": title,
                 "content": content,
                 "intentions": json.dumps(intentions),
                 "priority": priority,
                 "research_depth": research_depth,
-                "declared_at": created_at,
-                "created_at": created_at,
-                "updated_at": updated_at,
+                "declared_at": now,
+                "created_at": now,
+                "updated_at": now,
             },
         )
+
         return {
-            "id": id,
+            "id": node_id,
             "title": title,
             "content": content,
             "intentions": intentions,
             "priority": priority,
             "research_depth": research_depth,
             "active": True,
-            "declared_at": created_at,
-            "created_at": created_at,
-            "updated_at": updated_at,
+            "declared_at": now,
+            "created_at": now,
+            "updated_at": now,
         }
 
     def create_internal_node(
         self,
-        id: str,
         title: str,
         content: str,
         source: str,
-        node_purpose: str,
-        source_type: str,
-        signal_valence: str | None = None,
+        node_purpose: NodePurpose,
+        source_type: SourceType,
+        signal_valence: SignalValence | None = None,
         confidence: float = 1.0,
     ) -> dict:
-        """Create an InternalNode (abstraction)."""
-        # TODO: Implement
-        raise NotImplementedError()
+        """Create an InternalNode (abstraction/cluster of beliefs).
+
+        Args:
+            title: Semantic slug (e.g., 'running-pattern-jan2024')
+            content: Full text content of the abstraction
+            source: Origin - 'conversation', 'voku', 'user', 'import'
+            node_purpose: 'observation', 'pattern', 'belief', 'intention', 'decision'
+            source_type: 'explicit' (user stated) or 'inferred' (Voku detected)
+            signal_valence: 'positive', 'negative', 'neutral', or None
+            confidence: 0.0-1.0 certainty score (default 1.0)
+
+        Returns:
+            Dict with all node fields including generated 'id'
+        """
+        return self._create_content_node(
+            table="InternalNode",
+            title=title,
+            content=content,
+            source=source,
+            node_purpose=node_purpose,
+            source_type=source_type,
+            signal_valence=signal_valence,
+            confidence=confidence,
+        )
 
     def create_leaf_node(
         self,
         title: str,
         content: str,
         source: str,
-        node_purpose: str,
-        source_type: str,
-        signal_valence: str | None = None,
+        node_purpose: NodePurpose,
+        source_type: SourceType,
+        signal_valence: SignalValence | None = None,
         confidence: float = 1.0,
     ) -> dict:
         """Create a LeafNode (atomic belief/fact).
@@ -116,12 +166,35 @@ class GraphOperations:
         Returns:
             Dict with all node fields including generated 'id'
         """
-        id = str(uuid.uuid4())
-        created_at = datetime.now(timezone.utc)
-        updated_at = created_at
+        return self._create_content_node(
+            table="LeafNode",
+            title=title,
+            content=content,
+            source=source,
+            node_purpose=node_purpose,
+            source_type=source_type,
+            signal_valence=signal_valence,
+            confidence=confidence,
+        )
+
+    def _create_content_node(
+        self,
+        table: str,
+        title: str,
+        content: str,
+        source: str,
+        node_purpose: str,
+        source_type: str,
+        signal_valence: str | None,
+        confidence: float,
+    ) -> dict:
+        """Internal helper to create InternalNode or LeafNode (shared schema)."""
+        node_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
+
         self._conn.execute(
-            """
-            CREATE (n:LeafNode {
+            f"""
+            CREATE (n:{table} {{
                 id: $id,
                 title: $title,
                 content: $content,
@@ -131,10 +204,11 @@ class GraphOperations:
                 signal_valence: $signal_valence,
                 confidence: $confidence,
                 created_at: $created_at,
-                updated_at: $updated_at})
-        """,
+                updated_at: $updated_at
+            }})
+            """,
             {
-                "id": id,
+                "id": node_id,
                 "title": title,
                 "content": content,
                 "source": source,
@@ -142,12 +216,13 @@ class GraphOperations:
                 "source_type": source_type,
                 "signal_valence": signal_valence,
                 "confidence": confidence,
-                "created_at": created_at,
-                "updated_at": updated_at,
+                "created_at": now,
+                "updated_at": now,
             },
         )
+
         return {
-            "id": id,
+            "id": node_id,
             "title": title,
             "content": content,
             "source": source,
@@ -155,33 +230,50 @@ class GraphOperations:
             "source_type": source_type,
             "signal_valence": signal_valence,
             "confidence": confidence,
-            "created_at": created_at,
-            "updated_at": updated_at,
+            "created_at": now,
+            "updated_at": now,
         }
 
-    def get_node(self, id: str) -> dict | None:
-        """Retrieve any node by ID."""
-        tables = ["ModuleNode", "InternalNode", "LeafNode", "OrganizationNode"]
-        for table in tables:
+    def get_node(self, node_id: str) -> dict | None:
+        """Retrieve any node by ID.
+
+        Args:
+            node_id: UUID of the node
+
+        Returns:
+            Node dict with parsed JSON fields, or None if not found
+        """
+        result = self._get_node_with_table(node_id)
+        return result[0] if result else None
+
+    def _get_node_with_table(self, node_id: str) -> tuple[dict, str] | None:
+        """Retrieve any node by ID along with its table name.
+
+        Returns:
+            Tuple of (node dict, table name) or None if not found
+        """
+        for table in ALL_NODE_TABLES:
             query_result = self._conn.execute(
-                f"""
-                MATCH (n:{table} {{id: $id}})
-                RETURN n
-            """,
-                {"id": id},
+                f"MATCH (n:{table} {{id: $id}}) RETURN n",
+                {"id": node_id},
             )
             records = query_result.get_all()
-            if records:
-                node = records[0][0]
-                result = dict(node)
 
-                # Parse known JSON fields
-                if "intentions" in result and isinstance(result["intentions"], str):
-                    result["intentions"] = json.loads(result["intentions"])
-                return result
+            if records:
+                node = dict(records[0][0])
+                self._parse_json_fields(node)
+                return node, table
+
         return None
 
-    # --- Edge Operations ---
+    def _parse_json_fields(self, node: dict) -> None:
+        """Parse known JSON fields in-place."""
+        if "intentions" in node and isinstance(node["intentions"], str):
+            node["intentions"] = json.loads(node["intentions"])
+
+    # ==========================================================================
+    # Edge Operations
+    # ==========================================================================
 
     def create_edge(
         self,
@@ -193,22 +285,203 @@ class GraphOperations:
     ) -> dict:
         """Create an edge between nodes.
 
-        rel_type: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES
+        Args:
+            from_id: Source node UUID
+            to_id: Target node UUID
+            rel_type: CONTAINS, SUPPORTS, CONTRADICTS, ENABLES, SUPERSEDES, REFERENCES
+            confidence: Confidence score 0.0-1.0 (default 1.0)
+            rationale: Text rationale (used by SUPPORTS/CONTRADICTS)
+
+        Returns:
+            Dict with edge details
+
+        Raises:
+            ValueError: Invalid rel_type or table combination
+            LookupError: from_id or to_id not found
         """
-        # TODO: Implement
-        raise NotImplementedError()
+        # Validate edge type
+        if rel_type not in VALID_EDGE_TYPES:
+            raise ValueError(
+                f"Invalid edge type: {rel_type}. Must be one of {VALID_EDGE_TYPES}."
+            )
+
+        # Lookup nodes and their tables
+        from_result = self._get_node_with_table(from_id)
+        if not from_result:
+            raise LookupError(f"Source node ID {from_id} not found.")
+        _, from_table = from_result
+
+        to_result = self._get_node_with_table(to_id)
+        if not to_result:
+            raise LookupError(f"Target node ID {to_id} not found.")
+        _, to_table = to_result
+
+        # Validate table combination
+        if (from_table, to_table) not in EDGE_CONSTRAINTS[rel_type]:
+            raise ValueError(
+                f"{rel_type} edge cannot be created from {from_table} to {to_table}. "
+                f"Valid: {EDGE_CONSTRAINTS[rel_type]}"
+            )
+
+        # Build query based on edge type properties
+        created_at = datetime.now(timezone.utc)
+        props, params = self._build_edge_props(
+            rel_type, from_id, to_id, confidence, rationale, created_at
+        )
+
+        query = f"""
+            MATCH (a:{from_table} {{id: $from_id}}), (b:{to_table} {{id: $to_id}})
+            CREATE (a)-[r:{rel_type} {{{props}}}]->(b)
+        """
+        self._conn.execute(query, params)
+
+        return {
+            "from_id": from_id,
+            "to_id": to_id,
+            "rel_type": rel_type,
+            "confidence": confidence,
+            "rationale": rationale,
+            "created_at": created_at,
+        }
+
+    def _build_edge_props(
+        self,
+        rel_type: str,
+        from_id: str,
+        to_id: str,
+        confidence: float,
+        rationale: str | None,
+        created_at: datetime,
+    ) -> tuple[str, dict]:
+        """Build property string and params dict for edge creation."""
+        base_params = {
+            "from_id": from_id,
+            "to_id": to_id,
+            "created_at": created_at,
+        }
+
+        if rel_type in ("SUPPORTS", "CONTRADICTS"):
+            props = "confidence: $confidence, rationale: $rationale, created_at: $created_at"
+            return props, {**base_params, "confidence": confidence, "rationale": rationale}
+
+        if rel_type == "SUPERSEDES":
+            props = "created_at: $created_at"
+            return props, base_params
+
+        # CONTAINS, ENABLES, REFERENCES
+        props = "confidence: $confidence, created_at: $created_at"
+        return props, {**base_params, "confidence": confidence}
 
     def get_children(self, node_id: str) -> list[dict]:
-        """Get all nodes connected via CONTAINS from this node."""
-        # TODO: Implement
-        raise NotImplementedError()
+        """Get all nodes connected via CONTAINS from this node.
 
-    def get_related(self, node_id: str, rel_type: str | None = None) -> list[dict]:
-        """Get nodes related to this node, optionally filtered by relationship type."""
-        # TODO: Implement
-        raise NotImplementedError()
+        Args:
+            node_id: Parent node UUID
 
-    # --- Embedding Operations ---
+        Returns:
+            List of child node dicts
+        """
+        parent_result = self._get_node_with_table(node_id)
+        if not parent_result:
+            return []
+
+        _, parent_table = parent_result
+
+        # Only ModuleNode and InternalNode can have CONTAINS children
+        if parent_table not in ("ModuleNode", "InternalNode"):
+            return []
+
+        result = self._conn.execute(
+            f"MATCH (p:{parent_table} {{id: $id}})-[:CONTAINS]->(c) RETURN c",
+            {"id": node_id},
+        )
+
+        children = []
+        for record in result.get_all():
+            node = dict(record[0])
+            self._parse_json_fields(node)
+            children.append(node)
+
+        return children
+
+    def get_related(
+        self,
+        node_id: str,
+        rel_type: str | None = None,
+    ) -> list[dict]:
+        """Get nodes related via SUPPORTS, CONTRADICTS, ENABLES, or SUPERSEDES.
+
+        Unlike get_children() which only handles CONTAINS hierarchy, this method
+        returns semantic relationships with direction information.
+
+        Args:
+            node_id: Node UUID to find relationships for
+            rel_type: Filter to specific relationship type, or None for all
+
+        Returns:
+            List of dicts with 'node' and 'direction' ('outgoing' or 'incoming')
+        """
+        node_result = self._get_node_with_table(node_id)
+        if not node_result:
+            return []
+
+        _, node_table = node_result
+
+        # Determine which edge types to query
+        if rel_type:
+            if rel_type not in RELATIONSHIP_EDGE_TYPES:
+                return []
+            edge_types = [rel_type]
+        else:
+            edge_types = list(RELATIONSHIP_EDGE_TYPES)
+
+        related: list[dict] = []
+
+        for edge_type in edge_types:
+            # Outgoing: this node -> other
+            related.extend(
+                self._query_related_direction(node_id, node_table, edge_type, "outgoing")
+            )
+            # Incoming: other -> this node
+            related.extend(
+                self._query_related_direction(node_id, node_table, edge_type, "incoming")
+            )
+
+        return related
+
+    def _query_related_direction(
+        self,
+        node_id: str,
+        node_table: str,
+        edge_type: str,
+        direction: EdgeDirection,
+    ) -> list[dict]:
+        """Query related nodes in a specific direction."""
+        if direction == "outgoing":
+            query = f"""
+                MATCH (n:{node_table} {{id: $id}})-[:{edge_type}]->(related)
+                RETURN related
+            """
+        else:
+            query = f"""
+                MATCH (n:{node_table} {{id: $id}})<-[:{edge_type}]-(related)
+                RETURN related
+            """
+
+        result = self._conn.execute(query, {"id": node_id})
+        records = result.get_all()
+
+        related = []
+        for record in records:
+            node = dict(record[0])
+            self._parse_json_fields(node)
+            related.append({"node": node, "direction": direction})
+
+        return related
+
+    # ==========================================================================
+    # Embedding Operations (TODO)
+    # ==========================================================================
 
     def store_embedding(
         self,
@@ -219,24 +492,26 @@ class GraphOperations:
     ) -> None:
         """Store an embedding for a node.
 
-        embedding_type: content, title, context, query
+        Args:
+            node_id: Node UUID
+            embedding_type: 'content', 'title', 'context', or 'query'
+            embedding: 768-dimensional vector
+            model: Model name used for generation
         """
-        # TODO: Implement
         raise NotImplementedError()
 
     def get_embeddings(self, node_id: str) -> dict[str, list[float]]:
         """Get all embeddings for a node, keyed by type."""
-        # TODO: Implement
         raise NotImplementedError()
 
-    # --- Query Operations ---
+    # ==========================================================================
+    # Query Operations (TODO)
+    # ==========================================================================
 
     def get_module_tree(self, root_id: str, max_depth: int = 3) -> dict:
         """Get hierarchical tree under a module."""
-        # TODO: Implement
         raise NotImplementedError()
 
     def find_contradictions(self, node_id: str) -> list[dict]:
         """Find nodes that contradict this node."""
-        # TODO: Implement
         raise NotImplementedError()
