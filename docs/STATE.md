@@ -200,9 +200,13 @@ npm run dev
 
 ## Next Action
 
-**Phase A: Complete Foundation**
-1. Implement `create_internal_node()` — currently stubbed
-2. Implement `get_related(node_id, rel_type)` — for SUPPORTS/CONTRADICTS/etc traversal
-3. Optional: node_purpose enum validation
+**Phase B: Auxiliary Storage** (next priority)
+1. SQLite schema: conversations, conversation_turns, conversation_fts
+2. node_sources table (provenance linking)
+3. processing_traces table (observability)
+
+**Alternative: Demo Polish**
+- Graph integrity tests for Phase A
+- Basic visualization of existing nodes
 
 See `docs/CONTINUE.md` for session continuation.
