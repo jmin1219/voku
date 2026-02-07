@@ -33,6 +33,7 @@ def init_database(db_path: str | Path) -> kuzu.Database:
 
     return db
 
+
 def _create_node_tables(conn: kuzu.Connection) -> None:
     """Create User Space and Organization Space node tables."""
 
@@ -42,7 +43,8 @@ def _create_node_tables(conn: kuzu.Connection) -> None:
     # - research_depth: default depth (0-10) for operations under this module
     # - active: whether module is currently in use
     # - declared_at: when user created this module (may differ from created_at for imports)
-    conn.execute("""
+    try:
+        conn.execute("""
         CREATE NODE TABLE ModuleNode (
             id STRING,
             title STRING,
@@ -57,6 +59,11 @@ def _create_node_tables(conn: kuzu.Connection) -> None:
             PRIMARY KEY (id)
         )
     """)
+    except RuntimeError as e:
+        if "already exists" in str(e):
+            pass  # Table already exists, ignore error
+        else:
+            raise  # Unexpected error, re-raise
 
     # InternalNode: Confirmed abstractions (clusters of beliefs)
     # - status: confirmed | suggested | faded | rejected (ghost lifecycle)
@@ -68,71 +75,89 @@ def _create_node_tables(conn: kuzu.Connection) -> None:
     # - valid_from/valid_to: bi-temporal (when you believed this)
     # - recorded_at: bi-temporal (when Voku learned it)
     # - suggested_at: when Voku proposed this ghost node
-    conn.execute("""
-        CREATE NODE TABLE InternalNode (
-            id STRING,
-            title STRING,
-            content STRING,
-            status STRING DEFAULT 'confirmed',
-            source STRING,
-            confidence FLOAT DEFAULT 1.0,
-            node_purpose STRING,
-            source_type STRING,
-            signal_valence STRING,
-            valid_from TIMESTAMP,
-            valid_to TIMESTAMP,
-            recorded_at TIMESTAMP,
-            suggested_at TIMESTAMP,
-            created_at TIMESTAMP,
-            updated_at TIMESTAMP,
-            PRIMARY KEY (id)
-        )
-    """)
+    try:
+        conn.execute("""
+            CREATE NODE TABLE InternalNode (
+                id STRING,
+                title STRING,
+                content STRING,
+                status STRING DEFAULT 'confirmed',
+                source STRING,
+                confidence FLOAT DEFAULT 1.0,
+                node_purpose STRING,
+                source_type STRING,
+                signal_valence STRING,
+                valid_from TIMESTAMP,
+                valid_to TIMESTAMP,
+                recorded_at TIMESTAMP,
+                suggested_at TIMESTAMP,
+                created_at TIMESTAMP,
+                updated_at TIMESTAMP,
+                PRIMARY KEY (id)
+            )
+        """)
+    except RuntimeError as e:
+        if "already exists" in str(e):
+            pass  # Table already exists, ignore error
+        else:
+            raise  # Unexpected error, re-raise
 
     # LeafNode: Atomic beliefs/facts extracted from conversation
     # Same fields as InternalNode but represents raw extractions, not abstractions
-    conn.execute("""
-        CREATE NODE TABLE LeafNode (
-            id STRING,
-            title STRING,
-            content STRING,
-            status STRING DEFAULT 'confirmed',
-            source STRING,
-            confidence FLOAT DEFAULT 1.0,
-            node_purpose STRING,
-            source_type STRING,
-            signal_valence STRING,
-            valid_from TIMESTAMP,
-            valid_to TIMESTAMP,
-            recorded_at TIMESTAMP,
-            suggested_at TIMESTAMP,
-            created_at TIMESTAMP,
-            updated_at TIMESTAMP,
-            PRIMARY KEY (id)
-        )
-    """)
+    try:
+        conn.execute("""
+            CREATE NODE TABLE LeafNode (
+                id STRING,
+                title STRING,
+                content STRING,
+                status STRING DEFAULT 'confirmed',
+                source STRING,
+                confidence FLOAT DEFAULT 1.0,
+                node_purpose STRING,
+                source_type STRING,
+                signal_valence STRING,
+                valid_from TIMESTAMP,
+                valid_to TIMESTAMP,
+                recorded_at TIMESTAMP,
+                suggested_at TIMESTAMP,
+                created_at TIMESTAMP,
+                updated_at TIMESTAMP,
+                PRIMARY KEY (id)
+            )
+        """)
+    except RuntimeError as e:
+        if "already exists" in str(e):
+            pass  # Table already exists, ignore error
+        else:
+            raise  # Unexpected error, re-raise
 
     # OrganizationNode: Voku's hidden cognitive workspace
     # - type: compression | priority | pattern | hypothesis | keyword | bridge
     # User can inspect ("why did you suggest this?") but doesn't clutter their graph
-    conn.execute("""
-        CREATE NODE TABLE OrganizationNode (
-            id STRING,
-            type STRING,
-            title STRING,
-            content STRING,
-            confidence FLOAT,
-            valid_from TIMESTAMP,
-            valid_to TIMESTAMP,
-            created_at TIMESTAMP,
-            PRIMARY KEY (id)
-        )
-    """)
+    try:
+        conn.execute("""
+            CREATE NODE TABLE OrganizationNode (
+                id STRING,
+                type STRING,
+                title STRING,
+                content STRING,
+                confidence FLOAT,
+                valid_from TIMESTAMP,
+                valid_to TIMESTAMP,
+                created_at TIMESTAMP,
+                PRIMARY KEY (id)
+            )
+        """)
+    except RuntimeError as e:
+        if "already exists" in str(e):
+            pass  # Table already exists, ignore error
+        else:
+            raise  # Unexpected error, re-raise
 
 
 def _create_edge_tables(conn: kuzu.Connection) -> None:
     """Create relationship tables using data-driven schema definition.
-    
+
     Kuzu uses REL TABLE GROUP for relationships spanning multiple node types.
     Each (from, to) pair is listed separately.
     """
@@ -232,9 +257,7 @@ def _create_edge_tables(conn: kuzu.Connection) -> None:
 
     for edge in EDGE_SCHEMAS:
         # Build FROM/TO pairs clause
-        pairs_clause = ", ".join(
-            f"FROM {f} TO {t}" for f, t in edge["from_to_pairs"]
-        )
+        pairs_clause = ", ".join(f"FROM {f} TO {t}" for f, t in edge["from_to_pairs"])
 
         # Build properties clause
         prop_parts = []
@@ -245,27 +268,41 @@ def _create_edge_tables(conn: kuzu.Connection) -> None:
                 prop_parts.append(f"{name} {typ}")
         props_clause = ", ".join(prop_parts)
 
-        cypher = f"CREATE REL TABLE GROUP {edge['name']} ({pairs_clause}, {props_clause})"
-        conn.execute(cypher)
+        cypher = (
+            f"CREATE REL TABLE GROUP {edge['name']} ({pairs_clause}, {props_clause})"
+        )
+        try:
+            conn.execute(cypher)
+        except RuntimeError as e:
+            if "already exists" in str(e):
+                continue  # Edge table already exists, ignore error
+            else:
+                raise  # Unexpected error, re-raise
 
 
 def _create_embedding_table(conn: kuzu.Connection) -> None:
     """Create NodeEmbedding table for multi-aspect embeddings.
-    
+
     Each node can have multiple embeddings:
     - content: literal meaning of text
-    - title: semantic boundary  
+    - title: semantic boundary
     - context: node + parent summaries
     - query: hypothetical questions this node answers
     """
-    conn.execute("""
-        CREATE NODE TABLE NodeEmbedding (
-            id STRING,
-            node_id STRING,
-            embedding_type STRING,
-            embedding FLOAT[768],
-            model STRING,
-            created_at TIMESTAMP,
-            PRIMARY KEY (id)
-        )
-    """)
+    try:
+        conn.execute("""
+            CREATE NODE TABLE NodeEmbedding (
+                id STRING,
+                node_id STRING,
+                embedding_type STRING,
+                embedding FLOAT[768],
+                model STRING,
+                created_at TIMESTAMP,
+                PRIMARY KEY (id)
+            )
+        """)
+    except RuntimeError as e:
+        if "already exists" in str(e):
+            pass  # Table already exists, ignore error
+        else:
+            raise  # Unexpected error, re-raise
