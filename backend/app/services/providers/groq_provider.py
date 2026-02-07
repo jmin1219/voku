@@ -1,9 +1,10 @@
 import os
+from typing import Optional
 
 import httpx
 from dotenv import load_dotenv
 
-from .base import Provider
+from .base import Provider, ProviderError
 
 load_dotenv()
 
@@ -45,19 +46,63 @@ class GroqProvider(Provider):
         data = response.json()
         return data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
-    async def complete(self, prompt: str) -> str:
+    async def complete(
+        self,
+        prompt: str,
+        *,
+        system_prompt: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> str:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+        # Conditionally prepend a system prompt if provided
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
         payload = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt}],
+            "model": model or "llama-3.3-70b-versatile",
+            "messages": messages,
             "max_tokens": 1024,
+            "response_format": {
+                "type": "json_object"
+            },  # Ensure Groq returns a valid JSON object but does NOT guarantee JSON matches schema
         }
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions", headers=headers, json=payload
+
+        # --- Boundary 1: Network call to Groq API ---
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions", headers=headers, json=payload
+                )
+            response.raise_for_status()  # Raise an error for bad status codes
+        except httpx.TimeoutException:
+            raise ProviderError("Request to Groq API timed out after 60s.")
+        except httpx.HTTPStatusError as e:
+            raise ProviderError(
+                f"Groq API returned an error: {e.response.status_code} - {e.response.text[:200]}..."
             )
-        data = response.json()
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        except httpx.RequestError as e:
+            raise ProviderError(
+                f"An error occurred while requesting Groq API: {str(e)}"
+            )
+
+        # --- Boundary 2: Parsing Groq response ---
+        try:
+            data = response.json()
+        except ValueError:
+            raise ProviderError(
+                f"Groq API did not return valid JSON: {response.text[:200]}..."
+            )  # Show first 200 chars of response for debugging
+
+        # --- Boundary 3: Extracting content from Groq response (fail loud) ---
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+        if not content:
+            raise ProviderError(
+                f"Groq API response is missing expected content field: {data}"
+            )
+
+        return content
