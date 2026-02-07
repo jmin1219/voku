@@ -2,7 +2,7 @@
 
 > Current position, decisions made, blockers. Updated each session.
 
-**Last Updated:** 2026-02-06 (Post-cleanup)
+**Last Updated:** 2026-02-07 (Phase 0 gate test complete)
 
 ---
 
@@ -29,7 +29,8 @@ Phase B (SQLite auxiliary storage) deferred — conversations can live in memory
 
 ### Backend
 - **Graph layer** (`services/graph/`): Kuzu schema, constants, CRUD operations — 18 tests passing
-- **LLM providers** (`services/providers/`): Groq + Ollama abstraction with `complete()` method
+- **Extraction service** (`services/extraction/`): LLM-based proposition extraction with full schema (including structured_data), 5-layer validation, voice preservation — Phase 0 gate test passed
+- **LLM providers** (`services/providers/`): Groq + Ollama abstraction with `complete()` method, system_prompt support, JSON mode, ProviderError handling
 - **FastAPI app**: Health check only — no graph routes yet
 
 ### Frontend  
@@ -94,7 +95,7 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 | **Research Depth 0-10** | Defer | No documented friction maps to "I wish processing were lighter/deeper." Friction is organization + temporal, not depth. Build if usage reveals need. |
 | **Multi-aspect embeddings (4/node)** | Defer — start with single embedding | Retrieval problems are about Claude not reading right files and creating duplicates, not semantic similarity returning wrong results. Single bge-base-en-v1.5 likely sufficient. Add aspects where single embedding measurably fails. |
 
-**Key risk for vertical slice:** Automated extraction may produce technically correct but emotionally flat propositions. The reason "the internal monitor" works is collaborative naming through dialogue. Test whether extracted propositions feel like *your* concepts or clinical summaries. If flat, add interactive refinement step (already in design: "AI proposes, human confirms").
+**Key risk for vertical slice:** Original assumption was that extraction should produce named abstractions ("the fabricator") from single turns. Review revealed these names emerged across 8+ rounds of collaborative dialogue — they're InternalNodes, not LeafNodes. Extraction must target atomic observations that preserve user meaning. Abstraction/naming is a separate operation. If atomic extraction produces clinical summaries despite good few-shot examples, interactive refinement ("AI proposes, human confirms") becomes necessary.
 
 ---
 
@@ -109,6 +110,9 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 | Feb 02 | 0.5 | Phase A: Complete — internal nodes, get_related(), 18 tests |
 | Feb 06 | — | Full project review, strip v0.2, upgrade Kuzu 0.8→0.11.3, clean docs |
 | Feb 06 | — | 60+ conversation retrospective: mapped every feature to documented failure mode. Deferred Research Depth + Multi-Aspect Embeddings to post-demo. |
+| Feb 06 | — | Phase 0 design: extraction targets LeafNodes not abstractions. Few-shot teaches atomic proposition quality, naming/clustering is separate operation. Identified Groq provider gaps (no JSON mode, no system prompt). Created extraction/ directory. |
+| Feb 07 | 1.0 | Phase 0 Step 1: Upgraded Provider ABC — `complete()` now accepts keyword-only `system_prompt` and `model` params. Added `ProviderError` custom exception. Groq provider updated with 3-boundary error handling (network, JSON parsing, content extraction). 18 tests still passing. |
+| Feb 07 | 2.5 | Phase 0 Steps 2-5: Extraction prompt with full schema (including structured_data), ExtractionService with 5-layer validation, Proposition dataclass. Gate test: 5/5 technical success, voice preservation 80-95%. Prompt improvements: atomic definition, voice preservation strengthening. Retry: 98%+ exact phrase preservation. Decision: proceed to Phase 1 - batch processing + conversational flow will handle refinement. Created vault concept: "privacy-processing tradeoff as architectural primitive". |
 
 ---
 
@@ -116,6 +120,11 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
+| **Hybrid batching: per-turn now, batch processing later** | Phase 1: per-turn extraction validates pipeline quickly. Phase 2: batch processing layer adds efficiency (3-10x cost reduction) + clustering (emergent pattern detection). See ADR_001. | Feb 07 |
+| **Phase 0 gate passed: proceed to Phase 1** | Extraction quality 80-95% sufficient for pipeline integration. Batch processing will handle fragmentation, conversational flow will handle voice refinement. Perfect extraction in isolation has diminishing returns. Vertical slice approach: build end-to-end, then iterate on quality. | Feb 07 |
+| **Privacy-processing tradeoff as architectural primitive** | Research Depth maps to both processing granularity AND privacy boundaries (depth 1-3 local-only, 4-6 hybrid, 7-10 cloud). This abstraction will apply across AI ecosystem as models get more powerful. Justifies bringing back Research Depth. | Feb 07 |
+| **Extraction ≠ Abstraction** | Extraction produces LeafNodes (atomic observations). Named abstractions (InternalNodes like "the fabricator") emerge from clustering leaves — separate operation, not single-turn extraction | Feb 06 |
+| **Few-shot teaches voice, not naming** | Examples guide atomic proposition quality (preserve user meaning), not concept naming. Naming is human-in-the-loop | Feb 06 |
 | **Strip v0.2 (BillyAI)** | Fitness/finance features muddy Voku's identity; clean repo tells one story | Feb 06 |
 | **Defer Research Depth 0-10** | No documented friction maps to variable processing depth; friction is organization + temporal | Feb 06 |
 | **Defer Multi-Aspect Embeddings** | Start with single embedding; retrieval problems are organizational not semantic | Feb 06 |
@@ -140,6 +149,7 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 |------|---------|
 | `docs/DESIGN_V03.md` | Complete architecture specification |
 | `docs/ARCHITECTURE_DIAGRAMS.md` | Mermaid visual diagrams |
+| `docs/ADR_001_BATCHING_STRATEGY.md` | Batching architecture decision rationale |
 | `docs/STATE.md` | This file — implementation status |
 | `docs/CONTINUE.md` | Session continuation prompt |
 | `backend/app/services/graph/schema.py` | Kuzu schema definition |
@@ -152,12 +162,30 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 
 ## Next Action
 
-**Vertical slice: text → extraction → graph → visualization**
+**Phase 0: ✅ COMPLETE** (Feb 07)
 
-1. API endpoint: `POST /api/chat` accepting user text
-2. LLM extraction: Groq call to extract propositions as JSON
-3. Graph write: Create LeafNodes + edges in Kuzu
-4. Embedding: Generate + store via sentence-transformers
-5. Frontend: React Flow rendering the graph
+Gate test passed: 5/5 technical success, 3.5/5 excellent voice preservation. Extraction service ready for integration.
 
+**Phase 1: Extraction → Graph Pipeline** (Current - per-turn extraction)
+
+Strategy: Per-turn extraction for fast validation. Batch processing layer deferred to Phase 2 (see ADR_001).
+
+1. Create `POST /api/chat` endpoint accepting user text
+2. Wire extraction service to endpoint
+3. Graph write: propositions → LeafNodes in Kuzu with metadata
+4. Semantic dedup: cosine similarity > 0.95 before creating nodes
+5. Basic edge creation: SIMILAR_TO connections between related nodes
+6. Test: conversation turn → nodes appear in graph, queryable via Cypher
+
+Success criteria:
+- User text → extraction → nodes created in Kuzu
+- Duplicate detection catches similar propositions
+- Can query nodes and traverse edges
+- Foundation for Phase 2 (visualization + batch clustering)
+
+**Phase 2: Batch Processing Layer** (After Phase 1 complete)
+
+Add sophisticated batching: conversation window → single LLM call → clustering → InternalNode proposals → atomic commit. This becomes the demo centerpiece showing emergent pattern detection.
+
+See `voku — development plan.md` Phase 1 for full spec.
 See `docs/CONTINUE.md` for session pickup.
