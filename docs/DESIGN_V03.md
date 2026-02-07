@@ -1,6 +1,6 @@
 # Voku v0.3: Complete Architecture Specification
 
-> Last Updated: 2026-01-31 00:30
+> Last Updated: 2026-02-06
 > Status: Architecture Finalized, Pre-Implementation
 > Design Philosophy: Self-understanding as anchor, goals as emergent byproduct
 
@@ -56,6 +56,8 @@ This is the derivative of productivity planning. It solves the root problems:
 ## 2. Core Architectural Principles
 
 ### 2.1 Research Depth as Architectural Axis
+
+> **⏸️ DEFERRED (Feb 06):** No documented friction from 60+ conversations maps to "I wish processing were lighter/deeper." All documented failures are about organization, temporal awareness, and compression mutation — not processing depth. Keep in design vision; implement after vertical slice validates core graph value. Build if usage reveals need.
 
 Research depth is not a feature toggle — it's a fundamental dimension affecting every operation.
 
@@ -161,6 +163,8 @@ This enables:
 - Contradiction detection: "You said A, but previously believed B"
 
 ### 2.4 Multi-Aspect Embeddings
+
+> **⏸️ DEFERRED (Feb 06):** Start with single bge-base-en-v1.5 embedding per node. Documented retrieval problems are about Claude not reading the right files and creating duplicates — not about semantic similarity returning wrong results. Single embedding likely sufficient for dedup + connection discovery. Add additional aspects only where single embedding measurably fails during vertical slice testing. 4x storage/compute cost is unjustified without evidence.
 
 Single embeddings only capture content semantics. Each node has multiple embeddings:
 

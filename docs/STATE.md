@@ -73,6 +73,31 @@ See `docs/DESIGN_V03.md` for complete specification.
 
 ---
 
+## Design Rationale: Feature ↔ Failure Mode Mapping
+
+Every core feature traces to a documented failure mode from 60+ Claude Desktop conversations (Dec 2025 — Feb 2026).
+
+| Feature | Claude Desktop Failure It Solves | Evidence |
+|---------|----------------------------------|----------|
+| **Persistent graph** | Context amnesia across sessions — each new chat starts from zero | Memory edits compress and mutate details (e.g., $96K→$9K hallucination, Jan 7) |
+| **Bi-temporal model** | Compression mutation — summaries overwrite source data | Immutable `recorded_at` prevents signal loss; `valid_from/valid_to` tracks belief evolution |
+| **Ghost persistence** | Aggressive compression loses signal | "Claude leaves me with a 1-2 paragraph summary of a 20-minute lecture" |
+| **Semantic dedup** | Duplicate note creation without checking existing concepts | INIT phase exists specifically because Claude creates duplicates without listing first |
+| **Dual space (user/org)** | Manual fragile organization — 3 vault restructures in 6 weeks | Organization space proposes structure; user confirms. Automates what naming conventions workaround |
+| **Graph traversal** | Flat keyword retrieval can't find reasoning chains | `conversation_search` finds keyword matches, not paths through thinking |
+| **Extraction → structured data** | Paraphrasing mutates intent | Propositions stored as structured nodes, not Claude summaries |
+
+**Deferred until post-demo validation:**
+
+| Feature | Status | Reasoning |
+|---------|--------|-----------|
+| **Research Depth 0-10** | Defer | No documented friction maps to "I wish processing were lighter/deeper." Friction is organization + temporal, not depth. Build if usage reveals need. |
+| **Multi-aspect embeddings (4/node)** | Defer — start with single embedding | Retrieval problems are about Claude not reading right files and creating duplicates, not semantic similarity returning wrong results. Single bge-base-en-v1.5 likely sufficient. Add aspects where single embedding measurably fails. |
+
+**Key risk for vertical slice:** Automated extraction may produce technically correct but emotionally flat propositions. The reason "the internal monitor" works is collaborative naming through dialogue. Test whether extracted propositions feel like *your* concepts or clinical summaries. If flat, add interactive refinement step (already in design: "AI proposes, human confirms").
+
+---
+
 ## Session Log
 
 | Date | Hours | Completed |
@@ -83,6 +108,7 @@ See `docs/DESIGN_V03.md` for complete specification.
 | Feb 01 | 1.0 | Phase A: Edge operations, constants.py, 13 tests |
 | Feb 02 | 0.5 | Phase A: Complete — internal nodes, get_related(), 18 tests |
 | Feb 06 | — | Full project review, strip v0.2, upgrade Kuzu 0.8→0.11.3, clean docs |
+| Feb 06 | — | 60+ conversation retrospective: mapped every feature to documented failure mode. Deferred Research Depth + Multi-Aspect Embeddings to post-demo. |
 
 ---
 
@@ -91,6 +117,9 @@ See `docs/DESIGN_V03.md` for complete specification.
 | Decision | Rationale | Date |
 |----------|-----------|------|
 | **Strip v0.2 (BillyAI)** | Fitness/finance features muddy Voku's identity; clean repo tells one story | Feb 06 |
+| **Defer Research Depth 0-10** | No documented friction maps to variable processing depth; friction is organization + temporal | Feb 06 |
+| **Defer Multi-Aspect Embeddings** | Start with single embedding; retrieval problems are organizational not semantic | Feb 06 |
+| **Feature↔Failure mapping** | Every core feature must trace to a documented Claude Desktop failure mode | Feb 06 |
 | **Upgrade Kuzu 0.8→0.11.3** | Gets native HNSW vector search, graph algorithms, pre-bundled extensions | Feb 06 |
 | **Vertical slice strategy** | Build one thin path through all layers vs completing phases sequentially | Feb 06 |
 | **Skip Phase B for now** | SQLite auxiliary storage is infrastructure, not demo material | Feb 06 |
