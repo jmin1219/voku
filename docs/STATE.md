@@ -113,6 +113,7 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 | Feb 06 | — | Phase 0 design: extraction targets LeafNodes not abstractions. Few-shot teaches atomic proposition quality, naming/clustering is separate operation. Identified Groq provider gaps (no JSON mode, no system prompt). Created extraction/ directory. |
 | Feb 07 | 1.0 | Phase 0 Step 1: Upgraded Provider ABC — `complete()` now accepts keyword-only `system_prompt` and `model` params. Added `ProviderError` custom exception. Groq provider updated with 3-boundary error handling (network, JSON parsing, content extraction). 18 tests still passing. |
 | Feb 07 | 2.5 | Phase 0 Steps 2-5: Extraction prompt with full schema (including structured_data), ExtractionService with 5-layer validation, Proposition dataclass. Gate test: 5/5 technical success, voice preservation 80-95%. Prompt improvements: atomic definition, voice preservation strengthening. Retry: 98%+ exact phrase preservation. Decision: proceed to Phase 1 - batch processing + conversational flow will handle refinement. Created vault concept: "privacy-processing tradeoff as architectural primitive". |
+| Feb 07 | 2.5 | Phase 1 Steps 1-3: Database lifecycle (lifespan events, idempotent schema), dependency injection system (4 service factories), chat route wired to ChatService, config updates. End-to-end pipeline verified: POST /api/chat/ → extraction → LeafNode creation → response with node IDs. Query script confirms node storage. Identified temporal NLP need (resolve "today" → YYYY-MM-DD). Next: embeddings + semantic dedup. |
 
 ---
 
@@ -170,18 +171,18 @@ Gate test passed: 5/5 technical success, 3.5/5 excellent voice preservation. Ext
 
 Strategy: Per-turn extraction for fast validation. Batch processing layer deferred to Phase 2 (see ADR_001).
 
-1. Create `POST /api/chat` endpoint accepting user text
-2. Wire extraction service to endpoint
-3. Graph write: propositions → LeafNodes in Kuzu with metadata
-4. Semantic dedup: cosine similarity > 0.95 before creating nodes
-5. Basic edge creation: SIMILAR_TO connections between related nodes
-6. Test: conversation turn → nodes appear in graph, queryable via Cypher
+Progress:
+1. ✅ Create `POST /api/chat` endpoint accepting user text
+2. ✅ Wire extraction service to endpoint
+3. ✅ Graph write: propositions → LeafNodes in Kuzu with metadata
+4. ⏳ Semantic dedup: cosine similarity > 0.95 before creating nodes (NEXT)
+5. ⏳ Basic edge creation: SIMILAR_TO connections between related nodes
 
-Success criteria:
-- User text → extraction → nodes created in Kuzu
-- Duplicate detection catches similar propositions
-- Can query nodes and traverse edges
-- Foundation for Phase 2 (visualization + batch clustering)
+Next session: Implement embedding generation, semantic deduplication, and SIMILAR_TO edge creation.
+
+Deferred to Phase 1.5:
+- Temporal NLP (resolve "today" → "2026-02-07" with structured_data.event_date)
+- Bi-temporal timestamps (recorded_at vs valid_from)
 
 **Phase 2: Batch Processing Layer** (After Phase 1 complete)
 
