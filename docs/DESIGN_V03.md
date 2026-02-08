@@ -1,8 +1,12 @@
 # Voku v0.3: Complete Architecture Specification
 
-> Last Updated: 2026-02-06
-> Status: Architecture Finalized, Pre-Implementation
+> Last Updated: 2026-02-07
+> Status: Partial implementation — see docs/STATE.md for what exists vs. what's planned
 > Design Philosophy: Self-understanding as anchor, goals as emergent byproduct
+>
+> **Implementation note:** This document describes the full v0.3 vision. Not all features are implemented.
+> Deferred features include Research Depth (0-10), Multi-Aspect Embeddings (4 per node), and
+> Organization Space operations. See STATE.md "Decisions Made" for rationale on each deferral.
 
 ---
 
