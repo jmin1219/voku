@@ -28,10 +28,11 @@ Phase B (SQLite auxiliary storage) deferred — conversations can live in memory
 ## What Exists
 
 ### Backend
-- **Graph layer** (`services/graph/`): Kuzu schema, constants, CRUD operations — 18 tests passing
+- **Graph layer** (`services/graph/`): Kuzu schema, constants, CRUD operations, embedding storage/retrieval — 18 tests passing
+- **Embedding service** (`services/embeddings.py`): bge-base-en-v1.5 integration, 768-dim vector generation, model caching
 - **Extraction service** (`services/extraction/`): LLM-based proposition extraction with full schema (including structured_data), 5-layer validation, voice preservation — Phase 0 gate test passed
 - **LLM providers** (`services/providers/`): Groq + Ollama abstraction with `complete()` method, system_prompt support, JSON mode, ProviderError handling
-- **FastAPI app**: Health check only — no graph routes yet
+- **FastAPI app**: Health check, chat endpoint with extraction → graph write pipeline (dedup not wired yet)
 
 ### Frontend  
 - React + TypeScript + Tailwind + shadcn/ui primitives
@@ -114,6 +115,8 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 | Feb 07 | 1.0 | Phase 0 Step 1: Upgraded Provider ABC — `complete()` now accepts keyword-only `system_prompt` and `model` params. Added `ProviderError` custom exception. Groq provider updated with 3-boundary error handling (network, JSON parsing, content extraction). 18 tests still passing. |
 | Feb 07 | 2.5 | Phase 0 Steps 2-5: Extraction prompt with full schema (including structured_data), ExtractionService with 5-layer validation, Proposition dataclass. Gate test: 5/5 technical success, voice preservation 80-95%. Prompt improvements: atomic definition, voice preservation strengthening. Retry: 98%+ exact phrase preservation. Decision: proceed to Phase 1 - batch processing + conversational flow will handle refinement. Created vault concept: "privacy-processing tradeoff as architectural primitive". |
 | Feb 07 | 2.5 | Phase 1 Steps 1-3: Database lifecycle (lifespan events, idempotent schema), dependency injection system (4 service factories), chat route wired to ChatService, config updates. End-to-end pipeline verified: POST /api/chat/ → extraction → LeafNode creation → response with node IDs. Query script confirms node storage. Identified temporal NLP need (resolve "today" → YYYY-MM-DD). Next: embeddings + semantic dedup. |
+| Feb 07 | 2.0 | Phase 1 Steps 4-6 (partial): Implemented EmbeddingService (bge-base-en-v1.5, 768-dim vectors, model caching), GraphOps.store_embedding() (writes to NodeEmbedding table), GraphOps.find_similar_nodes() (cosine similarity with linear scan O(n), threshold filtering). All tests passing: embedding storage verified, similarity search validated (0.826 similarity between semantically related texts, pizza correctly excluded). Error handling review: EAFP approach, propagate DB errors to service layer, skip zero-norm vectors. Ready for Step 7: wire into ChatService. |
+| Feb 07 | 0.5 | Code review (Opus 4.6): Fixed 2 bugs (datetime.now→UTC, numpy import to top-level). Identified: 5 embedding tests needed before ChatService wiring, EmbeddingService should be singleton in app.state, process_message flow should be embed→dedup→create (not create→dedup). Updated .gitignore, cleaned scratch files. |
 
 ---
 
@@ -155,7 +158,8 @@ Every core feature traces to a documented failure mode from 60+ Claude Desktop c
 | `docs/CONTINUE.md` | Session continuation prompt |
 | `backend/app/services/graph/schema.py` | Kuzu schema definition |
 | `backend/app/services/graph/constants.py` | Edge constraints, valid types |
-| `backend/app/services/graph/operations.py` | Graph CRUD operations |
+| `backend/app/services/graph/operations.py` | Graph CRUD operations, embedding storage/search |
+| `backend/app/services/embeddings.py` | Semantic embedding generation (bge-base-en-v1.5) |
 | `backend/app/services/providers/` | LLM provider abstraction |
 | `backend/tests/test_graph.py` | Graph layer tests (18 passing) |
 
@@ -175,10 +179,24 @@ Progress:
 1. ✅ Create `POST /api/chat` endpoint accepting user text
 2. ✅ Wire extraction service to endpoint
 3. ✅ Graph write: propositions → LeafNodes in Kuzu with metadata
-4. ⏳ Semantic dedup: cosine similarity > 0.95 before creating nodes (NEXT)
-5. ⏳ Basic edge creation: SIMILAR_TO connections between related nodes
+4. ✅ EmbeddingService: bge-base-en-v1.5, 768-dim vectors, model caching
+5. ✅ GraphOps.store_embedding(): writes to NodeEmbedding table
+6. ✅ GraphOps.find_similar_nodes(): cosine similarity search with threshold filtering
+7. ⏳ Wire into ChatService: _embed_propositions() and _deduplicate() methods (NEXT)
+8. ⏳ Update dependency injection: pass EmbeddingService to ChatService
+9. ⏳ End-to-end dedup test: POST same message twice, verify second is skipped
+10. ⏳ Basic edge creation: SIMILAR_TO connections between related nodes (0.85-0.95 similarity)
 
-Next session: Implement embedding generation, semantic deduplication, and SIMILAR_TO edge creation.
+Next session: Complete ChatService integration (Steps 7-9), then add SIMILAR_TO edges (Step 10).
+
+**Pre-flight (before Step 7):**
+- Unskip embedding tests in test_graph.py (store/retrieve, similarity above/below threshold, empty DB, zero vector)
+- Make EmbeddingService singleton in app.state (avoid ~2s model reload per request)
+
+**Architecture note from review:**
+- Restructure process_message flow: embed → dedup → create (not create → dedup)
+- This avoids creating nodes that are immediately identified as duplicates
+- Consider dropping `embedding` from find_similar_nodes return dict (only need node_id + similarity)
 
 Deferred to Phase 1.5:
 - Temporal NLP (resolve "today" → "2026-02-07" with structured_data.event_date)

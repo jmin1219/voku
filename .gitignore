@@ -12,3 +12,9 @@ data/
 
 # Environment
 .env
+
+# Scratch/review files
+OPUS_REVIEW_PROMPT.md
+
+# Standalone validation scripts (real tests in tests/)
+backend/test_*.py

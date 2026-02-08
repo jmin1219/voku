@@ -14,12 +14,11 @@ from datetime import datetime, timezone
 from typing import Literal
 
 import kuzu
-
+import numpy as np
 from app.services.graph.constants import (
     ALL_NODE_TABLES,
     EDGE_CONSTRAINTS,
     RELATIONSHIP_EDGE_TYPES,
-    USER_SPACE_TABLES,
     VALID_EDGE_TYPES,
 )
 
@@ -362,7 +361,11 @@ class GraphOperations:
 
         if rel_type in ("SUPPORTS", "CONTRADICTS"):
             props = "confidence: $confidence, rationale: $rationale, created_at: $created_at"
-            return props, {**base_params, "confidence": confidence, "rationale": rationale}
+            return props, {
+                **base_params,
+                "confidence": confidence,
+                "rationale": rationale,
+            }
 
         if rel_type == "SUPERSEDES":
             props = "created_at: $created_at"
@@ -440,11 +443,15 @@ class GraphOperations:
         for edge_type in edge_types:
             # Outgoing: this node -> other
             related.extend(
-                self._query_related_direction(node_id, node_table, edge_type, "outgoing")
+                self._query_related_direction(
+                    node_id, node_table, edge_type, "outgoing"
+                )
             )
             # Incoming: other -> this node
             related.extend(
-                self._query_related_direction(node_id, node_table, edge_type, "incoming")
+                self._query_related_direction(
+                    node_id, node_table, edge_type, "incoming"
+                )
             )
 
         return related
@@ -498,11 +505,123 @@ class GraphOperations:
             embedding: 768-dimensional vector
             model: Model name used for generation
         """
-        raise NotImplementedError()
+        embedding_id = str(uuid.uuid4())
+
+        query = """
+            CREATE (e:NodeEmbedding {
+                id: $id,
+                node_id: $node_id,
+                embedding_type: $embedding_type,
+                embedding: $embedding,
+                model: $model,
+                created_at: $created_at
+            })
+        """
+
+        self._conn.execute(
+            query,
+            {
+                "id": embedding_id,
+                "node_id": node_id,
+                "embedding_type": embedding_type,
+                "embedding": embedding,
+                "model": model,
+                "created_at": datetime.now(timezone.utc),
+            },
+        )
 
     def get_embeddings(self, node_id: str) -> dict[str, list[float]]:
-        """Get all embeddings for a node, keyed by type."""
-        raise NotImplementedError()
+        """Get all embeddings for a node, keyed by embedding_type.
+
+        Args:
+            node_id: Node UUID to get embeddings for
+
+        Returns:
+            Dict mapping embedding_type to embedding vector
+            eg. {
+                "content": [...],
+                "title": [...],
+                "context": [...],
+            }
+        """
+        query = """
+            MATCH (e:NodeEmbedding {node_id: $node_id})
+            RETURN e.embedding_type, e.embedding
+        """
+
+        result = self._conn.execute(query, {"node_id": node_id})
+        records = result.get_all()
+
+        embeddings = {}
+        for record in records:
+            embedding_type, embedding = record
+            embeddings[embedding_type] = embedding
+
+        return embeddings
+
+    def find_similar_nodes(
+        self,
+        embedding: list[float],
+        embedding_type: str = "content",
+        threshold: float = 0.95,
+        limit: int = 10,
+    ) -> list[dict]:
+        """
+        Find nodes with cosine similarity above threshold for a given embedding.
+
+        Future: use Kuzu's HNSW vector index for O(log n) similarity search instead of brute-force.
+
+        Args:
+            embedding: Query vectory (768-dim)
+            embedding_type: Type of embedding to compare ('content', 'title', etc.)
+            threshold: Minimum cosine similarity to consider a match (0.0-1.0; default 0.95)
+            limit: Maximum number of similar nodes to return
+
+        Returns:
+            List of dicts with keys: 'node_id', 'similarity', and 'embedding'
+            Sorted by similarity descending, limited to 'limit' results
+        """
+        # Query all embeddings of the specified type
+        query = """
+            MATCH (e:NodeEmbedding {embedding_type: $embedding_type})
+            RETURN e.node_id, e.embedding
+        """
+
+        result = self._conn.execute(query, {"embedding_type": embedding_type})
+        records = result.get_all()
+
+        if not records:
+            return []
+
+        # Convert query embedding to numpy array for similarity calculation
+
+        query_vec = np.array(embedding)
+        query_norm = np.linalg.norm(query_vec)
+
+        similar_nodes = []
+
+        for record in records:
+            node_id, node_embedding = record
+            node_vec = np.array(node_embedding)
+            node_norm = np.linalg.norm(node_vec)
+
+            if query_norm == 0 or node_norm == 0:
+                continue  # Avoid division by zero
+
+            cosine_similarity = np.dot(query_vec, node_vec) / (query_norm * node_norm)
+
+            if cosine_similarity >= threshold:
+                similar_nodes.append(
+                    {
+                        "node_id": node_id,
+                        "similarity": cosine_similarity,
+                        "embedding": node_embedding,
+                    }
+                )
+
+        # Sort by similarity descending and limit results
+        similar_nodes.sort(key=lambda x: x["similarity"], reverse=True)
+        return similar_nodes[:limit]
 
     # ==========================================================================
     # Query Operations (TODO)
