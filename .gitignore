@@ -18,3 +18,11 @@ OPUS_REVIEW_PROMPT.md
 
 # Standalone validation scripts (real tests in tests/)
 backend/test_*.py
+backend/scripts/
+
+# Operational docs (private — session tracking, prompts, personal planning)
+docs/STATE.md
+docs/CONTINUE.md
+docs/DEMO_PLAN.md
+docs/VISION_PERSONAL_API.md
+docs/DESIGN_V03.md
