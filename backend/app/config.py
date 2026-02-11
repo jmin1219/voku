@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     # Frontend origin for CORS
     frontend_url: str = "http://localhost:5173"
 
-    db_path: str = "./data/voku.db"  # Path to Kuzu database file
+    # SQLite database (single file, portable)
+    db_path: str = "./data/voku.db"
 
     class Config:
         env_file = ".env"

@@ -14,8 +14,8 @@ python-dotenv==1.2.1
 pytest==9.0.2
 pytest-asyncio==1.3.0
 
-# v0.3 Graph Layer
-kuzu==0.11.3
-
-# v0.3 Embeddings
+# Embeddings
 sentence-transformers==3.4.1
+
+# Vector search (in-memory, no external dependencies)
+numpy>=1.24.0

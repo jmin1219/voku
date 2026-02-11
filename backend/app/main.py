@@ -1,13 +1,12 @@
 """
-Voku v0.3 — Knowledge-first cognitive prosthetic
+Voku — Personal context engine with temporal belief tracking.
 
-Backend entry point. Graph operations + LLM extraction pipeline.
+Backend entry point. Extraction pipeline + SQLite storage + MCP server.
 """
 
 from contextlib import asynccontextmanager
 
 from app.config import settings
-from app.routes import chat_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,30 +14,20 @@ from fastapi.middleware.cors import CORSMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown events."""
-    # Startup Logic: Initialize database and services
     from pathlib import Path
 
-    from app.services.embeddings import EmbeddingService
-    from app.services.graph.schema import init_database
-
     db_path = Path(settings.db_path)
-    db_path.parent.mkdir(parents=True, exist_ok=True)  # Create data/ directory
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    db = init_database(db_path)
-    app.state.db = db  # Store db in app state for access in routes/services
+    # TODO: Initialize SQLite storage (Component 1.2)
+    # TODO: Initialize embedding service (Component 1.3)
 
-    # Initialize embedding service once (model loaded on first instantiation)
-    embedding_service = EmbeddingService()
-    app.state.embedding_service = embedding_service
+    yield
 
-    yield  # Run the application
-
-    # Shutdown Logic: Close connections, cleanup resources, etc.
-    del app.state.db  # Cleanup database connection
-    del app.state.embedding_service  # Cleanup embedding service
+    # Shutdown cleanup
 
 
-app = FastAPI(title="Voku", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Voku", version="0.4.0", lifespan=lifespan)
 
 # CORS (development only)
 if settings.environment == "development":
@@ -50,13 +39,10 @@ if settings.environment == "development":
         allow_headers=["*"],
     )
 
-# Include routers
-app.include_router(chat_router)
-
 
 @app.get("/")
 def read_root():
-    return {"name": "Voku", "version": "0.3.0"}
+    return {"name": "Voku", "version": "0.4.0"}
 
 
 @app.get("/health")
