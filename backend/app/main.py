@@ -15,9 +15,10 @@ from fastapi.middleware.cors import CORSMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown events."""
-    # Startup Logic: Initialize database
+    # Startup Logic: Initialize database and services
     from pathlib import Path
 
+    from app.services.embeddings import EmbeddingService
     from app.services.graph.schema import init_database
 
     db_path = Path(settings.db_path)
@@ -26,10 +27,15 @@ async def lifespan(app: FastAPI):
     db = init_database(db_path)
     app.state.db = db  # Store db in app state for access in routes/services
 
+    # Initialize embedding service once (model loaded on first instantiation)
+    embedding_service = EmbeddingService()
+    app.state.embedding_service = embedding_service
+
     yield  # Run the application
 
     # Shutdown Logic: Close connections, cleanup resources, etc.
     del app.state.db  # Cleanup database connection
+    del app.state.embedding_service  # Cleanup embedding service
 
 
 app = FastAPI(title="Voku", version="0.3.0", lifespan=lifespan)

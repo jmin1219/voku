@@ -437,7 +437,7 @@ class TestEdgeOperations:
 
 
 # =============================================================================
-# Embedding Tests (TODO)
+# Embedding Tests
 # =============================================================================
 
 
@@ -446,11 +446,153 @@ class TestEmbeddingStorage:
 
     def test_store_and_retrieve_embedding(self, graph_ops):
         """Should store and retrieve embeddings by type."""
-        pytest.skip("Implement after core operations")
+        # Create a test node
+        leaf = graph_ops.create_leaf_node(
+            title="test-embedding",
+            content="Test content for embeddings",
+            source="user",
+            node_purpose="observation",
+            source_type="explicit",
+        )
 
-    def test_multiple_embedding_types(self, graph_ops):
-        """Should store content, title, context, query embeddings separately."""
-        pytest.skip("Implement after core operations")
+        # Create synthetic 768-dim vector (all 0.5 for simplicity)
+        embedding = [0.5] * 768
+
+        # Store embedding
+        graph_ops.store_embedding(
+            node_id=leaf["id"],
+            embedding_type="content",
+            embedding=embedding,
+            model="test-model",
+        )
+
+        # Retrieve embeddings
+        retrieved = graph_ops.get_embeddings(leaf["id"])
+
+        assert "content" in retrieved
+        assert len(retrieved["content"]) == 768
+        assert retrieved["content"] == embedding
+
+    def test_find_similar_above_threshold(self, graph_ops):
+        """Should find nodes with similarity above threshold."""
+        # Create two test nodes
+        leaf1 = graph_ops.create_leaf_node(
+            title="leaf-1",
+            content="Similar content",
+            source="user",
+            node_purpose="observation",
+            source_type="explicit",
+        )
+        leaf2 = graph_ops.create_leaf_node(
+            title="leaf-2",
+            content="Also similar content",
+            source="user",
+            node_purpose="observation",
+            source_type="explicit",
+        )
+
+        # Create nearly identical embeddings (high similarity)
+        # Vector 1: mostly 1.0
+        embedding1 = [1.0] * 768
+        # Vector 2: mostly 1.0 with slight variation
+        embedding2 = [0.99] * 768
+
+        graph_ops.store_embedding(leaf1["id"], "content", embedding1, "test-model")
+        graph_ops.store_embedding(leaf2["id"], "content", embedding2, "test-model")
+
+        # Query with embedding1, should find leaf2 (similarity > 0.95)
+        results = graph_ops.find_similar_nodes(
+            embedding=embedding1,
+            embedding_type="content",
+            threshold=0.95,
+        )
+
+        # Should find both nodes (themselves have high similarity)
+        assert len(results) >= 1
+        node_ids = [r["node_id"] for r in results]
+        assert leaf1["id"] in node_ids or leaf2["id"] in node_ids
+        # All similarities should be above threshold
+        for result in results:
+            assert result["similarity"] >= 0.95
+
+    def test_find_similar_below_threshold(self, graph_ops):
+        """Should not return nodes with similarity below threshold."""
+        # Create two nodes with very different embeddings
+        leaf1 = graph_ops.create_leaf_node(
+            title="leaf-1",
+            content="Content about running",
+            source="user",
+            node_purpose="observation",
+            source_type="explicit",
+        )
+        leaf2 = graph_ops.create_leaf_node(
+            title="leaf-2",
+            content="Content about pizza",
+            source="user",
+            node_purpose="observation",
+            source_type="explicit",
+        )
+
+        # Very different embeddings (low similarity)
+        embedding1 = [1.0] * 768
+        embedding2 = [-1.0] * 768  # Orthogonal/opposite vector
+
+        graph_ops.store_embedding(leaf1["id"], "content", embedding1, "test-model")
+        graph_ops.store_embedding(leaf2["id"], "content", embedding2, "test-model")
+
+        # Query with embedding1, high threshold
+        results = graph_ops.find_similar_nodes(
+            embedding=embedding1,
+            embedding_type="content",
+            threshold=0.95,
+        )
+
+        # Should only find leaf1 (itself), not leaf2
+        assert len(results) == 1
+        assert results[0]["node_id"] == leaf1["id"]
+
+    def test_find_similar_empty_db(self, graph_ops):
+        """Should return empty list when no embeddings exist."""
+        # Query with synthetic vector
+        embedding = [0.5] * 768
+
+        results = graph_ops.find_similar_nodes(
+            embedding=embedding,
+            embedding_type="content",
+            threshold=0.95,
+        )
+
+        assert results == []
+
+    def test_store_embedding_zero_vector(self, graph_ops):
+        """Should handle zero vectors gracefully (skip in similarity search)."""
+        # Create test node
+        leaf = graph_ops.create_leaf_node(
+            title="zero-vector",
+            content="Node with zero embedding",
+            source="user",
+            node_purpose="observation",
+            source_type="explicit",
+        )
+
+        # Store zero vector
+        zero_embedding = [0.0] * 768
+        graph_ops.store_embedding(leaf["id"], "content", zero_embedding, "test-model")
+
+        # Query with non-zero vector
+        query_embedding = [1.0] * 768
+
+        # Should not crash (division by zero protected)
+        results = graph_ops.find_similar_nodes(
+            embedding=query_embedding,
+            embedding_type="content",
+            threshold=0.0,  # Very low threshold to see if zero vector appears
+        )
+
+        # Zero vector should be skipped (can't compute similarity)
+        # Check that no result has the zero vector node
+        node_ids = [r["node_id"] for r in results]
+        assert leaf["id"] not in node_ids
 
 
 # =============================================================================
