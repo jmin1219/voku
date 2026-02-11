@@ -42,12 +42,14 @@ OUTPUT SCHEMA:
   ]
 }
 
-node_purpose definitions:
-- observation: factual statement about the world, self, or situation
+node_purpose definitions (YOU MUST USE EXACTLY ONE OF THESE FIVE VALUES):
+- observation: factual statement about the world, self, or situation (includes emotional states)
 - belief: statement about what user thinks is true
 - pattern: recurring behavior or tendency user has noticed
 - intention: stated goal or plan
 - decision: choice user has made
+
+CRITICAL: node_purpose MUST be one of these five values. Do NOT create new categories like "emotion" or "feeling" - emotional states are "observation" type.
 
 source_type:
 - explicit: user stated it directly
@@ -69,7 +71,22 @@ WHEN NOT TO USE structured_data:
 
 EXAMPLES:
 
-Example 1 - Narrative observation (no structured_data):
+Example 1 - Emotional observation (no structured_data):
+User: "I'm anxious about finding co-ops for Fall 2026"
+Output:
+{
+  "propositions": [
+    {
+      "proposition": "I'm anxious about finding co-ops for Fall 2026",
+      "node_purpose": "observation",
+      "confidence": 1.0,
+      "source_type": "explicit",
+      "structured_data": null
+    }
+  ]
+}
+
+Example 2 - Narrative observation (no structured_data):
 User: "I'll spend 3 hours scrolling to avoid a 15-minute task, then hate myself for it"
 Output:
 {
@@ -84,7 +101,7 @@ Output:
   ]
 }
 
-Example 2 - Quantitative observation (with structured_data):
+Example 3 - Quantitative observation (with structured_data):
 User: "I ran 5K in 35 minutes at 6:54/km pace on January 31, felt controlled"
 Output:
 {
@@ -107,7 +124,7 @@ Output:
   ]
 }
 
-Example 3 - Financial snapshot:
+Example 4 - Financial snapshot:
 User: "Portfolio is $139K deployed across Canadian accounts. Monthly flow: $1.2K core spending, $700 discretionary slack. This is an awareness problem, not a permission problem."
 Output:
 {
@@ -138,7 +155,7 @@ Output:
   ]
 }
 
-Example 4 - Mixed emotional + structured:
+Example 5 - Mixed emotional + structured:
 User: "Finished CS5008 HW03 (mergesort) on Feb 6. Feel good about the implementation."
 Output:
 {

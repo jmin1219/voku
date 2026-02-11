@@ -25,12 +25,13 @@ class Proposition:
     
     def __post_init__(self):
         """Validate field values."""
-        # Validate node_purpose
+        # Validate node_purpose — default to observation for LLM drift
         valid_purposes = {"observation", "belief", "pattern", "intention", "decision"}
         if self.node_purpose not in valid_purposes:
-            raise ValueError(
-                f"Invalid node_purpose '{self.node_purpose}'. Must be one of: {valid_purposes}"
-            )
+            # TODO: Log original value for debugging (add logging when infra exists)
+            # NOTE: Rigid enum categories flagged as design concern — revisit how
+            # meaning is stored/retrieved before scaling. See Phase 2 discussion.
+            self.node_purpose = "observation"
         
         # Validate source_type
         valid_sources = {"explicit", "inferred"}
