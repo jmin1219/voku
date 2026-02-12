@@ -20,6 +20,9 @@ OPUS_REVIEW_PROMPT.md
 backend/test_*.py
 backend/scripts/
 
+# Test fixtures with real conversation data (private)
+backend/tests/fixtures/real/
+
 # Operational docs (private — session tracking, prompts, personal planning)
 docs/STATE.md
 docs/CONTINUE.md

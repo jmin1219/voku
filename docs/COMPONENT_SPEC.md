@@ -37,26 +37,56 @@ Voku is a personal context engine that ingests conversations, extracts propositi
 
 **Purpose:** Parse Claude.ai conversation exports (markdown) into structured messages.
 
-**Input:**
+**Input (actual Claude Exporter format, confirmed by Spike S1):**
+
+File header:
 ```
-## 2026-02-10T22:15:00Z - Jaymin
+# [Conversation Title]
+
+**Created:** 2/10/2026 21:53:11
+**Updated:** 2/11/2026 0:25:01
+**Exported:** 2/11/2026 0:53:21
+**Link:** [https://claude.ai/chat/{uuid}](https://claude.ai/chat/{uuid})
+```
+
+Message format:
+```
+## Prompt:
+2/10/2026, 9:53:12 PM
 
 I think my main limiter for rowing is my ankle — I can't get full extension.
 
-## 2026-02-10T22:15:30Z - Claude
+
+
+## Response:
+2/10/2026, 9:53:39 PM
+
+````plaintext
+Thought process: ...
+````
 
 That's a common issue with...
+```
+
+Footer:
+```
+---
+Powered by [Claude Exporter](https://www.ai-chat-exporter.net)
 ```
 
 **Output:**
 ```python
 @dataclass
 class ConversationMessage:
-    text: str              # Raw message text
-    speaker: str           # "user" or "assistant"
-    timestamp: datetime    # Parsed from header
-    session_id: str        # Derived from filename or first timestamp
+    text: str              # Raw message text (thinking/tool blocks stripped for assistant)
+    speaker: str           # "user" or "assistant" (from "Prompt:"/"Response:")
+    timestamp: datetime    # Parsed from US locale line: "M/D/YYYY, H:MM:SS AM/PM"
+    session_id: str        # UUID extracted from Link header (e.g., "9a9c2191-84b1-...")
     message_index: int     # Order within conversation
+    source_char_start: int # Character offset of message start in original export file
+    source_char_end: int   # Character offset of message end in original export file
+    source_file: str       # Filename of the source export (for multi-file provenance)
+    assistant_reasoning: str | None  # Extracted thinking blocks (for future eval comparison)
 ```
 
 **Interface:**
@@ -71,23 +101,32 @@ class ConversationParser:
         ...
 ```
 
-**Edge cases to handle:**
+**Edge cases to handle (confirmed by Spike S1):**
 - Empty messages (skip)
-- Messages with images/attachments (extract text, note attachment)
-- Malformed timestamps (log warning, use previous timestamp + 1s)
-- Multi-paragraph messages (preserve as single message)
+- Base64 image embeds: `![...](data:image/...;base64,...)` — strip from text, note attachment existed
+- US locale timestamps `M/D/YYYY, H:MM:SS AM/PM` — parse with explicit format string
+- Multi-paragraph messages (preserve as single message, separated by blank lines)
+- Assistant thinking blocks: `````plaintext\nThought process...````` — extract to `assistant_reasoning`, strip from `text`
+- Assistant tool call blocks: `````plaintext\nTool: tool_name````` — strip from `text`
+- Footer line `Powered by [Claude Exporter]` — strip
+- File header metadata — extract session_id from Link URL, created/updated timestamps
 - Assistant messages (store but flag — extraction targets user messages only)
 
 **Dependencies:** None (pure parsing, no external services)
 
 **Tests needed:**
 - Parse single well-formed conversation → correct message count, timestamps, speakers
-- Parse conversation with malformed timestamp → graceful fallback
+- Parse conversation with base64 image → image stripped, text preserved
+- Parse conversation with thinking blocks → stripped from text, captured in assistant_reasoning
+- Parse US locale timestamp → correct datetime object
+- Session ID extracted from Link header → matches UUID in URL
 - Parse conversation with empty messages → skipped
-- Parse directory of 5 conversations → all messages extracted
+- Parse directory of 3+ conversations → all messages extracted, unique session IDs
+- Footer stripped from final message
 - Roundtrip: known input file → exact expected output
+- Char offsets: source_char_start/end slice original file text → matches message text
 
-**Spike needed:** YES — export 3 conversations from claude.ai, examine actual format before finalizing parser. Format may differ from assumed `## timestamp - speaker` pattern.
+**Spike S1 COMPLETE** — format confirmed from 3 real exports (Claude Exporter browser extension). Original assumed format (`## timestamp - speaker`) was wrong. Real format uses `## Prompt:`/`## Response:` delimiters with timestamps on next line.
 
 ---
 
@@ -104,6 +143,9 @@ CREATE TABLE propositions (
     node_type TEXT NOT NULL,        -- BELIEF/GOAL/OBSERVATION/DECISION/PATTERN/LEARNING/EMOTIONAL
     confidence TEXT DEFAULT 'MEDIUM', -- HIGH/MEDIUM/LOW
     source_type TEXT DEFAULT 'conversation',
+    source_char_start INTEGER,      -- Character offset in original export file
+    source_char_end INTEGER,        -- Character offset end — enables "click to source" provenance
+    source_file TEXT,               -- Filename of source export (provenance chain)
     created_at TEXT NOT NULL,       -- ISO 8601
     session_id TEXT,                -- Links to source conversation
     message_id TEXT,                -- Links to specific message
@@ -710,3 +752,10 @@ tests/
 └── golden/
     └── test_cases.json         # 50-case golden test set
 ```
+
+---
+
+## Future Work (Post-Demo)
+
+- **Multi-pass extraction for recall optimization.** Running 2-3 independent extraction passes over the same text and merging results (first-pass-wins for overlapping spans) improves recall from ~93% to ~96% (cf. Google's LangExtract). Worth evaluating once single-pass baseline metrics exist from Milestone 2.
+- **LangExtract as extraction backend.** If Voku's hand-built extraction layer becomes a maintenance burden, LangExtract (Apache 2.0, ~24K stars, Ollama-compatible) is a potential drop-in replacement. Evaluate after Milestone 4 ships, when extraction needs are well-understood. Key gap: no entity disambiguation or relationship extraction — Voku's ingestion layer must still handle these.
