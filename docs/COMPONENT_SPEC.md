@@ -140,17 +140,17 @@ class ConversationParser:
 CREATE TABLE propositions (
     id TEXT PRIMARY KEY,           -- UUID
     text TEXT NOT NULL,             -- Original proposition text
-    node_type TEXT NOT NULL,        -- BELIEF/GOAL/OBSERVATION/DECISION/PATTERN/LEARNING/EMOTIONAL
-    confidence TEXT DEFAULT 'MEDIUM', -- HIGH/MEDIUM/LOW
+    node_type TEXT NOT NULL,        -- belief/observation/pattern/intention/decision
+    confidence REAL DEFAULT 0.5,     -- 0.0–1.0 (from LLM extraction)
     source_type TEXT DEFAULT 'conversation',
     source_char_start INTEGER,      -- Character offset in original export file
     source_char_end INTEGER,        -- Character offset end — enables "click to source" provenance
     source_file TEXT,               -- Filename of source export (provenance chain)
     created_at TEXT NOT NULL,       -- ISO 8601
     session_id TEXT,                -- Links to source conversation
-    message_id TEXT,                -- Links to specific message
+    message_index INTEGER,          -- Order within conversation
     domain_tags TEXT DEFAULT '[]',  -- JSON array
-    status TEXT DEFAULT 'ACTIVE'    -- ACTIVE/SUPERSEDED/CONTRADICTED
+    status TEXT DEFAULT 'active'    -- active/superseded/contradicted
 );
 
 -- Embeddings (separate table per SQLite BLOB best practice)

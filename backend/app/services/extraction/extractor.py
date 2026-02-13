@@ -1,6 +1,7 @@
 """
-Extraction service - converts user text into structured propositions.
+Extraction service — converts user text into structured propositions.
 """
+
 import json
 from typing import List
 
@@ -19,26 +20,19 @@ class ExtractionService:
         """
         Extract atomic propositions from user text.
 
-        Args:
-            user_text: Raw text from user conversation turn
-
-        Returns:
-            List of validated Proposition objects
+        Returns only explicitly stated propositions (Constraint 0.3).
 
         Raises:
-            ProviderError: If LLM call fails (network, timeout, etc)
+            ProviderError: If LLM call fails
             ExtractionError: If response doesn't match schema
         """
-        # Call LLM with extraction prompt
         try:
             raw_response = await self.provider.complete(
                 prompt=user_text, system_prompt=EXTRACTION_SYSTEM_PROMPT
             )
         except ProviderError as e:
-            # Re-raise provider errors - caller should handle
             raise e
 
-        # Parse JSON response
         try:
             response_data = json.loads(raw_response)
         except json.JSONDecodeError as e:
@@ -46,7 +40,6 @@ class ExtractionService:
                 f"LLM returned invalid JSON: {raw_response[:200]}..."
             ) from e
 
-        # Validate top-level structure
         if "propositions" not in response_data:
             raise ExtractionError(
                 f"Response missing 'propositions' key: {response_data}"
@@ -57,17 +50,14 @@ class ExtractionService:
                 f"'propositions' must be a list, got {type(response_data['propositions'])}"
             )
 
-        # Parse each proposition into dataclass
         propositions = []
         for i, prop_dict in enumerate(response_data["propositions"]):
             try:
-                # Extract required fields
                 proposition = Proposition(
                     proposition=prop_dict["proposition"],
-                    node_purpose=prop_dict["node_purpose"],
+                    node_type=prop_dict["node_type"],
                     confidence=prop_dict["confidence"],
-                    source_type=prop_dict["source_type"],
-                    structured_data=prop_dict.get("structured_data"),  # Optional
+                    structured_data=prop_dict.get("structured_data"),
                 )
                 propositions.append(proposition)
             except KeyError as e:
@@ -75,13 +65,8 @@ class ExtractionService:
                     f"Proposition {i} missing required field: {e}"
                 ) from e
             except ValueError as e:
-                # Catches validation errors from Proposition.__post_init__
                 raise ExtractionError(
                     f"Proposition {i} validation failed: {e}"
-                ) from e
-            except Exception as e:
-                raise ExtractionError(
-                    f"Unexpected error parsing proposition {i}: {e}"
                 ) from e
 
         return propositions

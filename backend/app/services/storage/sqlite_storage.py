@@ -43,7 +43,7 @@ class SQLiteStorage(StorageService):
                 id TEXT PRIMARY KEY,
                 text TEXT NOT NULL,
                 node_type TEXT NOT NULL,
-                confidence TEXT DEFAULT 'MEDIUM',
+                confidence REAL DEFAULT 0.5,
                 source_type TEXT DEFAULT 'conversation',
                 source_char_start INTEGER,
                 source_char_end INTEGER,
@@ -52,7 +52,7 @@ class SQLiteStorage(StorageService):
                 session_id TEXT,
                 message_index INTEGER,
                 domain_tags TEXT DEFAULT '[]',
-                status TEXT DEFAULT 'ACTIVE'
+                status TEXT DEFAULT 'active'
             );
 
             CREATE TABLE IF NOT EXISTS embeddings (
