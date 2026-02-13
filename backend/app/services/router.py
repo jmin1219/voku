@@ -1,18 +1,31 @@
+import os
+from dotenv import load_dotenv
 from .providers import GroqProvider, OllamaProvider, Provider
 
-def get_provider(task: str = "vision", sensitive: bool = False) -> Provider:
+load_dotenv()
+
+
+def get_provider(sensitive: bool = False) -> Provider:
     """
-    Route to appropriate provider.
-    
+    Route to appropriate LLM provider.
+
+    Privacy-first: user controls where their data goes.
+    - VOKU_PROVIDER=local  → all processing stays on your machine (Ollama)
+    - VOKU_PROVIDER=groq   → cloud processing (faster, data leaves machine)
+    - sensitive=True       → forces local regardless of setting
+
     Args:
-        task: "vision" or "reasoning"
-        sensitive: If True, always use local (Ollama)
-    
+        sensitive: If True, override to local provider (Ollama)
+
     Returns:
         Provider instance
     """
     if sensitive:
         return OllamaProvider()
-    
-    # Default: use Groq for speed (free tier)
-    return GroqProvider()
+
+    provider_setting = os.getenv("VOKU_PROVIDER", "groq").lower()
+
+    if provider_setting == "local":
+        return OllamaProvider()
+    else:
+        return GroqProvider()
