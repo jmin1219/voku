@@ -12,6 +12,8 @@
 
 2. **Voku must use real conversational data, not synthetic toy examples.** The claim is that this works on actual human thinking. If it only works on contrived demos, the thesis is unproven. Jaymin's 60+ Claude conversations are the test corpus.
 
+3. **Demo scope: explicitly stated beliefs only.** Extraction accuracy on explicit beliefs (~75-85% F1) vs implicit beliefs (~40-60% F1) means end-to-end temporal accuracy degrades to coin-flip territory on inferred worldview. Demo targets first-person statements: "I think X", "I believe Y", "My main concern is Z." Implicit belief extraction is future work, not demo scope. (Added 2026-02-12, from devil's advocate risk analysis.)
+
 ---
 
 ## TIER 1: CAREER CONSTRAINTS

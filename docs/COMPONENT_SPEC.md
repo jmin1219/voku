@@ -378,6 +378,7 @@ def test_milestone1_vertical_slice():
 **Goal:** Build evaluation infrastructure. Create golden test set. Run first metrics. Establish baseline.
 **Constraint:** Tier 1.6 (evaluation is first-class), Tier 0.1 (must demonstrate temporal tracking)
 **Gate:** Golden test set runs, baseline numbers recorded, comparison with naive retrieval complete.
+**Accuracy gate (added 2026-02-12):** End-to-end temporal accuracy must exceed 70% on golden set temporal cases before proceeding to full Milestone 3 build. Below 70% → narrow extraction scope (tighter explicit-belief filters) or simplify process mode before investing build time. Honest results > inflated claims — if the numbers are low, document why and adjust, don't hide.
 
 ---
 
@@ -515,8 +516,9 @@ class AblationReport:
 ## Milestone 3: Prove Temporal Tracking Works
 
 **Goal:** Build process mode. Detect contradictions. Update belief status. Demonstrate the thesis.
-**Constraint:** Tier 0.1 (THE thesis — temporal belief tracking)
+**Constraint:** Tier 0.1 (THE thesis — temporal belief tracking), Tier 0.3 (explicitly stated beliefs only)
 **Gate:** Temporal accuracy metric improves measurably over Milestone 2 baseline. At least one real contradiction detected and resolved from Jaymin's conversation data.
+**Scope note (added 2026-02-12):** Process mode targets explicitly stated beliefs per Constraint 0.3. Extraction prompt must filter for first-person declarative statements. Implicit belief inference (worldview from described behavior) is future work — end-to-end accuracy on implicit beliefs is ~34-51%, below useful threshold.
 
 ---
 
