@@ -98,7 +98,7 @@ def test_parse_directory():
 
     assert len(messages) > 0
     session_ids = set(m.session_id for m in messages)
-    assert len(session_ids) == 3  # One per fixture file
+    assert len(session_ids) == 21  # One per fixture file
 
 
 def test_parse_footer_stripped():

@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Optional
 
@@ -7,6 +8,10 @@ from dotenv import load_dotenv
 from .base import Provider, ProviderError
 
 load_dotenv()
+
+# Retry config for rate limits (429)
+MAX_RETRIES = 3
+BASE_DELAY = 20.0  # 20s, 40s, 80s — long enough to actually clear TPM window
 
 
 class GroqProvider(Provider):
@@ -71,22 +76,36 @@ class GroqProvider(Provider):
             },  # Ensure Groq returns a valid JSON object but does NOT guarantee JSON matches schema
         }
 
-        # --- Boundary 1: Network call to Groq API ---
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    f"{self.base_url}/chat/completions", headers=headers, json=payload
+        # --- Boundary 1: Network call to Groq API (with retry for rate limits) ---
+        last_error = None
+        for attempt in range(MAX_RETRIES + 1):
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(
+                        f"{self.base_url}/chat/completions", headers=headers, json=payload
+                    )
+                response.raise_for_status()
+                break  # Success — exit retry loop
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429 and attempt < MAX_RETRIES:
+                    delay = BASE_DELAY * (2 ** attempt)  # 15, 30, 60, 120, 240
+                    print(f"  ⏳ Rate limited (attempt {attempt + 1}/{MAX_RETRIES}), waiting {delay:.0f}s...")
+                    await asyncio.sleep(delay)
+                    last_error = e
+                    continue
+                raise ProviderError(
+                    f"Groq API returned an error: {e.response.status_code} - {e.response.text[:200]}..."
                 )
-            response.raise_for_status()  # Raise an error for bad status codes
-        except httpx.TimeoutException:
-            raise ProviderError("Request to Groq API timed out after 60s.")
-        except httpx.HTTPStatusError as e:
+            except httpx.TimeoutException:
+                raise ProviderError("Request to Groq API timed out after 60s.")
+            except httpx.RequestError as e:
+                raise ProviderError(
+                    f"An error occurred while requesting Groq API: {str(e)}"
+                )
+        else:
+            # Exhausted all retries
             raise ProviderError(
-                f"Groq API returned an error: {e.response.status_code} - {e.response.text[:200]}..."
-            )
-        except httpx.RequestError as e:
-            raise ProviderError(
-                f"An error occurred while requesting Groq API: {str(e)}"
+                f"Groq API rate limit exceeded after {MAX_RETRIES} retries. Last error: {last_error}"
             )
 
         # --- Boundary 2: Parsing Groq response ---

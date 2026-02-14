@@ -1,4 +1,5 @@
 import httpx
+from typing import Optional
 from .base import Provider
 
 class OllamaProvider(Provider):
@@ -19,14 +20,24 @@ class OllamaProvider(Provider):
       )
     return response.json().get("response", "")
   
-  async def complete(self, prompt: str) -> str:
-    async with httpx.AsyncClient(timeout=60.0) as client:
+  async def complete(
+    self,
+    prompt: str,
+    *,
+    system_prompt: Optional[str] = None,
+    model: Optional[str] = None,
+  ) -> str:
+    payload = {
+      "model": model or "llama3.1:8b",
+      "prompt": prompt,
+      "stream": False,
+    }
+    if system_prompt:
+      payload["system"] = system_prompt
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
       response = await client.post(
         f"{self.base_url}/api/generate",
-        json={
-          "model": "llama3.2",
-          "prompt": prompt,
-          "stream": False
-        }
+        json=payload,
       )
     return response.json().get("response", "")

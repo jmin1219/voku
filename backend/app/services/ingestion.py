@@ -5,6 +5,7 @@ Component 1.4 in COMPONENT_SPEC.md.
 Replaces old ChatService.
 """
 
+import asyncio
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -17,6 +18,9 @@ from services.storage.models import StoredProposition
 
 # Dedup threshold — cosine similarity above this means "same proposition"
 DEDUP_THRESHOLD = 0.95
+
+# Messages shorter than this are skipped (commands, "yes", "continue", etc.)
+MIN_MESSAGE_LENGTH = 30
 
 
 @dataclass
@@ -43,10 +47,11 @@ class BatchIngestionResult:
 class IngestionService:
     """Orchestrates extract → embed → dedup → store for conversation messages."""
 
-    def __init__(self, storage, extraction, embedder):
+    def __init__(self, storage, extraction, embedder, throttle_seconds: float = 0):
         self._storage = storage
         self._extraction = extraction
         self._embedder = embedder
+        self._throttle = throttle_seconds
 
     # ------------------------------------------------------------------
     # Core: single message
@@ -108,6 +113,10 @@ class IngestionService:
             if msg.speaker != "user":
                 continue
 
+            # Pre-filter: skip short messages that won't produce propositions
+            if len(msg.text.strip()) < MIN_MESSAGE_LENGTH:
+                continue
+
             sessions_seen.add(msg.session_id)
 
             try:
@@ -116,6 +125,10 @@ class IngestionService:
                 batch.total_propositions_stored += result.propositions_stored
             except Exception as e:
                 batch.errors.append(f"Message {msg.message_index}: {e}")
+
+            # Throttle between extraction calls to respect rate limits
+            if self._throttle > 0:
+                await asyncio.sleep(self._throttle)
 
         batch.sessions_processed = len(sessions_seen)
         return batch
