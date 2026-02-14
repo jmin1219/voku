@@ -1,95 +1,107 @@
 # Voku
 
-> A personal temporal knowledge graph that extracts beliefs from conversation, organizes them into a graph, and shows how your thinking evolves.
+> Personal context engine that ingests conversations, extracts beliefs, tracks how they evolve, and serves temporally-aware context back to AI tools.
 
-## What Voku Is
+## The Problem
 
-You talk to Voku naturally. It extracts atomic propositions from your speech, embeds them semantically, deduplicates against your existing knowledge, and writes unique beliefs into a graph — building a structured model of how you think.
+Every AI conversation starts from scratch. Claude's memory stores compressed summaries that mutate over time. Your beliefs evolve — you change your mind, refine your thinking, develop new understanding — but no tool tracks that evolution. Flat memory systems remember *what* you said. They don't know *when* you stopped believing it.
 
-**Core insight:** Productivity planners take goals as input. Voku questions whether stated goals are *real* — or performance, or inherited, or outdated. Self-understanding is the anchor; goals emerge from seeing yourself clearly.
+## What Voku Does
 
-**What it surfaces:**
-- Discrepancies between stated intentions and observed patterns
-- How your beliefs evolve over time (contradiction detection, refinement tracking)
-- Connections in your thinking you haven't noticed
+Voku sits underneath your existing AI workflow. It ingests exported conversations, extracts atomic propositions (beliefs, observations, decisions), and stores them with full temporal provenance. A process engine then detects when beliefs contradict or supersede each other, building an evolving model of how you think.
+
+**The demo moment:** Ask "What is the user's main rowing limiter?" Flat retrieval returns *ankle* (mentioned first, mentioned more). Voku returns *breathing* (most recent, supersedes ankle) — with a timeline showing the evolution and evidence trail.
 
 ## Architecture
 
-| Layer | Implementation | Status |
-|-------|---------------|--------|
-| **Extraction** | LLM-based proposition extraction (Groq/Ollama) with 5-layer validation, voice preservation | ✅ Working |
-| **Embedding** | bge-base-en-v1.5, 768-dim vectors, cosine similarity search | ✅ Working |
-| **Deduplication** | Semantic similarity threshold (>0.95 = duplicate, 0.85-0.95 = related) | 🔧 Wiring |
-| **Graph Storage** | Kuzu 0.11.3 — 4 node types, 6 edge types, 18 tests passing | ✅ Working |
-| **Frontend** | React + TypeScript + Tailwind (placeholder) | ⏳ Planned |
-| **Visualization** | React Flow graph rendering | ⏳ Planned |
-
 ```
-User speaks → ExtractionService → EmbeddingService → Dedup → GraphOperations → Kuzu
-                  (Groq LLM)      (bge-base-en-v1.5)         (LeafNode + NodeEmbedding)
+Conversation Export (.md)
+    → Parser (Component 1.1)
+        → ConversationMessage (text + who + when + provenance)
+            → ExtractionService (Groq/Ollama LLM)
+                → Proposition (belief + type + confidence)
+                    → EmbeddingProvider (BGE-base, 768-dim)
+                        → Dedup (cosine similarity > 0.95)
+                            → SQLite (propositions + embeddings)
+
+Process Engine (post-ingestion):
+    → Find similar proposition pairs
+    → LLM classifies: SUPPORTS / CONTRADICTS / SUPERSEDES
+    → Update statuses, create edges
+    → Build thread surfaces (topic summaries)
+
+Serving:
+    → MCP server → Claude Desktop gets temporally-aware context
+    → Evaluation harness → golden test set, temporal accuracy metrics
 ```
-
-## Design Principles
-
-| Principle | Implementation |
-|-----------|---------------|
-| **Dual Space** | User sees confirmed graph; Voku reasons in hidden Organization Space before proposing |
-| **Bi-Temporal Model** | `valid_from`/`valid_to` (when you believed it) vs `recorded_at` (when Voku learned it) |
-| **Ghost Persistence** | Never delete — graduated visibility preserves history |
-| **Goal-Anchored Fields** | `node_purpose`, `source_type`, `signal_valence` enable intention vs. pattern queries |
-| **Extraction ≠ Abstraction** | Extraction produces LeafNodes (atomic). Named abstractions (InternalNodes) emerge from clustering — separate operation |
 
 ## Tech Stack
 
-| Component | Choice | Version |
-|-----------|--------|---------|
-| Graph Database | Kuzu | 0.11.3 (archived Oct 2025, feature-complete for requirements) |
-| Backend | FastAPI | 0.128.0 |
-| Frontend | React + React Flow | TBD |
-| LLM (default) | Groq | llama-3.3-70b-versatile |
-| LLM (private) | Ollama | Local |
-| Embeddings | bge-base-en-v1.5 | via sentence-transformers 3.4.1 |
+| Component | Choice | Rationale |
+|-----------|--------|-----------|
+| Storage | SQLite + numpy | Single portable file. In-memory vector search via numpy. No vector DB overhead. |
+| Embeddings | bge-base-en-v1.5 | 768-dim, sentence-transformers. Spike S2 confirmed over EmbeddingGemma. |
+| LLM (default) | Groq | llama-3.3-70b-versatile, free tier. Auto-fallback to Ollama if no API key. |
+| LLM (local) | Ollama | Zero-cost default. Privacy-first for sensitive data. |
+| Backend | FastAPI | Lightweight, async-native. |
+| MCP | FastMCP | stdio transport, Claude Desktop integration. |
+| Evaluation | Custom + RAGAS | Temporal accuracy metric, golden test set, ablation studies. |
 
 ## Current Status
 
-**v0.3: Knowledge-First Graph — Phase 1 in progress**
+**Milestone 1: Ingest Real Data — ✅ COMPLETE**
+- Parser, SQLite storage, BGE embedding, ingestion pipeline
+- 29 tests passing (28 unit + 1 integration gate with real Groq + BGE)
+- 13 commits, spec-driven development
 
-| Phase | Status |
-|-------|--------|
-| A: Kuzu Foundation | ✅ Complete — schema, CRUD, edges, 18 tests |
-| 0: LLM Extraction | ✅ Complete — proposition extraction, voice preservation |
-| 1: Extraction → Graph Pipeline | 🎯 Steps 6/10 — extraction, embedding, dedup wiring next |
-| 2: Batch Processing + Clustering | Planned — emergent pattern detection |
-| 3: Graph Visualization | Planned — React Flow |
+**Milestone 2: Prove Retrieval Works — 🎯 Next**
+- Golden test set, retrieval service, evaluation harness
+- Establish flat retrieval baseline (the number to beat)
 
-**Approach:** Vertical slice (text → extraction → embedding → dedup → graph → visualization) rather than completing phases sequentially. See [docs/STATE.md](./docs/STATE.md) for implementation details.
+**Milestone 3: Prove Temporal Tracking — The Thesis**
+- Process engine: contradiction/supersession detection via LLM
+- Temporal retrieval: returns current beliefs, not just most-mentioned
+- Gate test: temporal accuracy > flat accuracy on real belief evolution
+
+**Milestone 4: Make It Usable — Flex Scope**
+- MCP server serving context to Claude Desktop
+- Optional visualization (simplify if time-constrained)
+
+## Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| SQLite over graph DB | Kuzu archived. Single file, portable, numpy handles vector search at personal scale. |
+| Meaning at read-time | No pre-computed edges in storage. Process engine discovers relationships post-ingestion. |
+| Explicit beliefs only | Extraction accuracy on implicit beliefs (~40-60% F1) makes end-to-end temporal accuracy coin-flip. Demo scope: first-person declarative statements. |
+| Evaluation-first | "Temporal accuracy improved X% over flat retrieval" gets interviews. Metrics are first-class deliverables. |
+| Local-first, zero-cost default | Every component works without paid APIs. Ollama fallback automatic. |
+| Batch import, no chat UI | Prove thesis with real data + evaluation metrics. Chat UI is delivery mechanism, not the thesis. |
 
 ## Setup
 
 ```bash
-# Backend
 cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # Add GROQ_API_KEY
-python -m pytest tests/test_graph.py -v  # 18 passed
-uvicorn app.main:app --reload
+cp .env.example .env  # Add GROQ_API_KEY (optional — falls back to Ollama)
 
-# Frontend
-cd frontend
-npm install
-npm run dev
+# Run all tests
+python -m pytest tests/ -v
+
+# Run integration gate (requires GROQ_API_KEY)
+python -m pytest tests/test_milestone1.py -v
 ```
 
 ## Documentation
 
 | Document | Purpose |
 |----------|---------|
-| [docs/DESIGN_V03.md](./docs/DESIGN_V03.md) | Complete architecture specification |
-| [docs/ARCHITECTURE_DIAGRAMS.md](./docs/ARCHITECTURE_DIAGRAMS.md) | Mermaid diagrams (schema, data flow, system architecture) |
-| [docs/ADR_001_BATCHING_STRATEGY.md](./docs/ADR_001_BATCHING_STRATEGY.md) | Why per-turn now, batch processing later |
-| [docs/STATE.md](./docs/STATE.md) | Implementation status, session log, decisions made |
+| [docs/STATE.md](./docs/STATE.md) | Implementation status, session log, decisions |
+| [docs/CONTINUE.md](./docs/CONTINUE.md) | Session continuation prompt |
+| [docs/COMPONENT_SPEC.md](./docs/COMPONENT_SPEC.md) | Full build spec — 10 components, 4 milestones |
+| [docs/CONSTRAINTS.md](./docs/CONSTRAINTS.md) | Hierarchical decision framework (4 tiers) |
 
 ## License
 
@@ -97,5 +109,5 @@ MIT
 
 ---
 
-**Built by:** Jaymin Chang
+**Built by:** Jaymin Chang — MSCS @ Northeastern Vancouver
 **Portfolio:** [github.com/jmin1219](https://github.com/jmin1219) | [@ChangJaymin](https://twitter.com/ChangJaymin)

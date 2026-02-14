@@ -284,7 +284,7 @@ class OllamaEmbedding(EmbeddingProvider):
 - Cosine similarity of related texts > 0.7
 - Cosine similarity of unrelated texts < 0.5
 
-**Spike needed:** YES — compare bge-base vs EmbeddingGemma on 20 real Voku propositions. Measure retrieval quality (do the right propositions surface for test queries?). Decision: switch only if EmbeddingGemma is measurably better on our data.
+**Spike S2 COMPLETE:** bge-base-en-v1.5 confirmed as default. 95% Recall@5, no Ollama dependency for embeddings. EmbeddingGemma did not measurably outperform on Voku's proposition data.
 
 ---
 
@@ -708,11 +708,11 @@ def get_thread_surfaces() -> str:
 | Spike | Question | Time Box | Blocks |
 |-------|----------|----------|--------|
 | S1: Export format | What does claude.ai markdown export actually look like? | 1 hour | Component 1.1 |
-| S2: EmbeddingGemma | Is it measurably better than bge-base on our propositions? | 2 hours | Component 1.3 decision |
-| S3: Extraction on real exports | Does current extraction prompt work on full conversation messages? | 2 hours | Component 1.4 quality |
+| S2: EmbeddingGemma | Is it measurably better than bge-base on our propositions? | 2 hours | ✅ DONE — bge-base wins (95% Recall@5, no Ollama dep) |
+| S3: Extraction on real exports | Does current extraction prompt work on full conversation messages? | 2 hours | ✅ DONE — works on real messages |
 | S4: LLM relationship detection | Can Groq/Ollama reliably classify SUPPORTS/CONTRADICTS/SUPERSEDES? | 2 hours | Component 3.1 feasibility |
 
-**Spikes S1-S3 should run before Milestone 1 build. S4 can run during Milestone 2.**
+**Spikes S1-S3 complete. S4 runs during Milestone 2/3 build.**
 
 ---
 
