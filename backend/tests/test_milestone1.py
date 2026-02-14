@@ -14,7 +14,6 @@ Run explicitly:
 import os
 from pathlib import Path
 
-import numpy as np
 import pytest
 from dotenv import load_dotenv
 
@@ -27,12 +26,12 @@ pytestmark = pytest.mark.skipif(
     reason="GROQ_API_KEY not set — skipping integration test",
 )
 
-from services.parser import ConversationParser
-from services.storage.sqlite_storage import SQLiteStorage
 from services.embedding.bge import BGEBaseEmbedding
 from services.extraction import ExtractionService
-from services.providers.groq_provider import GroqProvider
 from services.ingestion import IngestionService
+from services.parser import ConversationParser
+from services.providers.groq_provider import GroqProvider
+from services.storage.sqlite_storage import SQLiteStorage
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures" / "real"
 FIXTURE_FILE = FIXTURES_DIR / "Deep Research on Voku Plans.md"
@@ -122,7 +121,13 @@ async def test_m1_real_pipeline(ingestion, storage, embedder):
         # Every proposition should trace back to the source
         assert prop.session_id == EXPECTED_SESSION_ID
         assert prop.source_file == FIXTURE_FILE.name
-        assert prop.node_type in {"belief", "observation", "pattern", "intention", "decision"}
+        assert prop.node_type in {
+            "belief",
+            "observation",
+            "pattern",
+            "intention",
+            "decision",
+        }
         assert 0.0 <= prop.confidence <= 1.0
         assert prop.text.strip() != ""
 

@@ -27,5 +27,9 @@ def get_provider(sensitive: bool = False) -> Provider:
 
     if provider_setting == "local":
         return OllamaProvider()
-    else:
-        return GroqProvider()
+
+    # Auto-fallback: no API key → use local (Constraint 3.11: zero-cost default)
+    if not os.getenv("GROQ_API_KEY"):
+        return OllamaProvider()
+
+    return GroqProvider()
