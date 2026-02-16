@@ -22,17 +22,20 @@ from services.ingestion import IngestionService
 class MockExtractionService:
     """Mock extraction — returns 2 predictable propositions for any input text."""
 
-    async def extract(self, text: str) -> list[Proposition]:
+    async def extract(self, text: str, ai_context: str | None = None) -> list[Proposition]:
         return [
             Proposition(
                 proposition=f"Belief extracted from: {text[:30]}",
-                node_type="belief",
+                node_type="stance",
                 confidence=0.9,
+                supersedable=True,
             ),
             Proposition(
                 proposition=f"Observation extracted from: {text[:30]}",
-                node_type="observation",
+                node_type="event",
                 confidence=0.8,
+                supersedable=False,
+                event_timeframe="recent",
             ),
         ]
 
@@ -40,7 +43,7 @@ class MockExtractionService:
 class FailingExtractionService:
     """Mock extraction — always raises an error. For error handling test."""
 
-    async def extract(self, text: str) -> list[Proposition]:
+    async def extract(self, text: str, ai_context: str | None = None) -> list[Proposition]:
         raise Exception("LLM extraction failed")
 
 
@@ -51,10 +54,10 @@ class SelectiveExtractionService:
         self._fail_on = fail_on
         self._normal = MockExtractionService()
 
-    async def extract(self, text: str) -> list[Proposition]:
+    async def extract(self, text: str, ai_context: str | None = None) -> list[Proposition]:
         if self._fail_on in text:
             raise Exception("LLM extraction failed")
-        return await self._normal.extract(text)
+        return await self._normal.extract(text, ai_context=ai_context)
 
 
 class MockEmbeddingProvider:
@@ -203,8 +206,8 @@ async def test_ingest_single_message(ingestion, storage, sample_message):
     # Verify they're actually in the database
     stored = storage.find_by_session("session-abc")
     assert len(stored) == 2
-    assert stored[0].node_type == "belief"
-    assert stored[1].node_type == "observation"
+    assert stored[0].node_type == "stance"
+    assert stored[1].node_type == "event"
 
 
 @pytest.mark.asyncio

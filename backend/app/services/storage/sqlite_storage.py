@@ -4,6 +4,8 @@ SQLite storage implementation. Single file, numpy for vector search.
 Component 1.2 in COMPONENT_SPEC.md.
 Vector strategy: load all embeddings into memory on startup, cosine similarity via numpy.
 At 50K propositions × 768 dims: ~150MB memory, <15ms search.
+
+v2: Added supersedable, event_timeframe, message_position columns.
 """
 
 import json
@@ -44,6 +46,8 @@ class SQLiteStorage(StorageService):
                 text TEXT NOT NULL,
                 node_type TEXT NOT NULL,
                 confidence REAL DEFAULT 0.5,
+                supersedable INTEGER DEFAULT 1,
+                event_timeframe TEXT,
                 source_type TEXT DEFAULT 'conversation',
                 source_char_start INTEGER,
                 source_char_end INTEGER,
@@ -51,6 +55,7 @@ class SQLiteStorage(StorageService):
                 created_at TEXT NOT NULL,
                 session_id TEXT,
                 message_index INTEGER,
+                message_position INTEGER,
                 domain_tags TEXT DEFAULT '[]',
                 status TEXT DEFAULT 'active'
             );
@@ -102,10 +107,13 @@ class SQLiteStorage(StorageService):
             text=row["text"],
             node_type=row["node_type"],
             confidence=row["confidence"],
+            supersedable=bool(row["supersedable"]) if row["supersedable"] is not None else True,
+            event_timeframe=row["event_timeframe"],
             source_type=row["source_type"],
             created_at=row["created_at"],
             session_id=row["session_id"],
             message_index=row["message_index"],
+            message_position=row["message_position"] if "message_position" in row.keys() else None,
             source_char_start=row["source_char_start"],
             source_char_end=row["source_char_end"],
             source_file=row["source_file"],
@@ -117,15 +125,18 @@ class SQLiteStorage(StorageService):
         """Store a proposition. Returns its ID."""
         self._conn.execute(
             """INSERT INTO propositions
-            (id, text, node_type, confidence, source_type, source_char_start,
-             source_char_end, source_file, created_at, session_id, message_index,
+            (id, text, node_type, confidence, supersedable, event_timeframe,
+             source_type, source_char_start, source_char_end, source_file,
+             created_at, session_id, message_index, message_position,
              domain_tags, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 proposition.id,
                 proposition.text,
                 proposition.node_type,
                 proposition.confidence,
+                int(proposition.supersedable),
+                proposition.event_timeframe,
                 proposition.source_type,
                 proposition.source_char_start,
                 proposition.source_char_end,
@@ -133,6 +144,7 @@ class SQLiteStorage(StorageService):
                 proposition.created_at,
                 proposition.session_id,
                 proposition.message_index,
+                proposition.message_position,
                 json.dumps(proposition.domain_tags),
                 proposition.status,
             ),
