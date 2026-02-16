@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "app"))
 
 from services.parser import ConversationParser
 from services.extraction import ExtractionService
-from services.providers.ollama_provider import OllamaProvider
+from services.providers.groq_provider import GroqProvider
 
 FIXTURES_DIR = Path(__file__).parent.parent / "tests" / "fixtures" / "real"
 MIN_LENGTH = 50
@@ -77,15 +77,15 @@ async def extract_conversation(parser, extractor, filepath):
             })
 
         last_ai_text = None
-        # No throttle needed for local Ollama
-        await asyncio.sleep(0.5)
+        # Throttle for Groq rate limits (300K TPM on paid tier with 70b)
+        await asyncio.sleep(1)
 
     return results
 
 
 async def run_validation():
     parser = ConversationParser()
-    provider = OllamaProvider()
+    provider = GroqProvider()
     extractor = ExtractionService(provider)
 
     print("=" * 80)
