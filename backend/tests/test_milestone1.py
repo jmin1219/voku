@@ -122,11 +122,9 @@ async def test_m1_real_pipeline(ingestion, storage, embedder):
         assert prop.session_id == EXPECTED_SESSION_ID
         assert prop.source_file == FIXTURE_FILE.name
         assert prop.node_type in {
-            "belief",
-            "observation",
-            "pattern",
+            "stance",
+            "event",
             "intention",
-            "decision",
         }
         assert 0.0 <= prop.confidence <= 1.0
         assert prop.text.strip() != ""

@@ -27,7 +27,7 @@ def sample_proposition():
     return StoredProposition(
         id="test-uuid-001",
         text="I think my ankle limits my rowing performance",
-        node_type="belief",
+        node_type="stance",
         confidence=0.95,
         source_type="conversation",
         created_at="2026-02-10T21:53:12",
@@ -46,7 +46,7 @@ def test_store_and_retrieve_proposition(storage, sample_proposition):
     results = storage.find_by_session("session-abc")
     assert len(results) == 1
     assert results[0].text == "I think my ankle limits my rowing performance"
-    assert results[0].node_type == "belief"
+    assert results[0].node_type == "stance"
     assert results[0].confidence == 0.95
     assert results[0].source_file == "Deep Research on Voku Plans.md"
 
@@ -77,17 +77,17 @@ def test_find_similar_below_threshold_returns_empty(storage, sample_proposition)
 
 def test_find_by_timerange(storage):
     p1 = StoredProposition(
-        id="p1", text="Morning belief", node_type="belief",
+        id="p1", text="Morning belief", node_type="stance",
         confidence=0.9, source_type="conversation",
         created_at="2026-02-10T08:00:00",
     )
     p2 = StoredProposition(
-        id="p2", text="Evening belief", node_type="observation",
+        id="p2", text="Evening belief", node_type="event",
         confidence=0.85, source_type="conversation",
         created_at="2026-02-10T20:00:00",
     )
     p3 = StoredProposition(
-        id="p3", text="Next day belief", node_type="belief",
+        id="p3", text="Next day belief", node_type="stance",
         confidence=1.0, source_type="conversation",
         created_at="2026-02-11T10:00:00",
     )
@@ -106,17 +106,17 @@ def test_find_by_timerange(storage):
 
 def test_find_by_session(storage):
     p1 = StoredProposition(
-        id="p1", text="First message", node_type="observation",
+        id="p1", text="First message", node_type="event",
         confidence=0.8, source_type="conversation",
         created_at="2026-02-10T08:00:00", session_id="sess-1", message_index=0,
     )
     p2 = StoredProposition(
-        id="p2", text="Second message", node_type="belief",
+        id="p2", text="Second message", node_type="stance",
         confidence=0.95, source_type="conversation",
         created_at="2026-02-10T08:01:00", session_id="sess-1", message_index=1,
     )
     p3 = StoredProposition(
-        id="p3", text="Different session", node_type="decision",
+        id="p3", text="Different session", node_type="event",
         confidence=1.0, source_type="conversation",
         created_at="2026-02-10T09:00:00", session_id="sess-2", message_index=0,
     )
@@ -152,7 +152,7 @@ def test_database_is_single_file(tmp_path):
     db_path = tmp_path / "portable.db"
     db = SQLiteStorage(db_path)
     db.store_proposition(StoredProposition(
-        id="p1", text="Test", node_type="belief",
+        id="p1", text="Test", node_type="stance",
         confidence=0.9, source_type="conversation",
         created_at="2026-02-10T08:00:00",
     ))

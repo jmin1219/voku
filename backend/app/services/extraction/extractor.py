@@ -1,13 +1,17 @@
 """
 Extraction service — converts user text into structured propositions.
+
+v2: Supports conversation context (preceding AI message) for comprehension.
+The AI context helps the LLM understand what the user is responding to,
+but propositions are only extracted from the user's message.
 """
 
 import json
-from typing import List
+from typing import List, Optional
 
 from app.services.providers.base import Provider, ProviderError
 from .models import Proposition, ExtractionError
-from .prompt import EXTRACTION_SYSTEM_PROMPT
+from .prompt import EXTRACTION_SYSTEM_PROMPT, CONTEXT_PREFIX
 
 
 class ExtractionService:
@@ -16,9 +20,19 @@ class ExtractionService:
     def __init__(self, provider: Provider):
         self.provider = provider
 
-    async def extract(self, user_text: str) -> List[Proposition]:
+    async def extract(
+        self,
+        user_text: str,
+        ai_context: Optional[str] = None,
+    ) -> List[Proposition]:
         """
         Extract atomic propositions from user text.
+
+        Args:
+            user_text: The user's message to extract from.
+            ai_context: Optional preceding AI message for comprehension context.
+                        Used to understand what the user is responding to.
+                        NOT extracted from — only the user's message produces propositions.
 
         Returns only explicitly stated propositions (Constraint 0.3).
 
@@ -26,9 +40,15 @@ class ExtractionService:
             ProviderError: If LLM call fails
             ExtractionError: If response doesn't match schema
         """
+        # Build the prompt: optionally prepend AI context for comprehension
+        if ai_context:
+            prompt = CONTEXT_PREFIX.format(ai_context=ai_context[:2000]) + user_text
+        else:
+            prompt = user_text
+
         try:
             raw_response = await self.provider.complete(
-                prompt=user_text, system_prompt=EXTRACTION_SYSTEM_PROMPT
+                prompt=prompt, system_prompt=EXTRACTION_SYSTEM_PROMPT
             )
         except ProviderError as e:
             raise e
@@ -57,7 +77,8 @@ class ExtractionService:
                     proposition=prop_dict["proposition"],
                     node_type=prop_dict["node_type"],
                     confidence=prop_dict["confidence"],
-                    structured_data=prop_dict.get("structured_data"),
+                    supersedable=prop_dict.get("supersedable", True),
+                    event_timeframe=prop_dict.get("event_timeframe"),
                 )
                 propositions.append(proposition)
             except KeyError as e:
