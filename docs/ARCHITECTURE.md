@@ -355,7 +355,44 @@ This circularity is Voku's core value proposition, not a limitation. Every other
 ### 8.2 Proposition Viewer/Editor (v0 Phase 4)
 User sees what Voku inferred: which cognitive operation, what evidence, what comparison. User can correct any of these. Corrections become data.
 
-### 8.3 Feedback Loop Awareness (v3)
+### 8.3 Privacy Architecture: User-Controlled Disclosure
+
+Privacy is not binary (local vs cloud). The user determines how much to disclose from their Voku at every layer.
+
+**Three privacy boundaries:**
+
+| Layer | Default | User Control |
+|-------|---------|-------------|
+| Storage | Always local (SQLite file, user owns it) | Full ownership, portable, deletable |
+| Extraction | Provider-agnostic (Ollama local or Groq/Claude cloud) | User chooses per-run. Cloud = faster/better. Local = nothing leaves device. |
+| Retrieval/Serving | Local MCP server → cloud LLM (Claude Desktop) | Propositions served only if `shareable: true`. User reviews via viewer/editor before anything is shared. |
+
+**Extraction provider options:**
+
+| Privacy Level | Provider | Trade-off |
+|---|---|---|
+| Maximum | Ollama (local) | Slower, lower quality on small models. Nothing leaves the machine. |
+| Balanced | Groq free tier | Fast, good quality. Data transits to Groq servers. |
+| Convenience | Claude/OpenAI API | Best quality. Costs money. Data transits to provider. |
+
+The user chooses their provider in config. Switching is a config change, not a code change (Constraint 3.13).
+
+**The privacy gate is the proposition viewer/editor** (v0 Phase 4). The user reviews what Voku extracted and controls what enters the retrieval pool:
+- Mark propositions as `shareable: false` (never served to external models via MCP)
+- Delete propositions entirely
+- Edit propositions before they enter the retrieval pool
+- Choose extraction provider (local vs cloud) per batch
+
+User corrections and redactions are themselves data — they reveal what the user considers private, which is self-knowledge.
+
+**Provider defaults:**
+- **Production default:** Ollama (local-first, per CONSTRAINTS.md Tier 3.11)
+- **Development:** Groq (free, avoids Claude-on-Claude extraction bias)
+- **v0 Phase 4:** User-facing privacy toggle in the proposition viewer/editor UI
+
+Note: Using a non-Claude model (Groq/Ollama) for extraction of Claude conversations is arguably *better* for objectivity — the extraction LLM has no self-recognition of Claude-style outputs, reducing eigenform bias in the extraction layer.
+
+### 8.4 Feedback Loop Awareness (v3)
 Cross-domain research confirms: Voku's observations change what it observes. The eigenform framing: tracked beliefs are co-constructed artifacts of the user-system loop. Design implications:
 - Gain limiting on reported metric changes
 - Circuit breakers for positive feedback spirals
@@ -399,6 +436,7 @@ Beyond existing tables (propositions, embeddings, edges, thread_surfaces):
 - Add `entrenchment_rank` to propositions (identity/approach/preference/situational) — manually populated for golden set
 - Extend `source_type` enum: conversation | user_declared | standalone_text
 - Add `message_position` to propositions (integer) — position within conversation, confidence signal (earlier = less AI-mediated)
+- Add `shareable` to propositions (boolean, default true) — privacy gate for MCP serving. User sets via viewer/editor.
 
 ### Schema Reserved for v1+ (create tables but don't populate)
 - `abstractions` — internal nodes (leaf → internal → module hierarchy)
@@ -454,6 +492,7 @@ Seven domains researched: signal detection theory, dynamical systems (cusp catas
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
+| Privacy = user-controlled disclosure | Not binary local/cloud. Three boundaries (storage/extraction/serving). Proposition viewer/editor is the privacy gate. `shareable` flag on propositions. Groq for dev (avoids Claude-on-Claude bias). | Feb 15 |
 | User declarations as v0 data source | YAML file for direct, unmediated user input. Solves cold start, eigenform escape, and correction-as-data. Higher base confidence than extracted propositions. | Feb 15 |
 | Proposition viewer/editor in v0 Phase 4 | v3 debuggable interface pulled forward to MVP scope. Agentic-coded React app. User corrections = highest-quality temporal data. | Feb 15 |
 | Story decomposition principle | Stories are compound: event (integral) + interpretive stance (derivative). Decompose at extraction, link via provenance. Enables tracking reinterpretation over time. | Feb 15 |

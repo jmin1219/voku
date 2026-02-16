@@ -31,6 +31,7 @@ class OllamaProvider(Provider):
       "model": model or "llama3.1:8b",
       "prompt": prompt,
       "stream": False,
+      "format": "json",  # Force JSON output (like Groq's response_format)
     }
     if system_prompt:
       payload["system"] = system_prompt
