@@ -1,7 +1,7 @@
 # Voku Architecture
 **Created:** 2026-02-15
 **Status:** Authoritative build plan. Replaces COMPONENT_SPEC.md for strategic direction.
-**Last Updated:** 2026-02-15T18:30
+**Last Updated:** 2026-02-15T19:30
 
 > "The system doesn't discover who the user is. It co-creates a useful model of who they're becoming."
 
@@ -116,7 +116,18 @@ Every extracted proposition is exactly one of:
 |------|-----------|---------------------|----------|
 | **Stance** | Position that can be superseded | Supersession detection, contradiction detection, confidence evolution | "Breathing is my rowing limiter", "I think concurrent training is better", "Voku should use SQLite" |
 | **Event** | Thing that happened | Accumulation, frequency analysis, correlation, clustering | "Scrolled after lunch", "Had E1 Row session", "Felt afternoon murk", "Skipped training" |
+
+**Event timeframe dimension:**
+| Timeframe | Definition | Examples |
+|-----------|-----------|----------|
+| `recent` | Within the conversation period (weeks/months) | "Scrolled after lunch", "Had E1 Row session" |
+| `historical` | Before the conversation period | "Went to 9 schools K-12", "Studied motor learning at Columbia" |
+| `ongoing` | Recurring or persistent state/fact | "Father is CEO of Korean investment bank", "Lives in Vancouver" |
 | **Intention** | Declared commitment | Fulfillment tracking (paired against events), abandonment detection | "I want to work on Voku tomorrow", "Goal: 2K row time under 8:00", "Will start nutrition protocol" |
+
+**Stories are compound propositions.** Natural speech bundles types together. "I went to 9 schools and that instability created my hypervigilant self-evaluation" contains an immutable historical event (9 schools) and a supersedable interpretive stance (instability → hypervigilance). The extraction layer decomposes stories into their atomic types, linked by shared provenance. This decomposition is what makes derivatives computable — the event is the integral (accumulated history), the stance is the derivative (current interpretation applied to that history). The same event can produce different interpretive stances over time; Voku sees the change because it stored them separately.
+
+**"Ongoing" events blur toward stances** — and that's resolved by processing semantics. "I have an interest-based nervous system" looks like a fact but functions as an identity-level stance (supersedable if understanding changes). Classify by pipeline: accumulates → event, supersedes → stance.
 
 **Why three, not seven:** Original types (BELIEF/GOAL/OBSERVATION/DECISION/PATTERN/LEARNING/EMOTIONAL) collapsed because processing semantics are what matter, not content description. A DECISION is a stance (it supersedes the previous approach). A GOAL is an intention (it gets fulfilled or abandoned). An EMOTIONAL observation is an event (it accumulates for pattern detection). Type = which pipeline processes it.
 
@@ -201,12 +212,56 @@ Same words = different operations. "I think concurrent training is better" as ex
 
 **v0 implementation:** Not extracted. v1 feature requiring extraction prompt redesign.
 
-### 5.3 Source Filtering Rules
+### 5.3 Story Decomposition Principle
+
+When the user tells a story about their past, the extraction prompt must separate:
+1. **The factual event** — what happened (immutable, gets `event` type + `historical` timeframe)
+2. **The interpretive stance** — what the user believes it means *now* (supersedable, gets `stance` type)
+
+Both propositions share provenance (same message, same conversation). This decomposition is required because the event won't change but the interpretation will — and tracking that divergence over time is Voku's core value.
+
+Example: "I went to 9 schools K-12, which is why I have this hypervigilant internal monitor" →
+- Event (historical): "Attended 9 schools during K-12"
+- Stance (identity): "K-12 school instability is the source of hypervigilant self-evaluation pattern"
+
+### 5.4 Source Filtering Rules
 
 - **Extract from:** User messages only
 - **Use as context:** AI messages (for comprehension, not proposition extraction)
 - **Strip:** Thinking blocks, tool calls, base64 images, footer lines
 - **Preserve:** Provenance fields (source_char_start/end, source_file, session_id, message_index)
+
+### 5.5 User Declarations (Direct Input Channel)
+
+Not all input should pass through conversation extraction. A declarations file provides a direct, unmediated channel for the user to seed or correct Voku’s model. This solves three problems:
+
+1. **Cold start.** Voku can begin with user-declared stances, events, and intentions before any conversation is ingested. No extraction error, no AI bias.
+2. **Eigenform escape.** Conversation-extracted propositions are beliefs-as-expressed-through-an-AI-interlocutor. Declarations bypass that loop — the user states what they believe without scaffolding shaping the expression.
+3. **Correction as data.** When the user edits or deletes an extracted proposition, that correction is itself a temporal event — a user-confirmed supersession with the highest provenance quality.
+
+**v0 format:** YAML file, manually edited, ingested through the same pipeline as conversation extractions.
+
+```yaml
+# voku_declarations.yaml
+- text: "Concurrent training is better than sequential for my goals"
+  type: stance
+  entrenchment: approach
+  declared: 2026-02-15
+
+- text: "Attended 9 schools K-12"
+  type: event
+  timeframe: historical
+
+- text: "Start LeetCode practice by May 2026"
+  type: intention
+  deadline: 2026-05-01
+```
+
+Declarations get `source_type: "user_declared"` and higher base confidence than conversation-extracted propositions (no extraction error margin). They use the same storage, embeddings, and retrieval as all other propositions.
+
+**v0 Phase 4:** Replace the YAML file with a proposition viewer/editor UI (React app). See what Voku extracted, correct it, add new declarations, delete noise. The feedback loop between extraction and user correction is the product.
+
+**Evaluation dimension:** The ablation study gains a third axis — extracted vs. declared vs. both. If declared propositions retrieve better (expected: cleaner signal), that’s a baseline. If extracted propositions add value on top (expected: capture what the user didn’t think to declare), that proves the extraction pipeline is worthwhile.
 
 ---
 
@@ -292,9 +347,12 @@ This circularity is Voku's core value proposition, not a limitation. Every other
 
 ### 8.1 CQRS Pattern
 - **Reads:** Live during conversation (MCP server serves context to Claude Desktop)
-- **Writes:** Batched post-conversation (extraction pipeline processes exported conversations)
+- **Writes:** Three channels, in order of signal quality:
+  1. **User declarations** (highest confidence) — direct YAML input or proposition editor. No extraction error. User explicitly states and classifies.
+  2. **User corrections** (high confidence) — edits to extracted propositions via viewer/editor. Corrections are themselves temporal events (user-confirmed supersessions).
+  3. **Conversation extraction** (standard confidence) — batched post-conversation pipeline. Subject to extraction error and AI-mediation bias. Earlier messages in conversation = higher confidence than later ones.
 
-### 8.2 Debuggable Interface (v3)
+### 8.2 Proposition Viewer/Editor (v0 Phase 4)
 User sees what Voku inferred: which cognitive operation, what evidence, what comparison. User can correct any of these. Corrections become data.
 
 ### 8.3 Feedback Loop Awareness (v3)
@@ -311,10 +369,13 @@ Cross-domain research confirms: Voku's observations change what it observes. The
 Current state: Milestone 1 COMPLETE (29/29 tests). Golden set database EXISTS (332 propositions, contaminated with AI messages).
 
 ### Phase 1: Clean Foundation
-1. **Re-extraction prompt design** — user messages only, node_type (stance/event/intention), explicit beliefs only
-2. **Sample validation** — test new prompt on 3-5 conversations, evaluate classification accuracy
-3. **Full re-extraction** — if sample validates, re-extract all 21 conversations
-4. **Spike S4** — LLM relationship classification reliability on 10 known-ground-truth pairs
+1. **Temporal signal audit** — scan 21 fixtures for explicit belief evolution instances (stance A at time T₁ → stance B at time T₂). Need 3-5 cases to support thesis. Determines whether data supports the demo before building extraction around it.
+2. **Re-extraction prompt design** — user messages only (AI messages as comprehension context), node_type (stance/event/intention), event_timeframe (recent/historical/ongoing), story decomposition (separate event from interpretive stance), supersedable fallback field, explicit beliefs only
+3. **Spike S4b** — node type classification accuracy. Hand-label 20-30 propositions from existing 332 as ground truth. If <65% three-way accuracy but >80% binary supersedable accuracy, defer trichotomy to v1.
+4. **Sample validation** — test new prompt on 3-5 conversations, evaluate classification accuracy. Include at least 1 story-heavy conversation to validate decomposition. Also test on 1 standalone text (vault concept file) to validate non-conversational extraction.
+5. **Declarations file parser** — YAML ingestion path for user-declared propositions. Same pipeline (embed → store), `source_type: user_declared`, higher base confidence.
+6. **Full re-extraction** — if sample validates, re-extract all 21 conversations with new prompt
+7. **Spike S4** — LLM relationship classification reliability on 10 known-ground-truth pairs
 
 ### Phase 2: Prove Retrieval
 5. **Hand-craft 10-15 golden set queries** — temporal cases, basic retrieval, contradiction cases
@@ -328,12 +389,16 @@ Current state: Milestone 1 COMPLETE (29/29 tests). Golden set database EXISTS (3
 
 ### Phase 4: Make It Usable
 11. **MCP server** — serve temporal context to Claude Desktop
-12. **Visualization** — minimum viable (static HTML with proposition status coloring, or skip if time-constrained)
+12. **Proposition viewer/editor** — React app (agentic-coded, 4-6 hours). Table or card view of all propositions. Filter by node_type, status, timeframe. Inline edit, add new declarations, delete noise. This is the v3 debuggable interface pulled forward to minimum viable scope — the user sees what Voku extracted and corrects it. Corrections are user-confirmed supersessions (highest-quality temporal data).
+13. **If time: timeline view** — chronological view of events and stance evolution. Calendar-style for events/intentions, chain view for stance supersession.
 
 ### Schema Additions for v0
 Beyond existing tables (propositions, embeddings, edges, thread_surfaces):
 - Add `node_type` to propositions (stance/event/intention) — replaces current generic type
+- Add `event_timeframe` to propositions (recent/historical/ongoing) — populated for event-type nodes only
 - Add `entrenchment_rank` to propositions (identity/approach/preference/situational) — manually populated for golden set
+- Extend `source_type` enum: conversation | user_declared | standalone_text
+- Add `message_position` to propositions (integer) — position within conversation, confidence signal (earlier = less AI-mediated)
 
 ### Schema Reserved for v1+ (create tables but don't populate)
 - `abstractions` — internal nodes (leaf → internal → module hierarchy)
@@ -389,6 +454,10 @@ Seven domains researched: signal detection theory, dynamical systems (cusp catas
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
+| User declarations as v0 data source | YAML file for direct, unmediated user input. Solves cold start, eigenform escape, and correction-as-data. Higher base confidence than extracted propositions. | Feb 15 |
+| Proposition viewer/editor in v0 Phase 4 | v3 debuggable interface pulled forward to MVP scope. Agentic-coded React app. User corrections = highest-quality temporal data. | Feb 15 |
+| Story decomposition principle | Stories are compound: event (integral) + interpretive stance (derivative). Decompose at extraction, link via provenance. Enables tracking reinterpretation over time. | Feb 15 |
+| Event timeframe dimension | recent/historical/ongoing — events have temporal context beyond conversation timestamp | Feb 15 |
 | Observation engine identity | Three capabilities: stance tracking, pattern detection, stated-vs-revealed gap | Feb 15 |
 | Node types 7→3 | stance/event/intention map to distinct processing pipelines | Feb 15 |
 | Extract user messages only | AI messages = scaffolding for user thinking, not user knowledge | Feb 15 |

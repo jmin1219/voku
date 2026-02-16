@@ -10,7 +10,7 @@ __pycache__/
 # User data (private, never commit)
 data/
 *.db
-backend/data/exports/
+backend/data/
 
 # Environment
 .env
@@ -31,3 +31,7 @@ docs/CONTINUE.md
 docs/DEMO_PLAN.md
 docs/VISION_PERSONAL_API.md
 docs/DESIGN_V03.md
+
+# User declarations (personal data)
+*.yaml
+!backend/requirements.yaml
