@@ -1,0 +1,427 @@
+# Voku Architecture
+**Created:** 2026-02-15
+**Status:** Authoritative build plan. Replaces COMPONENT_SPEC.md for strategic direction.
+**Last Updated:** 2026-02-15T18:30
+
+> "The system doesn't discover who the user is. It co-creates a useful model of who they're becoming."
+
+---
+
+## 1. Purpose
+
+Voku is a cognitive mirror — an observation engine that externalizes how a person allocates attention, time, and energy, and reflects that model back so they can see what they actually prioritize, how their understanding evolves, and where their stated intentions diverge from their revealed behavior.
+
+The fundamental substrate is **time and energy allocation.** Everything a person does — training, scrolling, building, conversing, sitting in afternoon murk — is a use of finite resources. Beliefs emerge from these allocations. Intentions predict them. Events record them. The gap between what someone says they'll do and what they actually do is the most diagnostic signal about who they actually are.
+
+**The practice of interacting with Voku is itself the intervention.** The user develops a habit of externalizing, inspecting, and curating their own cognitive context. Voku doesn't just observe the user — it inserts a feedback checkpoint into a naturally circular process (context → task selection → context) that previously had no external visibility. The mirror changes what it reflects by the act of reflecting it.
+
+### What Voku Is Not
+- Not a retrieval system (retrieval is infrastructure, not purpose)
+- Not an AI advisor (doesn't generate ideas or recommendations)
+- Not a productivity tool (surfaces self-knowledge that makes productivity *possible*)
+- Not a passive observer (it's a participant in a self-referential feedback loop)
+
+### The Problem It Addresses
+1. **Lossy self-compression** — nuanced evaluations flatten into harsh verdicts through repeated recall
+2. **Invisible context pollution** — physical/emotional states silently degrade cognition without awareness
+3. **The articulation paradox** — tools that require self-knowledge to configure are useless to those who lack it
+
+### The Landscape Gap
+Every system in the AI memory landscape (Mem0, Graphiti, LangMem, Letta) points output at the AI. Voku points output at the human. The AI is the mirror's surface. The human is the one looking into it. No existing system tracks belief evolution — the temporal dimension of personal knowledge is essentially unstudied in production systems.
+
+---
+
+## 2. Version Roadmap
+
+### v0 — Thesis Proof (Current → Demo)
+**Question:** Does temporal tracking produce meaningfully better retrieval than flat memory?
+- Ingest real conversations, extract propositions, detect belief evolution
+- Evaluate: temporal retrieval accuracy vs flat baseline
+- Deliverable: working prototype + metrics proving the thesis
+- Scope: explicitly stated beliefs only, single user, batch processing
+
+### v1 — Observation Engine (Post-Demo)
+**Question:** Can Voku reliably observe stance evolution, behavioral patterns, and intention-event gaps?
+- Clean extraction pipeline: 3 node types + cognitive operations + conversation metadata
+- Basic synthesis layer: pattern/gap/trajectory generation
+- User confirmation loop: Voku proposes → user validates → confirmed = durable knowledge
+- Power-law confidence decay (system confidence about model accuracy, not belief strength)
+- Entrenchment ranks parameterizing decay rates
+- MCP integration serving live context to Claude Desktop
+
+### v2 — Intelligence Layer (Research Phase)
+**Question:** Can Voku detect the *structure* of belief change — networks, transitions, coupling?
+- Belief network graph: connectivity influences behavior (connected beliefs persist, isolated ones decay)
+- Node hierarchy: leaf → internal → module (hierarchical search)
+- Task-contextual retrieval: same graph reorganizes based on what user is doing
+- Bayesian state estimation replacing point confidence scores
+- Transition detection: variance monitoring for pre-shift signals (critical slowing down)
+- Cross-derivatives: stance-event coupling, intention-event conversion rates
+
+### v3 — Mirror (Product Vision)
+**Question:** Can Voku manage its own feedback effects responsibly?
+- Debuggable interface: user sees Voku's inferences, corrects them, corrections become data
+- Feedback loop management: circuit breakers, gain limiting, shadow model
+- Observer derivative: measuring Voku's own impact on user behavior
+- Multi-source ingestion: calendar, health metrics, screen time alongside conversation data
+- Polar/3D visualization: radius = generality, angle = domain
+- Multi-user architecture (if productized)
+
+### What Each Version Proves
+| Version | Proves | Audience |
+|---------|--------|----------|
+| v0 | Temporal > flat retrieval (with numbers) | Hiring managers, portfolio reviewers |
+| v1 | Observation engine works on real ongoing data | Jaymin as daily user, blog readers |
+| v2 | Network structure reveals things derivatives can't | Research community, thesis reviewers |
+| v3 | Self-referential feedback can be managed | Product users, the field |
+
+---
+
+## 3. Three Capabilities
+
+These are Voku's functional outputs. Everything in the architecture serves one or more of these.
+
+### 3.1 Stance Tracking
+Beliefs evolve via supersession. "Ankle is my rowing limiter" → "Breathing is my rowing limiter."
+- **Input:** Stance propositions with timestamps
+- **Processing:** Detect contradiction/supersession between stances via semantic similarity + LLM classification
+- **Output:** Belief timelines, supersession edges, status updates (active → superseded)
+- **Key insight (from cross-domain research):** High-involvement belief changes are discrete phase transitions (cusp catastrophe), not smooth derivatives. The SUPERSEDES edge already handles this correctly — belief change is modeled as event-driven, not time-driven.
+
+### 3.2 Behavioral Pattern Detection
+Events accumulate; patterns emerge from frequency and correlation.
+- **Input:** Event propositions (behavioral observations, actions taken)
+- **Processing:** Frequency analysis, clustering, correlation detection across events
+- **Output:** Pattern synthesis nodes ("scrolls after lunch on weekdays")
+- **Lineage:** Billy's awareness layer (Dec 14-22, 2025), feature extraction on 3,768 messages. Dropped during Jan 22 descoping, now returning with proper architecture.
+- **Key constraint (from signal detection research):** Need 30-50 observations minimum for reliable pattern detection. Weekly behaviors need 2-3 months of data. Surface patterns with explicit confidence intervals, not point claims.
+
+### 3.3 Stated-vs-Revealed Gap Detection
+Intentions compared against events.
+- **Input:** Intention propositions + subsequent event propositions
+- **Processing:** Match intentions to fulfillment events; detect unfulfilled, abandoned, or persistent intentions
+- **Output:** Gap synthesis nodes ("said would work on Voku, no Voku event logged")
+- **Lineage:** "Billy is the derivative of productivity planning" (Jan 30 concept file). Goals aren't the anchor. Self-understanding is the anchor. Goals are a byproduct.
+- **Key insight:** This doesn't need derivatives or half-lives. It needs binary matching (did the event happen?) with sophistication in aggregation (conversion rate over time).
+
+---
+
+## 4. Data Model
+
+### 4.1 Three Node Types (Processing Semantics)
+
+Every extracted proposition is exactly one of:
+
+| Type | Definition | Processing Pipeline | Examples |
+|------|-----------|---------------------|----------|
+| **Stance** | Position that can be superseded | Supersession detection, contradiction detection, confidence evolution | "Breathing is my rowing limiter", "I think concurrent training is better", "Voku should use SQLite" |
+| **Event** | Thing that happened | Accumulation, frequency analysis, correlation, clustering | "Scrolled after lunch", "Had E1 Row session", "Felt afternoon murk", "Skipped training" |
+| **Intention** | Declared commitment | Fulfillment tracking (paired against events), abandonment detection | "I want to work on Voku tomorrow", "Goal: 2K row time under 8:00", "Will start nutrition protocol" |
+
+**Why three, not seven:** Original types (BELIEF/GOAL/OBSERVATION/DECISION/PATTERN/LEARNING/EMOTIONAL) collapsed because processing semantics are what matter, not content description. A DECISION is a stance (it supersedes the previous approach). A GOAL is an intention (it gets fulfilled or abandoned). An EMOTIONAL observation is an event (it accumulates for pattern detection). Type = which pipeline processes it.
+
+### 4.2 Confidence Model
+
+**Critical reframe from cross-domain research:** Confidence represents **system certainty that its model matches reality**, not belief strength. Without new evidence, system certainty should decrease — not because the user's belief is weakening, but because Voku can't know whether it's still current.
+
+**Power-law decay** (not exponential):
+```
+system_confidence = base_confidence × (t_since_last_evidence + 1) ^ (-β)
+```
+Power-law gives a long tail — old beliefs retain faint residual rather than vanishing. Matches human memory: you don't forget your old training philosophy, it's just less accessible until triggered.
+
+**Decay rate parameterized by entrenchment rank:**
+| Rank | Examples | Approximate Half-Life | β |
+|------|----------|----------------------|---|
+| Identity/value | "I build tools to help humans see themselves" | Months–years | ~0.1 |
+| Approach/method | "Concurrent training is better than sequential" | Weeks–months | ~0.3 |
+| Preference/taste | "I prefer SQLite over Postgres for this" | Days–weeks | ~0.5 |
+| Situational | "I'm feeling tired today", "Plan for tomorrow" | Hours–days | ~1.0 |
+| Intention | Deadline-governed, not time-decayed | Special: decays on deadline miss, not by time | N/A |
+
+**v0 implementation:** base_confidence from LLM extraction, no decay computation. Decay is a v1 feature.
+
+### 4.3 Synthesis Nodes (Voku-Generated)
+
+Three types, all user-confirmable:
+
+| Type | Source | Example |
+|------|--------|---------|
+| **Pattern** | Event accumulation | "You scroll after lunch on weekdays" |
+| **Gap** | Intention-event comparison | "Said would do Voku, didn't — 3 of 5 times this month" |
+| **Trajectory** | Stance evolution chain | "Training philosophy shifted from performance-first to consistency-first over 6 weeks" |
+
+**Lifecycle:** Generated by processing pipeline → surfaced to user → user confirms or rejects → confirmed = durable knowledge, rejected = training signal. This is the Dec 18 "unsupervised → validate → encode" loop.
+
+**v0 implementation:** No synthesis nodes. v1 feature.
+
+### 4.4 Node Hierarchy (v2)
+
+| Level | Description | Example |
+|-------|------------|---------|
+| Leaf | Atomic propositions (extraction output) | "Breathing limits my rowing catch" |
+| Internal | Confirmed abstractions (user-validated clusters) | "Training philosophy evolution" |
+| Module | Domains | Training, Career, Psychology, Voku |
+
+Enables hierarchical retrieval: identify relevant module → search within subtree. Solves flat embedding search's "everything is related" problem.
+
+**v0 implementation:** Flat propositions only. Hierarchy is v2.
+
+---
+
+## 5. Extraction Model
+
+### 5.1 Two-Pass Architecture (v1+)
+
+**Pass 1 — Conversation Level:** Read full conversation, tag metadata.
+- opening_mode: exploring / executing / processing / venting
+- trajectory: deepened / pivoted / resolved / abandoned
+- closing_state: energized / depleted / uncertain / decided
+
+**Pass 2 — Message Level:** Extract propositions from user messages only.
+- AI messages used as comprehension context, never as proposition sources
+- Each proposition gets: text, node_type, cognitive_operation, confidence
+
+**v0 implementation:** Single-pass extraction with node_type classification. Conversation metadata and cognitive operations are v1 features.
+
+### 5.2 Cognitive Operations (v1+)
+
+What the user is *doing* cognitively with a statement:
+
+| Operation | Description | Confidence Effect |
+|-----------|-------------|-------------------|
+| Exploring | Testing an idea, first mention | Lower confidence |
+| Declaring | Committing to a position after reasoning | Higher confidence |
+| Reporting | Describing what happened | High confidence (factual) |
+| Processing | Working through emotions/confusion | Context-dependent |
+| Evaluating | Assessing something against criteria | Medium confidence |
+| Planning | Stating future actions | Intention-type, deadline-governed |
+
+Same words = different operations. "I think concurrent training is better" as exploration (first mention) vs declaration (after 45 minutes of reasoning) = different confidence, different processing.
+
+**v0 implementation:** Not extracted. v1 feature requiring extraction prompt redesign.
+
+### 5.3 Source Filtering Rules
+
+- **Extract from:** User messages only
+- **Use as context:** AI messages (for comprehension, not proposition extraction)
+- **Strip:** Thinking blocks, tool calls, base64 images, footer lines
+- **Preserve:** Provenance fields (source_char_start/end, source_file, session_id, message_index)
+
+---
+
+## 6. Processing Pipelines
+
+One per node type. Each runs during the "process" phase after ingestion.
+
+### 6.1 Stance Pipeline
+```
+New stance → find semantically similar existing stances (embedding search)
+  → for each similar pair: LLM classifies relationship
+    → SUPPORTS: create edge, optionally boost confidence
+    → CONTRADICTS: create edge, flag for user review
+    → SUPERSEDES: create edge, update older stance status to "superseded"
+    → UNRELATED: skip
+```
+
+**v0 implementation:** This IS the core of Milestone 3 (process engine). Spike S4 validates LLM classification accuracy before building.
+
+### 6.2 Event Pipeline (v1+)
+```
+New event → accumulate in event store
+  → periodic pattern detection:
+    → frequency analysis per domain/topic
+    → correlation detection (co-occurring events)
+    → clustering (semantically similar events)
+  → when pattern confidence exceeds threshold:
+    → generate Pattern synthesis node
+    → surface for user confirmation
+```
+
+**v0 implementation:** Events stored but not processed for patterns. Pattern detection is v1.
+
+### 6.3 Intention Pipeline (v1+)
+```
+New intention → track against subsequent events
+  → if matching event found within window: mark fulfilled
+  → if deadline passes without event: mark unfulfilled
+  → if intention restated without fulfillment: increment persistence count
+  → when gap pattern emerges (repeated unfulfillment in domain):
+    → generate Gap synthesis node
+    → surface for user confirmation
+```
+
+**v0 implementation:** Intentions stored but not tracked against events. Gap detection is v1.
+
+---
+
+## 7. Retrieval Model
+
+### 7.1 Three Modes
+
+| Mode | Description | Version |
+|------|------------|---------|
+| **Flat** | Pure embedding similarity (baseline) | v0 |
+| **Temporal** | Similarity + status awareness + recency weighting | v0 |
+| **Task-contextual** | Weighted module activations per task context | v2 |
+
+**Meaning computed at read-time** (ADR_002). Propositions are tokens; meaning is recomputed through attention to the query context, not stored as static labels.
+
+### 7.2 The Circularity
+
+The task determines which context is retrieved. But the accumulated context determines which tasks the user chooses. Retrieval and observation are the same system running in opposite directions:
+- **Retrieval direction:** Given a task, activate relevant context
+- **Observation direction:** Given accumulated context, surface what patterns/gaps emerge
+
+This circularity is Voku's core value proposition, not a limitation. Every other system treats the user as static. Voku models a system in motion.
+
+### 7.3 Evaluation (v0, Critical)
+
+**Ablation study:** Three-way comparison on golden test set.
+1. No context (baseline)
+2. Flat retrieval (embedding similarity only)
+3. Temporal retrieval (similarity + status + recency)
+
+**Key metric:** Temporal accuracy — % of queries where temporal retrieval returns the *current* correct belief vs flat retrieval returning an outdated one.
+
+**Go/no-go gate:** End-to-end temporal accuracy must exceed 70% on golden set temporal cases before proceeding to full build. Below 70% → narrow scope or simplify.
+
+---
+
+## 8. Interaction Model
+
+### 8.1 CQRS Pattern
+- **Reads:** Live during conversation (MCP server serves context to Claude Desktop)
+- **Writes:** Batched post-conversation (extraction pipeline processes exported conversations)
+
+### 8.2 Debuggable Interface (v3)
+User sees what Voku inferred: which cognitive operation, what evidence, what comparison. User can correct any of these. Corrections become data.
+
+### 8.3 Feedback Loop Awareness (v3)
+Cross-domain research confirms: Voku's observations change what it observes. The eigenform framing: tracked beliefs are co-constructed artifacts of the user-system loop. Design implications:
+- Gain limiting on reported metric changes
+- Circuit breakers for positive feedback spirals
+- Present information informationally, not controlling (SDT framework)
+- Support "happy abandonment" — users who learned what they needed and moved on
+
+---
+
+## 9. v0 Build Sequence
+
+Current state: Milestone 1 COMPLETE (29/29 tests). Golden set database EXISTS (332 propositions, contaminated with AI messages).
+
+### Phase 1: Clean Foundation
+1. **Re-extraction prompt design** — user messages only, node_type (stance/event/intention), explicit beliefs only
+2. **Sample validation** — test new prompt on 3-5 conversations, evaluate classification accuracy
+3. **Full re-extraction** — if sample validates, re-extract all 21 conversations
+4. **Spike S4** — LLM relationship classification reliability on 10 known-ground-truth pairs
+
+### Phase 2: Prove Retrieval
+5. **Hand-craft 10-15 golden set queries** — temporal cases, basic retrieval, contradiction cases
+6. **RetrievalService** — flat + temporal modes
+7. **EvaluationHarness** — run golden set, compute metrics, first ablation
+
+### Phase 3: Prove Temporal Tracking
+8. **ProcessEngine** — stance pipeline only (detect supersession/contradiction)
+9. **Re-run evaluation** — temporal accuracy delta vs flat baseline
+10. **Gate test** — "What is the user's rowing limiter?" returns breathing, not ankle
+
+### Phase 4: Make It Usable
+11. **MCP server** — serve temporal context to Claude Desktop
+12. **Visualization** — minimum viable (static HTML with proposition status coloring, or skip if time-constrained)
+
+### Schema Additions for v0
+Beyond existing tables (propositions, embeddings, edges, thread_surfaces):
+- Add `node_type` to propositions (stance/event/intention) — replaces current generic type
+- Add `entrenchment_rank` to propositions (identity/approach/preference/situational) — manually populated for golden set
+
+### Schema Reserved for v1+ (create tables but don't populate)
+- `abstractions` — internal nodes (leaf → internal → module hierarchy)
+- `contains_edges` — hierarchy relationships
+- `synthesis_nodes` — Voku-generated patterns/gaps/trajectories
+- `conversation_metadata` — opening_mode, trajectory, closing_state per conversation
+
+---
+
+## 10. Research Foundations
+
+### Cross-Domain Findings (Feb 15 analysis)
+
+Seven domains researched: signal detection theory, dynamical systems (cusp catastrophe), formal epistemology (AGM, Bayesian, Dempster-Shafer), truth maintenance systems, second-order cybernetics (von Foerster, Bateson), self-determination theory, and lived informatics.
+
+**Incorporated into architecture:**
+- Power-law confidence decay (not exponential) — beliefs retain faint residual
+- Confidence = system certainty about model accuracy, not belief strength
+- Entrenchment ranks parameterizing decay rates
+- Discrete supersession events (not smooth derivatives) for high-involvement beliefs
+- Sparse data caution: 30-50 observations needed for reliable pattern detection
+- Eigenform framing: Voku co-creates a model, doesn't passively discover one
+
+**Deferred to v2+:**
+- Bayesian state estimation (posterior distributions instead of point scores)
+- Belief network connectivity influencing decay behavior
+- Transition detection via variance monitoring (critical slowing down)
+- Feedback loop damping mechanisms (circuit breakers, shadow model)
+
+**Already present in architecture:**
+- Justification chains (provenance fields since v0)
+- Belief network graph (edges table)
+- User-confirmable synthesis (Dec 18 validate → encode loop)
+- Episodic engagement model (batch import)
+- Separated inference/display (CQRS)
+
+### Development Arc
+| Phase | Period | Key Contribution |
+|-------|--------|-----------------|
+| Billy OS | Dec 14-22, 2025 | Mirror + reasoning layers, unsupervised → validate → encode loop, awareness layer, multi-agent architecture |
+| Billy Features 1-10 | Dec 22 - Jan 8, 2026 | Calendar/scheduling, somatic check-ins, plan generation. Proved: operational data alone isn't enough |
+| Billy → Voku Pivot | Jan 22, 2026 | Descoped from multi-agent OS to knowledge graph. "Temporal belief tracking" became the thesis |
+| Personal Context Thesis | Jan 26, 2026 | Multi-domain context architecture, personal API vision |
+| Derivative Concept | Jan 30, 2026 | "Billy is the derivative of productivity planning" — stated vs revealed gap as core value |
+| Architecture Migration | Feb 10-11, 2026 | Kuzu → SQLite, meaning-at-read-time (ADR_002), spec-driven development |
+| Build Sprint | Feb 13-14, 2026 | M1 complete (29/29), golden set database (332 propositions) |
+| Observation Engine | Feb 15, 2026 | Node types 7→3, cognitive operations layer, AI message contamination discovered, Billy feature resurrection |
+| Cross-Domain Research | Feb 15, 2026 | Seven-domain analysis validates architecture, adds power-law decay, eigenform framing |
+
+---
+
+## 11. Key Decisions
+
+| Decision | Rationale | Date |
+|----------|-----------|------|
+| Observation engine identity | Three capabilities: stance tracking, pattern detection, stated-vs-revealed gap | Feb 15 |
+| Node types 7→3 | stance/event/intention map to distinct processing pipelines | Feb 15 |
+| Extract user messages only | AI messages = scaffolding for user thinking, not user knowledge | Feb 15 |
+| Power-law decay | Beliefs retain faint residual; exponential decay incorrectly zeroes out old beliefs | Feb 15 |
+| Confidence = system certainty | Not belief strength. Absence of evidence increases uncertainty about model accuracy | Feb 15 |
+| Architecture document before implementation | Top-down validation prevents analyzing what exists before questioning whether it's correct | Feb 15 |
+| Demo timeline flexible | "Build the right thing" > hitting March 31. Thesis quality > schedule adherence | Feb 15 |
+| SQLite + numpy architecture | Single file, no external services, portable. Minimum viable complexity | Feb 11 |
+| Spec-driven development | CONSTRAINTS.md + specs. Tests before implementation | Feb 11 |
+| bge-base over EmbeddingGemma | Spike S2: bge-base wins on retrieval quality, no Ollama dependency | Feb 13 |
+
+---
+
+## 12. Risks (Updated)
+
+### Active (affect v0)
+- **R1: Extraction accuracy compounds.** End-to-end temporal accuracy = extraction × classification. If extraction or S4 fail, narrow scope.
+- **R1b: Node type classification accuracy.** Can the LLM reliably distinguish stance/event/intention? Unknown. Test before building pipelines around it.
+- **R3: Evaluation might show thesis doesn't work.** Honest results are still portfolio-worthy. "I measured rigorously and found X" is a strong story.
+
+### Deferred
+- **R2: Platform window.** 12-18 months before platforms attempt belief tracking. Ship blog post by April.
+- **R4-R7:** Retention, psychological resistance, market size, tools-for-thought graveyard. See `voku — risk assessment.md`.
+
+---
+
+## File References
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `docs/ARCHITECTURE.md` | This file — authoritative build plan | Living |
+| `docs/CONSTRAINTS.md` | Hierarchical decision framework | Stable |
+| `docs/COMPONENT_SPEC.md` | Component-level specs + interfaces | Reference (superseded by this doc for strategy) |
+| `docs/STATE.md` | Implementation status + session log | Updated each session |
+| `docs/CONTINUE.md` | Session continuation prompt | Updated each session |
+| `docs/ADR_002_MEANING_AT_READ_TIME.md` | Meaning-at-read-time decision | Stable |

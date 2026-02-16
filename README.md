@@ -1,107 +1,91 @@
 # Voku
 
-> Personal context engine that ingests conversations, extracts beliefs, tracks how they evolve, and serves temporally-aware context back to AI tools.
+> An observation engine that models how a person allocates attention, time, and energy — and reflects that model back so they can see what they actually prioritize, how their understanding evolves, and where their stated intentions diverge from their revealed behavior.
 
-## The Problem
+## Why
 
-Every AI conversation starts from scratch. Claude's memory stores compressed summaries that mutate over time. Your beliefs evolve — you change your mind, refine your thinking, develop new understanding — but no tool tracks that evolution. Flat memory systems remember *what* you said. They don't know *when* you stopped believing it.
+Every AI memory system points output at the AI. Mem0 remembers so the chatbot can personalize. Graphiti tracks facts so the agent can reason. Voku flips the audience: the AI is infrastructure, the human is the one looking into the mirror.
 
-## What Voku Does
+The problem: humans can't inspect their own cognitive processes. Nuanced evaluations flatten into harsh verdicts through repeated recall. Physical states silently degrade cognition. Tools that require self-knowledge to configure are useless to those who lack it. Voku addresses these by externalizing what's invisible — not to tell people what to think, but to make the inputs to their intuition inspectable.
 
-Voku sits underneath your existing AI workflow. It ingests exported conversations, extracts atomic propositions (beliefs, observations, decisions), and stores them with full temporal provenance. A process engine then detects when beliefs contradict or supersede each other, building an evolving model of how you think.
+> *"The system doesn't discover who the user is. It co-creates a useful model of who they're becoming."*
 
-**The demo moment:** Ask "What is the user's main rowing limiter?" Flat retrieval returns *ankle* (mentioned first, mentioned more). Voku returns *breathing* (most recent, supersedes ankle) — with a timeline showing the evolution and evidence trail.
+## Three Capabilities
+
+1. **Stance tracking** — beliefs evolve via supersession. "Ankle is my rowing limiter" → "Breathing is my rowing limiter." Temporal provenance preserves the full evolution chain.
+
+2. **Behavioral pattern detection** — events accumulate, patterns emerge from frequency and correlation. "Scrolled after lunch 4 of 5 weekdays." Surfaces what the user can't see from inside the pattern.
+
+3. **Stated-vs-revealed gap detection** — intentions compared against events. The discrepancy between what you say you'll do and what you actually do is the most diagnostic signal about who you actually are.
 
 ## Architecture
 
 ```
-Conversation Export (.md)
-    → Parser (Component 1.1)
-        → ConversationMessage (text + who + when + provenance)
-            → ExtractionService (Groq/Ollama LLM)
-                → Proposition (belief + type + confidence)
-                    → EmbeddingProvider (BGE-base, 768-dim)
-                        → Dedup (cosine similarity > 0.95)
-                            → SQLite (propositions + embeddings)
+Conversation Exports (.md)
+    → Parser → ConversationMessage (text + speaker + timestamp + provenance)
+        → ExtractionService (Groq/Ollama)
+            → Proposition (stance | event | intention) + confidence
+                → EmbeddingProvider (bge-base, 768-dim)
+                    → SQLite (propositions + embeddings + edges)
 
-Process Engine (post-ingestion):
-    → Find similar proposition pairs
-    → LLM classifies: SUPPORTS / CONTRADICTS / SUPERSEDES
-    → Update statuses, create edges
-    → Build thread surfaces (topic summaries)
+Processing (post-ingestion):
+    → Stance pipeline: supersession/contradiction detection
+    → Event pipeline: pattern accumulation + frequency analysis
+    → Intention pipeline: fulfillment tracking against events
 
 Serving:
-    → MCP server → Claude Desktop gets temporally-aware context
-    → Evaluation harness → golden test set, temporal accuracy metrics
+    → MCP server → Claude Desktop receives temporally-aware context
+    → Evaluation harness → temporal accuracy metrics + ablation studies
 ```
 
 ## Tech Stack
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Storage | SQLite + numpy | Single portable file. In-memory vector search via numpy. No vector DB overhead. |
-| Embeddings | bge-base-en-v1.5 | 768-dim, sentence-transformers. Spike S2 confirmed over EmbeddingGemma. |
-| LLM (default) | Groq | llama-3.3-70b-versatile, free tier. Auto-fallback to Ollama if no API key. |
-| LLM (local) | Ollama | Zero-cost default. Privacy-first for sensitive data. |
-| Backend | FastAPI | Lightweight, async-native. |
+| Storage | SQLite + numpy | Single portable file. In-memory vector search. No infrastructure. |
+| Embeddings | bge-base-en-v1.5 | 768-dim. Spike-validated over EmbeddingGemma. |
+| LLM | Groq → Ollama fallback | Zero-cost default. Auto-fallback if no API key. |
 | MCP | FastMCP | stdio transport, Claude Desktop integration. |
-| Evaluation | Custom + RAGAS | Temporal accuracy metric, golden test set, ablation studies. |
+| Evaluation | Custom temporal metric + RAGAS | Ablation: flat vs temporal retrieval. |
+
+## Version Roadmap
+
+| Version | Question | Status |
+|---------|----------|--------|
+| **v0** | Does temporal tracking outperform flat retrieval? | 🏗️ Building — M1 complete, extraction redesign next |
+| **v1** | Can Voku reliably observe stance evolution, patterns, and intention gaps? | Planned |
+| **v2** | Can belief network structure reveal things individual tracking can't? | Research |
+| **v3** | Can a self-referential feedback system manage its own observer effects? | Vision |
 
 ## Current Status
 
-**Milestone 1: Ingest Real Data — ✅ COMPLETE**
-- Parser, SQLite storage, BGE embedding, ingestion pipeline
-- 29 tests passing (28 unit + 1 integration gate with real Groq + BGE)
-- 13 commits, spec-driven development
+**Milestone 1: Ingest Real Data — ✅ COMPLETE** (29/29 tests)
 
-**Milestone 2: Prove Retrieval Works — 🎯 Next**
-- Golden test set, retrieval service, evaluation harness
-- Establish flat retrieval baseline (the number to beat)
-
-**Milestone 3: Prove Temporal Tracking — The Thesis**
-- Process engine: contradiction/supersession detection via LLM
-- Temporal retrieval: returns current beliefs, not just most-mentioned
-- Gate test: temporal accuracy > flat accuracy on real belief evolution
-
-**Milestone 4: Make It Usable — Flex Scope**
-- MCP server serving context to Claude Desktop
-- Optional visualization (simplify if time-constrained)
-
-## Design Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| SQLite over graph DB | Kuzu archived. Single file, portable, numpy handles vector search at personal scale. |
-| Meaning at read-time | No pre-computed edges in storage. Process engine discovers relationships post-ingestion. |
-| Explicit beliefs only | Extraction accuracy on implicit beliefs (~40-60% F1) makes end-to-end temporal accuracy coin-flip. Demo scope: first-person declarative statements. |
-| Evaluation-first | "Temporal accuracy improved X% over flat retrieval" gets interviews. Metrics are first-class deliverables. |
-| Local-first, zero-cost default | Every component works without paid APIs. Ollama fallback automatic. |
-| Batch import, no chat UI | Prove thesis with real data + evaluation metrics. Chat UI is delivery mechanism, not the thesis. |
+**Next: v0 Phase 1 — Clean Foundation**
+- Re-extraction prompt (user messages only, 3 node types)
+- Node type classification validation (stance/event/intention)
+- Relationship classification spike (SUPPORTS/CONTRADICTS/SUPERSEDES)
 
 ## Setup
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # Add GROQ_API_KEY (optional — falls back to Ollama)
+cp .env.example .env  # GROQ_API_KEY optional — falls back to Ollama
 
-# Run all tests
-python -m pytest tests/ -v
-
-# Run integration gate (requires GROQ_API_KEY)
-python -m pytest tests/test_milestone1.py -v
+pytest tests/ -v                      # Unit tests
+pytest tests/test_milestone1.py -v    # Integration gate (needs Groq key)
 ```
 
-## Documentation
+## Docs
 
 | Document | Purpose |
 |----------|---------|
-| [docs/STATE.md](./docs/STATE.md) | Implementation status, session log, decisions |
-| [docs/CONTINUE.md](./docs/CONTINUE.md) | Session continuation prompt |
-| [docs/COMPONENT_SPEC.md](./docs/COMPONENT_SPEC.md) | Full build spec — 10 components, 4 milestones |
-| [docs/CONSTRAINTS.md](./docs/CONSTRAINTS.md) | Hierarchical decision framework (4 tiers) |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Top-down build plan + version roadmap |
+| [COMPONENT_SPEC.md](./docs/COMPONENT_SPEC.md) | Component interfaces + test specs |
+| [CONSTRAINTS.md](./docs/CONSTRAINTS.md) | Hierarchical decision framework |
+| [STATE.md](./docs/STATE.md) | Implementation status + session log |
 
 ## License
 
@@ -110,4 +94,4 @@ MIT
 ---
 
 **Built by:** Jaymin Chang — MSCS @ Northeastern Vancouver
-**Portfolio:** [github.com/jmin1219](https://github.com/jmin1219) | [@ChangJaymin](https://twitter.com/ChangJaymin)
+[@ChangJaymin](https://twitter.com/ChangJaymin)

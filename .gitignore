@@ -9,6 +9,8 @@ __pycache__/
 
 # User data (private, never commit)
 data/
+*.db
+backend/data/exports/
 
 # Environment
 .env

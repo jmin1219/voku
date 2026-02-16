@@ -759,5 +759,18 @@ tests/
 
 ## Future Work (Post-Demo)
 
+### Design Extensions (surfaced Feb 15 — schema should support from start)
+
+**Node hierarchy (schema tables: `abstractions`, `contains_edges`):**
+LeafNode (atomic propositions) → InternalNode (confirmed abstractions like "the fabricator", "training philosophy evolution") → ModuleNode (domains: Training, Career, Psychology). Solves flat retrieval's "everything is related" problem by scoping retrieval before similarity search. For demo: manually create 3-4 modules and 5-8 internal nodes from existing 332 propositions. Post-demo: automate abstraction discovery via LLM clustering.
+
+**Task-contextual retrieval (schema tables: `task_contexts`, `task_activations`):**
+Same propositions reorganize based on task context. Task contexts are weighted activations over modules/internals. "Interview prep" activates Career(1.0), Voku(0.9), Psychology(0.6). System learns activation patterns from usage over time. For demo: hand-craft 2-3 task contexts with manual weights. Post-demo: learn weights from retrieval feedback. Genuinely novel — no system in the landscape does this.
+
+**Polar embedding visualization:**
+Radius = generality (modules near origin, leaves at periphery), angle = semantic domain. UMAP reduction of bge-base embeddings to 2D → polar conversion → convex hulls around clusters → color by status. The containment hierarchy maps directly onto radial structure. Implementation: Component 4.2 flex scope.
+
+### Other Future Work
+
 - **Multi-pass extraction for recall optimization.** Running 2-3 independent extraction passes over the same text and merging results (first-pass-wins for overlapping spans) improves recall from ~93% to ~96% (cf. Google's LangExtract). Worth evaluating once single-pass baseline metrics exist from Milestone 2.
 - **LangExtract as extraction backend.** If Voku's hand-built extraction layer becomes a maintenance burden, LangExtract (Apache 2.0, ~24K stars, Ollama-compatible) is a potential drop-in replacement. Evaluate after Milestone 4 ships, when extraction needs are well-understood. Key gap: no entity disambiguation or relationship extraction — Voku's ingestion layer must still handle these.
