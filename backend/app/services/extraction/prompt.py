@@ -52,20 +52,32 @@ Classify by what happens to it DOWNSTREAM, not what it looks like:
 ## EVENT TIMEFRAME (events only)
 
 For each EVENT, also classify its timeframe:
-- recent: within the current conversation period (days to weeks ago)
-- historical: before the conversation period (months to years ago)
-- ongoing: recurring state or persistent fact (no specific time boundary)
+- recent: happened within the current period of the user's life (days, weeks, or a few months ago). Includes new states that started recently even if still true ("I just moved to Vancouver", "I don't know anyone here" — these are recent life changes, not permanent facts)
+- historical: happened in the distant past, before the user's current life phase (years ago, childhood, previous career). The user is recounting history.
+- ongoing: a persistent fact or recurring state with no clear start point, or that has been true for so long it's background context ("My father is CEO", "I have an interest-based nervous system").
+
+Rule of thumb: if the user frames it as a CHANGE or NEW situation, it's recent even if still ongoing. If it's background context they've always known, it's ongoing.
 
 ## STORY DECOMPOSITION
 
-When the user tells a story about their past, SEPARATE the factual event from any
-interpretive stance about what that event means. They are different propositions.
+When the user tells a story that COMBINES a factual event WITH an interpretation, meaning,
+or lesson, ALWAYS extract them as SEPARATE propositions. This is critical — the event
+is immutable but the interpretation can be superseded by new understanding later.
 
-Example: "I went to 9 schools K-12, which is why I have this hypervigilant self-evaluation"
+Example 1: "I went to 9 schools K-12, which is why I have this hypervigilant self-evaluation"
 → EVENT (historical): "Attended 9 schools during K-12"
 → STANCE: "K-12 school instability is the source of hypervigilant self-evaluation pattern"
 
-The event is immutable. The interpretation can be superseded later.
+Example 2: "Going to the gym for the first time was a big step that I'm proud of"
+→ EVENT (recent): "Went to the gym for the first time"
+→ STANCE: "Going to the gym for the first time was a big step to be proud of"
+
+Example 3: "It's really weird being completely independent and alone"
+→ EVENT (recent): "Now completely independent and alone"
+→ STANCE: "Being completely independent and alone feels really weird"
+
+The pattern: if a sentence contains BOTH what happened AND how the user feels/thinks
+about it, decompose. If it's purely factual OR purely interpretive, keep it as one.
 
 ## OPERATIONAL EVENTS
 
@@ -89,7 +101,11 @@ Confidence represents HOW EXPLICITLY the user stated this. Use these anchors:
 1. PRESERVE the user's exact language and voice — never paraphrase into clinical summaries
 2. Each proposition must be a SINGLE ATOMIC CLAIM (one idea per proposition)
 3. Only extract what the user EXPLICITLY said — no inferences
-4. Self-contained: readable without original context. Replace pronouns, add subjects.
+4. Self-contained: readable without original context.
+   - Replace third-person pronouns ("he", "she", "they") with the person's name or role
+   - KEEP first and second person ("I", "my", "you") — these are the user's voice
+   - When "you" refers to the AI assistant, keep it as "you" — it's how the user talks
+   - Add minimal context only when needed for comprehension ("[in Vancouver]")
 5. Minimum 8 words per proposition. Don't extract fragments.
 6. Don't extract questions or requests TO the AI assistant (but DO extract what the user
    reveals about themselves within those requests)

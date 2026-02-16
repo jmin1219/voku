@@ -41,10 +41,12 @@ class ExtractionService:
             ExtractionError: If response doesn't match schema
         """
         # Build the prompt: optionally prepend AI context for comprehension
+        # Note: Groq json_object mode requires 'json' in the user message
         if ai_context:
             prompt = CONTEXT_PREFIX.format(ai_context=ai_context[:2000]) + user_text
         else:
             prompt = user_text
+        prompt += "\n\nRespond with valid JSON only."
 
         try:
             raw_response = await self.provider.complete(
