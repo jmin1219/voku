@@ -22,6 +22,12 @@ export interface PropositionNode {
   dimensionRelevance: number;
 }
 
+export interface EdgeData {
+  source: string;  // proposition ID
+  target: string;  // proposition ID
+  weight: number;  // cosine similarity (0-1)
+}
+
 export interface ClusterData {
   id: number;
   center: [number, number, number];

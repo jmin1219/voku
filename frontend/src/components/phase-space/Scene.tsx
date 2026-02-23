@@ -1,13 +1,15 @@
 import { useMemo } from "react";
-import { type PropositionNode, type ClusterData, type LayoutMode } from "../../types/phase-space";
+import { type PropositionNode, type ClusterData, type EdgeData, type LayoutMode } from "../../types/phase-space";
 import { CameraController } from "./CameraController";
 import { ClusterShell } from "./ClusterShell";
-import { DataNode } from "./DataNode";
+import { EdgeMesh } from "./EdgeMesh";
+import { NodeCloud } from "./NodeCloud";
 import { TimeAxis } from "./TimeAxis";
 
-export function Scene({ nodes, clusters, relevanceMap, showClusters, layoutMode, retrievalIds }: {
+export function Scene({ nodes, clusters, edges, relevanceMap, showClusters, layoutMode, retrievalIds }: {
   nodes: PropositionNode[];
   clusters: ClusterData[];
+  edges: EdgeData[];
   relevanceMap: Map<string, number>;
   showClusters: boolean;
   layoutMode: LayoutMode;
@@ -38,11 +40,20 @@ export function Scene({ nodes, clusters, relevanceMap, showClusters, layoutMode,
         <ClusterShell key={c.id} cluster={c} layoutMode={layoutMode} hasActive={hasActive} />
       ))}
       {layoutMode === "time" && <TimeAxis />}
-      {nodes.map((node) => (
-        <DataNode key={node.id} node={node}
-          relevance={retrievalSet.has(node.id) ? 1.0 : (relevanceMap.get(node.id) || 0)}
-          layoutMode={layoutMode} hasActive={hasActive} />
-      ))}
+      <EdgeMesh
+        nodes={nodes}
+        edges={edges}
+        layoutMode={layoutMode}
+        retrievalIds={retrievalIds}
+        hasActive={hasActive}
+      />
+      <NodeCloud
+        nodes={nodes}
+        relevanceMap={relevanceMap}
+        retrievalIds={retrievalIds}
+        layoutMode={layoutMode}
+        hasActive={hasActive}
+      />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { type PropositionNode, type ClusterData, type LayoutMode } from "../types/phase-space";
+import { type PropositionNode, type ClusterData, type EdgeData, type LayoutMode } from "../types/phase-space";
 import { scoreRelevance } from "../lib/relevance";
 import { ChatPanel } from "../components/chat/ChatPanel";
 import { PhaseSpace } from "../components/phase-space/PhaseSpace";
@@ -40,6 +40,7 @@ export default function Workspace() {
   // Dynamic proposition nodes (fetched from API)
   const [nodes, setNodes] = useState<PropositionNode[]>([]);
   const [clusters, setClusters] = useState<ClusterData[]>([]);
+  const [edges, setEdges] = useState<EdgeData[]>([]);
 
   // Conversation boundaries
   const [boundaries, setBoundaries] = useState<ConversationBoundary[]>([]);
@@ -52,7 +53,8 @@ export default function Workspace() {
       .then((data) => {
         setNodes(data.nodes || []);
         setClusters(data.clusters || []);
-        console.log(`[propositions] ${data.nodes?.length || 0} nodes, ${data.clusters?.length || 0} clusters`);
+        setEdges(data.edges || []);
+        console.log(`[propositions] ${data.nodes?.length || 0} nodes, ${data.clusters?.length || 0} clusters, ${data.edges?.length || 0} edges`);
       })
       .catch((err) => console.error("Failed to load propositions:", err));
   }, []);
@@ -330,6 +332,7 @@ export default function Workspace() {
         <PhaseSpace
           nodes={nodes}
           clusters={clusters}
+          edges={edges}
           relevanceMap={relevanceMap}
           showClusters={showClusters}
           layoutMode={layoutMode}

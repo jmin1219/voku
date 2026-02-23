@@ -17,6 +17,7 @@ from umap import UMAP
 
 
 SCALE = 5.0  # Normalize UMAP output to roughly [-5, 5]
+KNN_K = 5    # Neighbors per node for ambient edge mesh
 
 STOPWORDS = {
     "the", "and", "for", "that", "this", "with", "from", "have", "has",
@@ -44,6 +45,66 @@ def _scale_positions(coords: np.ndarray) -> np.ndarray:
     centered = coords - coords.mean(axis=0)
     factor = SCALE / max(np.abs(centered).max(), 0.001)
     return centered * factor
+
+
+def _compute_knn_edges(
+    X: np.ndarray, ids: list[str], k: int = KNN_K
+) -> list[dict]:
+    """Compute k-nearest-neighbor edges from cosine similarity in embedding space.
+
+    Operates on the raw embedding matrix (768d), NOT the UMAP projection.
+    UMAP preserves local neighborhoods but distorts distances — the original
+    space gives ground-truth semantic proximity.
+
+    Returns deduplicated undirected edges: [{source, target, weight}].
+    Weight = cosine similarity (0-1). Higher = more semantically related.
+
+    Deduplication: edge (A,B) and (B,A) collapse to one entry with the
+    higher weight. Uses frozenset of index pairs as the dedup key.
+    """
+    n = X.shape[0]
+    if n < 2:
+        return []
+
+    # L2-normalize rows → dot product = cosine similarity
+    norms = np.linalg.norm(X, axis=1, keepdims=True)
+    norms = np.where(norms == 0, 1.0, norms)  # guard zero-vectors
+    X_norm = X / norms
+
+    # Full similarity matrix: (n, n) — feasible for n ≤ ~5000
+    sim = X_norm @ X_norm.T
+
+    # Zero out diagonal (no self-edges)
+    np.fill_diagonal(sim, 0.0)
+
+    # Effective k: can't have more neighbors than n-1
+    k_eff = min(k, n - 1)
+
+    # For each node, find top-k neighbor indices by descending similarity
+    # argpartition is O(n) vs O(n log n) for full argsort — matters at scale
+    top_k_indices = np.argpartition(-sim, k_eff, axis=1)[:, :k_eff]
+
+    # Collect edges with deduplication
+    seen: set[frozenset[int]] = set()
+    edges: list[dict] = []
+
+    for i in range(n):
+        for j_idx in range(k_eff):
+            j = int(top_k_indices[i, j_idx])
+            pair = frozenset((i, j))
+            if pair in seen:
+                continue
+            seen.add(pair)
+            weight = float(sim[i, j])
+            if weight <= 0:
+                continue  # skip anti-correlated or zero-similarity
+            edges.append({
+                "source": ids[i],
+                "target": ids[j],
+                "weight": round(weight, 4),
+            })
+
+    return edges
 
 
 def _load_dimension_map(conn: sqlite3.Connection) -> dict[str, dict]:
@@ -135,11 +196,15 @@ def compute_projection(db_path: str) -> dict:
         timestamps.append(ts)
 
     if not data:
-        return {"nodes": [], "clusters": [], "meta": {"count": 0}}
+        return {"nodes": [], "clusters": [], "edges": [], "meta": {"count": 0}}
 
     X = np.array(vectors)
     ts_arr = np.array(timestamps)
     n = len(data)
+    node_ids = [d["id"] for d in data]
+
+    # --- k-NN edges (computed in original 768d embedding space) ---
+    edges = _compute_knn_edges(X, node_ids)
 
     # --- 3D UMAP (semantic space) ---
     n_neighbors_3d = min(15, n - 1)
@@ -220,9 +285,12 @@ def compute_projection(db_path: str) -> dict:
     return {
         "nodes": nodes,
         "clusters": clusters,
+        "edges": edges,
         "meta": {
             "count": n,
             "n_clusters": n_clusters,
+            "n_edges": len(edges),
+            "knn_k": KNN_K,
             "method": "UMAP",
             "params_3d": {"n_neighbors": n_neighbors_3d, "min_dist": 0.3, "n_components": 3},
             "params_2d": {"n_neighbors": n_neighbors_2d, "min_dist": 0.3, "n_components": 2},

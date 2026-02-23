@@ -1,10 +1,11 @@
 import { Canvas } from "@react-three/fiber";
-import { type PropositionNode, type ClusterData, type LayoutMode } from "../../types/phase-space";
+import { type PropositionNode, type ClusterData, type EdgeData, type LayoutMode } from "../../types/phase-space";
 import { Scene } from "./Scene";
 
-export function PhaseSpace({ nodes, clusters, relevanceMap, showClusters, layoutMode, retrievalIds }: {
+export function PhaseSpace({ nodes, clusters, edges, relevanceMap, showClusters, layoutMode, retrievalIds }: {
   nodes: PropositionNode[];
   clusters: ClusterData[];
+  edges: EdgeData[];
   relevanceMap: Map<string, number>;
   showClusters: boolean;
   layoutMode: LayoutMode;
@@ -18,7 +19,7 @@ export function PhaseSpace({ nodes, clusters, relevanceMap, showClusters, layout
         style={{ background: "transparent" }}
       >
         <color attach="background" args={["#1a1a22"]} />
-        <Scene nodes={nodes} clusters={clusters} relevanceMap={relevanceMap}
+        <Scene nodes={nodes} clusters={clusters} edges={edges} relevanceMap={relevanceMap}
           showClusters={showClusters} layoutMode={layoutMode} retrievalIds={retrievalIds} />
       </Canvas>
     </div>
