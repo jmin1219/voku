@@ -91,3 +91,37 @@ The chat is the input modality. The phase space is interactive — the user can 
 ## What Voku Is Not
 
 It does not directly build the things that emerge from the fundamentals. Self-discovery, goal tracking, belief evolution — these are proof the system works, not features to be engineered. Voku builds the substrate. The emergences take care of themselves.
+
+---
+
+## Build Plan
+
+**Validated:** Spike A (Three.js phase space, Feb 18) ✔️ | Spike B (Anthropic streaming) — Thu Feb 20
+
+### Build 1 — The Shell (Fri Feb 21)
+Real layout, real components, no backend. Two panels: chat (left 30%) + phase space (right 70%). Messages go into shared state, phase space reacts via keyword scoring (same as spike). Mock data.
+
+**Done when:** Same behavior as spike, but architected as a real app with proper component boundaries using the design system. Ready for Build 2 to plug in a backend.
+
+**Components:**
+- `Workspace` — two-panel layout, owns message state
+- `ChatPanel` — message list + input
+- `PhaseSpace` — Three.js canvas (Scene, DataNode, EdgeLine extracted from spike)
+- Shared types in `types/` — NodeData, Message, etc.
+
+**Decisions:** No router (single-page), no state library (lift state to Workspace), keep design system tokens from globals.css, strip old Shell/Sidebar.
+
+### Build 2 — Live Conversation (Sat Feb 22 morning)
+Real LLM responses, real persistence. Backend endpoint `POST /chat` streams Anthropic response, stores both sides in SQLite. Frontend sends messages, renders streamed tokens, loads history on startup.
+
+**Done when:** Real conversation with Claude through Voku. Close app, reopen, history persists.
+
+### Build 3 — The Integration (Sat Feb 22 afternoon)
+Context assembly + phase space with real data. Two things:
+1. Retrieval injects prior propositions into system prompt — LLM response informed by history.
+2. Extraction produces propositions that become phase space nodes. Positions from embeddings (bge-base → PCA/UMAP → 3D).
+
+**Done when:** Day 1 conversation, return day 3, system references prior context unprompted. Phase space shows real data activating based on current message. Tier 0 Constraint #1 proven.
+
+### Existence Proof Target
+Builds 1-3 = the minimum vertical slice that proves "Day 3 meaningfully better than Day 1." Everything after this deepens the slice.
