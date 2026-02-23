@@ -50,8 +50,9 @@ export function ChatInput({
   return (
     <div
       style={{
-        padding: "var(--voku-space-3)",
+        padding: "var(--voku-space-3) var(--voku-space-4) var(--voku-space-4)",
         borderTop: "1px solid var(--voku-border-subtle)",
+        background: "var(--voku-bg-base)",
       }}
     >
       <textarea

@@ -294,7 +294,7 @@ export default function Workspace() {
       ref={containerRef}
       style={{ display: "flex", height: "100vh", width: "100vw", background: "var(--voku-bg-deep)" }}
     >
-      <div style={{ width: chatWidth, flexShrink: 0 }}>
+      <div style={{ width: chatWidth, flexShrink: 0, background: "var(--voku-bg-base)" }}>
         <ChatPanel
           messages={messages}
           inputValue={inputValue}

@@ -36,7 +36,7 @@ export function ChatMessages({
         flex: 1,
         overflowY: "auto",
         overflowX: "hidden",
-        padding: "var(--voku-space-3)",
+        padding: "var(--voku-space-3) var(--voku-space-4)",
       }}
     >
       {/* Load earlier conversations — dashed button at top of scroll */}
@@ -166,7 +166,7 @@ export function ChatMessages({
                 marginLeft: isUser ? "var(--voku-msg-indent)" : "0",
                 marginRight: isUser ? "0" : "var(--voku-msg-indent)",
                 textAlign: isUser ? "right" : "left",
-                opacity: isFocused ? (isLatest ? 1 : 0.7) : 0.2,
+                opacity: isFocused ? (isLatest ? 1 : 0.85) : 0.35,
                 whiteSpace: isUser ? "pre-wrap" : "normal",
                 transition: "opacity 0.3s ease",
               }}
