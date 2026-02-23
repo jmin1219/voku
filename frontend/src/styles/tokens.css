@@ -55,7 +55,62 @@
   --voku-font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --voku-font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
 
-  /* === Sizing === */
+  /* === Radii === */
   --voku-radius-sm: 4px;
   --voku-radius-md: 6px;
+  --voku-radius-lg: 10px;
+
+  /* === Type Scale ===
+   * Base: 15px — smaller than browser 16px default.
+   * Tool UI, not reading app. Intentional density without cramping.
+   * Each step is ~2px — small enough to feel cohesive, large enough to create hierarchy.
+   */
+  --voku-text-xs: 0.6875rem;    /* 11px — metadata, timestamps, mono labels */
+  --voku-text-sm: 0.8125rem;    /* 13px — button text, secondary info */
+  --voku-text-base: 0.9375rem;  /* 15px — body text, messages, input */
+  --voku-text-lg: 1.0625rem;    /* 17px — section headers */
+  --voku-text-xl: 1.25rem;      /* 20px — page title (rare) */
+
+  /* === Line Heights ===
+   * Leading controls vertical rhythm more than font-size does.
+   * tight: headers where whitespace wastes space
+   * normal: messages where you read in bursts
+   * relaxed: long-form where eyes need room to track lines
+   */
+  --voku-leading-tight: 1.3;
+  --voku-leading-normal: 1.6;
+  --voku-leading-relaxed: 1.8;
+
+  /* === Spacing Scale ===
+   * Base unit: 4px (0.25rem). Every value is a multiple.
+   * Constraint: only use these tokens for padding/margin/gap.
+   * Prevents the slow drift where 12px, 13px, 14px, 15px all coexist.
+   */
+  --voku-space-1: 0.25rem;   /* 4px  — tight inner gaps */
+  --voku-space-2: 0.5rem;    /* 8px  — icon/text gaps, compact padding */
+  --voku-space-3: 0.75rem;   /* 12px — standard padding, message gaps */
+  --voku-space-4: 1rem;      /* 16px — section padding */
+  --voku-space-6: 1.5rem;    /* 24px — major section gaps */
+  --voku-space-8: 2rem;      /* 32px — page-level whitespace */
+
+  /* === Component Sizing ===
+   * Fixed dimensions for structural elements.
+   * Chat width range defines the draggable constraint.
+   * Input heights define the textarea growth bounds.
+   */
+  --voku-chat-min-w: 320px;
+  --voku-chat-max-w: 560px;
+  --voku-chat-default-w: 420px;
+  --voku-input-min-h: 2.5rem;    /* 40px — single line */
+  --voku-input-max-h: 10rem;     /* 160px — ~6 lines, then scroll */
+  --voku-header-h: 2.75rem;      /* 44px — chat header */
+  --voku-msg-indent: 1.5rem;     /* message left/right offset for role alignment */
+  --voku-msg-max-w: 85%;         /* message bubble max width (unused until responsive) */
+
+  /* === Responsive ===
+   * Single breakpoint. Below this: chat fullscreen, phase space hidden.
+   * Declared as token for reference — actual media query uses the raw value.
+   * Not implemented yet — planted for Phase D (demo deployment).
+   */
+  --voku-bp-compact: 768px;
 }

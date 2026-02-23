@@ -16,8 +16,9 @@ export interface ConversationBoundary {
 }
 
 const API_BASE = "http://localhost:8000/api";
+// Chat width bounds — CSS tokens exist but JS needs raw values for drag math
 const MIN_CHAT_WIDTH = 320;
-const MAX_CHAT_WIDTH = 600;
+const MAX_CHAT_WIDTH = 560;
 const DEFAULT_CHAT_WIDTH = 420;
 const INITIAL_VISIBLE_CONVERSATIONS = 2;
 
@@ -214,8 +215,7 @@ export default function Workspace() {
     if (layoutMode === "time") setLayoutMode("cluster");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!inputValue.trim() || isStreaming) return;
 
     const userMessage: ChatMessage = { role: "user", content: inputValue.trim() };
@@ -307,13 +307,6 @@ export default function Workspace() {
           conversationStartIndices={conversationStartIndices}
           hasHiddenConversations={hasHiddenConversations}
           onLoadPrevious={loadPreviousConversations}
-          showClusters={showClusters}
-          onToggleClusters={() => setShowClusters(!showClusters)}
-          layoutMode={layoutMode}
-          onCycleLayout={cycleLayoutMode}
-          nodeCount={nodes.length}
-          clusterCount={clusters.length}
-          relevanceMap={relevanceMap}
         />
       </div>
 
