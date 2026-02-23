@@ -32,6 +32,7 @@ export function ChatMessages({
 
   return (
     <div
+      className="scrollbar-hidden"
       style={{
         flex: 1,
         overflowY: "auto",
@@ -52,10 +53,11 @@ export function ChatMessages({
             border: "1px dashed var(--voku-border-default)",
             borderRadius: "var(--voku-radius-md)",
             color: "var(--voku-text-tertiary)",
-            fontSize: "var(--voku-text-sm)",
+            fontSize: "var(--voku-text-xs)",
             fontFamily: "var(--voku-font-mono)",
             cursor: "pointer",
             transition: "all 0.15s ease",
+            opacity: 0.5,
           }}
           onMouseEnter={(e) => {
             (e.target as HTMLElement).style.borderColor = "var(--voku-accent-gold-dim)";
@@ -158,15 +160,15 @@ export function ChatMessages({
                   : "var(--voku-bg-deep)",
                 borderRadius: "var(--voku-radius-md)",
                 borderLeft: !isUser
-                  ? `2px solid ${isFocused ? "var(--voku-assistant-accent)" : "var(--voku-border-subtle)"}`
+                  ? `3px solid ${isFocused ? "var(--voku-assistant-accent)" : "var(--voku-border-subtle)"}`
                   : "none",
                 borderRight: isUser
-                  ? `2px solid ${isFocused ? "var(--voku-user-accent)" : "var(--voku-border-subtle)"}`
+                  ? `3px solid ${isFocused ? "var(--voku-user-accent)" : "var(--voku-border-subtle)"}`
                   : "none",
                 marginLeft: isUser ? "var(--voku-msg-indent)" : "0",
                 marginRight: isUser ? "0" : "var(--voku-msg-indent)",
                 textAlign: isUser ? "right" : "left",
-                opacity: isFocused ? (isLatest ? 1 : 0.85) : 0.35,
+                opacity: isFocused ? (isLatest ? 1 : 0.85) : 0.5,
                 whiteSpace: isUser ? "pre-wrap" : "normal",
                 transition: "opacity 0.3s ease",
               }}

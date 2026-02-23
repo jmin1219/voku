@@ -45,3 +45,12 @@ button {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--voku-border-focus);
 }
+
+/* Hidden scrollbar — scrollable but invisible (chat panel) */
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
