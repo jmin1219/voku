@@ -2,23 +2,28 @@ import { useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { NODES } from "../../types/phase-space";
+import { type PropositionNode, getNodePosition, type LayoutMode } from "../../types/phase-space";
 
-export function CameraController({ relevanceMap }: { relevanceMap: Map<string, number> }) {
+export function CameraController({ nodes, relevanceMap, layoutMode }: {
+  nodes: PropositionNode[];
+  relevanceMap: Map<string, number>;
+  layoutMode?: LayoutMode;
+}) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
   const targetPos = useRef(new THREE.Vector3(0, 0, 14));
   const targetLookAt = useRef(new THREE.Vector3(0, 0, 0));
   const isAnimating = useRef(false);
+  const layout = layoutMode || "cluster";
 
   useEffect(() => {
-    const activeNodes = NODES.filter((n) => (relevanceMap.get(n.id) || 0) > 0.3);
+    const activeNodes = nodes.filter((n) => (relevanceMap.get(n.id) || 0) > 0.3);
 
     if (activeNodes.length === 0) {
       targetPos.current.set(0, 0, 14);
       targetLookAt.current.set(0, 0, 0);
     } else {
-      const positions = activeNodes.map((n) => n.position);
+      const positions = activeNodes.map((n) => getNodePosition(n, layout));
       const min = [Infinity, Infinity, Infinity];
       const max = [-Infinity, -Infinity, -Infinity];
       for (const p of positions) {
@@ -47,7 +52,7 @@ export function CameraController({ relevanceMap }: { relevanceMap: Map<string, n
     }
 
     isAnimating.current = true;
-  }, [relevanceMap]);
+  }, [relevanceMap, nodes, layout]);
 
   useFrame(() => {
     if (!isAnimating.current) return;
@@ -58,7 +63,6 @@ export function CameraController({ relevanceMap }: { relevanceMap: Map<string, n
       controlsRef.current.update();
     }
 
-    // Stop animating once close enough — let OrbitControls take over
     const posDist = camera.position.distanceTo(targetPos.current);
     const lookDist = controlsRef.current
       ? controlsRef.current.target.distanceTo(targetLookAt.current)

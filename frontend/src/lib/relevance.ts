@@ -1,6 +1,6 @@
-import type { FixtureNode } from "../types/phase-space";
+import type { PropositionNode } from "../types/phase-space";
 
-export function scoreRelevance(message: string, node: FixtureNode): number {
+export function scoreRelevance(message: string, node: PropositionNode): number {
   const lower = message.toLowerCase();
   const words = lower.split(/\s+/).filter((w) => w.length > 2);
   let score = 0;

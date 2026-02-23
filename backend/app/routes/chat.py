@@ -6,6 +6,8 @@ Build 2: POST /chat streams responses, persists messages.
 Build 3: Context assembly — retrieval injects prior propositions into system prompt.
 """
 
+import json
+
 import anthropic
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -13,34 +15,34 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.services.conversation.service import ConversationService
-from app.services.storage.sqlite_storage import SQLiteStorage
-from app.services.embedding.bge import BGEBaseEmbedding
-from app.services.retrieval import RetrievalService
+from app.dependencies import retrieval as _retrieval
 
 router = APIRouter(prefix="/api", tags=["api"])
 
-# Initialize retrieval stack (loaded once at module level)
-_storage = SQLiteStorage(settings.propositions_db_path)
-_embedder = BGEBaseEmbedding()
-_retrieval = RetrievalService(_storage, _embedder)
 
+def _build_system_prompt(user_message: str, limit: int = 5) -> tuple[str | None, list[str]]:
+    """Retrieve relevant propositions and format as system context.
 
-def _build_system_prompt(user_message: str, limit: int = 8) -> str | None:
-    """Retrieve relevant propositions and format as system context."""
+    Returns:
+        (system_prompt, retrieval_ids) — prompt may be None if no results.
+        retrieval_ids is always a list (possibly empty).
+    """
     results = _retrieval.retrieve(
         query=user_message,
         limit=limit,
-        temporal_weight=0.0,
-        similarity_threshold=0.3,
+        temporal_weight=0.3,
+        similarity_threshold=0.45,
     )
     if not results:
-        return None
+        return None, []
+
+    retrieval_ids = [r.proposition_id for r in results]
 
     context_lines = []
     for r in results:
         context_lines.append(f"- [{r.node_type}] {r.text} (confidence: {r.confidence:.1f})")
 
-    return (
+    system = (
         "You are Voku, a personal context engine. You have access to the user's "
         "prior knowledge — propositions extracted from their past conversations. "
         "Use this context naturally to inform your responses. Don't list the propositions "
@@ -48,6 +50,8 @@ def _build_system_prompt(user_message: str, limit: int = 8) -> str | None:
         "## Relevant context from prior conversations:\n"
         + "\n".join(context_lines)
     )
+
+    return system, retrieval_ids
 
 
 class ChatRequest(BaseModel):
@@ -74,12 +78,16 @@ async def chat(request: ChatRequest):
     service.add_message(conversation_id, role="user", content=last_message["content"])
 
     # Build context-aware system prompt from retrieved propositions
-    system_prompt = _build_system_prompt(last_message["content"])
+    system_prompt, retrieval_ids = _build_system_prompt(last_message["content"])
 
     # Stream from Anthropic, persist assistant message after completion
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
     def generate():
+        # First line: JSON metadata with retrieval IDs
+        # Frontend parses this before switching to text stream mode
+        yield json.dumps({"retrieval_ids": retrieval_ids}) + "\n"
+
         buffer = []
         try:
             stream_kwargs = {
@@ -107,6 +115,17 @@ async def chat(request: ChatRequest):
         media_type="text/plain",
         headers={"X-Conversation-Id": conversation_id},
     )
+
+
+@router.post("/conversations")
+def create_conversation():
+    """Create an empty conversation. Called when user clicks +new."""
+    service = ConversationService(settings.db_path)
+    try:
+        conv = service.create_conversation()
+        return {"id": conv.id, "created_at": conv.created_at}
+    finally:
+        service.close()
 
 
 @router.get("/history")

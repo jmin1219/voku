@@ -1,8 +1,10 @@
-import fixtureData from "../data/fixtures.json";
+// --- Layout modes ---
+
+export type LayoutMode = "cluster" | "type" | "time";
 
 // --- Interfaces ---
 
-export interface FixtureNode {
+export interface PropositionNode {
   id: string;
   label: string;
   fullText: string;
@@ -10,7 +12,10 @@ export interface FixtureNode {
   confidence: number;
   sourceFile: string;
   eventTimeframe: string | null;
-  position: [number, number, number];
+  createdAt: string;
+  age: number; // 0 = oldest, 1 = newest
+  position: [number, number, number];       // 3D UMAP (semantic)
+  positionTime: [number, number, number];   // 2D UMAP + time Z axis (developmental)
   keywords: string[];
   cluster: number;
 }
@@ -23,39 +28,46 @@ export interface ClusterData {
   label: string;
 }
 
+// --- Position helper ---
+
+export function getNodePosition(node: PropositionNode, layout: LayoutMode): [number, number, number] {
+  if (layout === "time") return node.positionTime;
+  return node.position;
+}
+
 // --- Color Constants ---
 
 export const TYPE_COLORS: Record<string, string> = {
-  stance: "#60a5fa",
-  event: "#4ade80",
-  intention: "#fbbf24",
+  stance: "#4a78a8",     // Medium blue
+  event: "#4a8a5e",      // Medium green
+  intention: "#a07830",  // Warm amber
 };
 
 export const CLUSTER_COLORS = [
-  "#f87171",
-  "#fb923c",
-  "#fbbf24",
-  "#a3e635",
-  "#34d399",
-  "#22d3ee",
-  "#60a5fa",
-  "#a78bfa",
-  "#e879f9",
-  "#fb7185",
-  "#fdba74",
-  "#bef264",
-  "#6ee7b7",
-  "#67e8f9",
-  "#93c5fd",
-  "#c4b5fd",
+  "#b05555",   // brick
+  "#b07840",   // sienna
+  "#9a8530",   // olive gold
+  "#5a8a40",   // fern
+  "#3a8a6a",   // jade
+  "#3a7a8a",   // ocean
+  "#4a6a9a",   // denim
+  "#6a5a9a",   // iris
+  "#8a5080",   // plum
+  "#b05a5a",   // coral
+  "#8a7050",   // umber
+  "#5a8a50",   // clover
+  "#3a8a7a",   // teal
+  "#4a7a9a",   // cadet
+  "#6a6a9a",   // indigo
+  "#7a5a8a",   // grape
 ];
 
-// --- Loaded Fixture Data ---
+// --- Time gradient ---
+// age: 0 = oldest (cool slate) → 1 = newest (warm gold)
 
-interface FixtureFile {
-  nodes: FixtureNode[];
-  clusters: ClusterData[];
+export function timeColor(age: number): string {
+  const r = Math.round(100 + age * 54);  // 100 → 154
+  const g = Math.round(120 + age * 3);   // 120 → 123
+  const b = Math.round(160 - age * 100); // 160 → 60
+  return `rgb(${r}, ${g}, ${b})`;
 }
-
-export const NODES: FixtureNode[] = (fixtureData as FixtureFile).nodes;
-export const CLUSTERS: ClusterData[] = (fixtureData as FixtureFile).clusters;

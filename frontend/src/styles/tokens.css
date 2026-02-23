@@ -1,0 +1,58 @@
+/*
+ * Voku Design Tokens — Warm Daylight
+ *
+ * Warm cream/parchment base with soft navy and gold accents.
+ * Journaling-app warmth, light mode.
+ */
+
+:root {
+  /* === Base surfaces === */
+  --voku-bg-deep: #f5f0e8;          /* Phase space background */
+  --voku-bg-base: #faf7f2;          /* Chat panel background */
+  --voku-bg-raised: #ffffff;         /* Message bubbles, cards */
+  --voku-bg-hover: #f0ebe1;         /* Hover states */
+
+  /* === Borders === */
+  --voku-border-subtle: #e8e0d4;    /* Panel dividers */
+  --voku-border-default: #d6cfc2;   /* Input borders */
+  --voku-border-focus: #b8a88a;     /* Focused inputs */
+
+  /* === Text === */
+  --voku-text-primary: #2c2620;     /* Main text — warm dark brown */
+  --voku-text-secondary: #6b6358;   /* Dimmed text */
+  --voku-text-tertiary: #99907f;    /* Very subtle text, metadata */
+  --voku-text-muted: #c4baa8;       /* Ghost text, placeholders */
+
+  /* === Accents === */
+  --voku-accent-gold: #9a7b3c;      /* Primary accent — warm gold */
+  --voku-accent-gold-dim: #b8a070;  /* Dimmed gold */
+  --voku-accent-gold-glow: #7a6230; /* Dark gold for emphasis */
+
+  /* === Role colors (chat) === */
+  --voku-user-accent: #5a72a0;      /* Muted steel blue for user messages */
+  --voku-user-bg: #f0f2f8;          /* User message background */
+  --voku-assistant-accent: #5a8a5e; /* Sage green for assistant */
+  --voku-assistant-bg: #f0f5f0;     /* Assistant message background */
+
+  /* === Node type colors (phase space — need contrast on light bg) === */
+  --voku-type-stance: #4a78a8;      /* Medium blue */
+  --voku-type-event: #4a8a5e;       /* Medium green */
+  --voku-type-intention: #a07830;   /* Warm amber */
+
+  /* === Phase space specific === */
+  --voku-phase-bg: #eae4da;         /* Slightly darker than base for depth */
+  --voku-cluster-opacity: 0.08;
+
+  /* === Divider (draggable) === */
+  --voku-divider-width: 4px;
+  --voku-divider-color: var(--voku-border-subtle);
+  --voku-divider-hover: var(--voku-accent-gold-dim);
+
+  /* === Typography === */
+  --voku-font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --voku-font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  /* === Sizing === */
+  --voku-radius-sm: 4px;
+  --voku-radius-md: 6px;
+}

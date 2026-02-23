@@ -43,7 +43,11 @@ if settings.environment == "development":
 
 # Register routes
 from app.routes.chat import router as chat_router
+from app.routes.extract import router as extract_router
+from app.routes.propositions import router as propositions_router
 app.include_router(chat_router)
+app.include_router(extract_router)
+app.include_router(propositions_router)
 
 
 @app.get("/")
