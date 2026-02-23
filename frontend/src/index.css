@@ -46,11 +46,30 @@ button {
   background: var(--voku-border-focus);
 }
 
-/* Hidden scrollbar — scrollable but invisible (chat panel) */
+/* Hidden scrollbar — scrollable but invisible (textarea input) */
 .scrollbar-hidden {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+/* Fade-in scrollbar — appears on hover, hidden at rest (chat messages) */
+.scrollbar-fade::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-fade::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-fade::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+.scrollbar-fade:hover::-webkit-scrollbar-thumb {
+  background: var(--voku-border-default);
+}
+.scrollbar-fade:hover::-webkit-scrollbar-thumb:hover {
+  background: var(--voku-border-focus);
 }

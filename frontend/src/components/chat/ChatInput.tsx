@@ -57,6 +57,7 @@ export function ChatInput({
     >
       <textarea
         ref={textareaRef}
+        className="scrollbar-hidden"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}

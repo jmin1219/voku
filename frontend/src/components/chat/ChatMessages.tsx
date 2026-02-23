@@ -32,7 +32,7 @@ export function ChatMessages({
 
   return (
     <div
-      className="scrollbar-hidden"
+      className="scrollbar-fade"
       style={{
         flex: 1,
         overflowY: "auto",
