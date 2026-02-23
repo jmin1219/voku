@@ -48,6 +48,8 @@ class SQLiteStorage(StorageService):
                 confidence REAL DEFAULT 0.5,
                 supersedable INTEGER DEFAULT 1,
                 event_timeframe TEXT,
+                superseded_in_conversation INTEGER DEFAULT 0,
+                conversation_summary TEXT,
                 source_type TEXT DEFAULT 'conversation',
                 source_char_start INTEGER,
                 source_char_end INTEGER,
@@ -109,6 +111,8 @@ class SQLiteStorage(StorageService):
             confidence=row["confidence"],
             supersedable=bool(row["supersedable"]) if row["supersedable"] is not None else True,
             event_timeframe=row["event_timeframe"],
+            superseded_in_conversation=bool(row["superseded_in_conversation"]) if "superseded_in_conversation" in row.keys() and row["superseded_in_conversation"] is not None else False,
+            conversation_summary=row["conversation_summary"] if "conversation_summary" in row.keys() else None,
             source_type=row["source_type"],
             created_at=row["created_at"],
             session_id=row["session_id"],
@@ -126,10 +130,11 @@ class SQLiteStorage(StorageService):
         self._conn.execute(
             """INSERT INTO propositions
             (id, text, node_type, confidence, supersedable, event_timeframe,
+             superseded_in_conversation, conversation_summary,
              source_type, source_char_start, source_char_end, source_file,
              created_at, session_id, message_index, message_position,
              domain_tags, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 proposition.id,
                 proposition.text,
@@ -137,6 +142,8 @@ class SQLiteStorage(StorageService):
                 proposition.confidence,
                 int(proposition.supersedable),
                 proposition.event_timeframe,
+                int(proposition.superseded_in_conversation),
+                proposition.conversation_summary,
                 proposition.source_type,
                 proposition.source_char_start,
                 proposition.source_char_end,

@@ -57,6 +57,7 @@ class GroqProvider(Provider):
         *,
         system_prompt: Optional[str] = None,
         model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> str:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -70,7 +71,7 @@ class GroqProvider(Provider):
         payload = {
             "model": model or "llama-3.3-70b-versatile",
             "messages": messages,
-            "max_tokens": 1024,
+            "max_tokens": max_tokens or 1024,
             "response_format": {
                 "type": "json_object"
             },  # Ensure Groq returns a valid JSON object but does NOT guarantee JSON matches schema

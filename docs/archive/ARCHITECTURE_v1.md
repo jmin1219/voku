@@ -224,14 +224,24 @@ Example: "I went to 9 schools K-12, which is why I have this hypervigilant inter
 - Event (historical): "Attended 9 schools during K-12"
 - Stance (identity): "K-12 school instability is the source of hypervigilant self-evaluation pattern"
 
-### 5.4 Source Filtering Rules
+### 5.4 Opening Message as Behavioral Telemetry (v1)
+
+The first message in every conversation is a voluntary state snapshot: time, location, recent events, current intention. Closest to uncontaminated measurement — user hasn't been shaped by AI responses yet.
+
+Extract separately as structured `opening_snapshot` with fields: `{time, location, recent_event, stated_intention, inferred_state}`. Seeds session context metadata for extraction prompt. Over 60+ conversations, accumulates into a structured behavioral dataset for pattern detection.
+
+**Selection bias:** Opening messages sample from activated states only. Mundane middle doesn't generate conversations. Good for "what triggers sessions" — poor for broad behavioral patterns. Full behavioral data requires external sources (v3).
+
+**v0 implementation:** Not extracted separately. v1 feature.
+
+### 5.5 Source Filtering Rules
 
 - **Extract from:** User messages only
 - **Use as context:** AI messages (for comprehension, not proposition extraction)
 - **Strip:** Thinking blocks, tool calls, base64 images, footer lines
 - **Preserve:** Provenance fields (source_char_start/end, source_file, session_id, message_index)
 
-### 5.5 User Declarations (Direct Input Channel)
+### 5.6 User Declarations (Direct Input Channel)
 
 Not all input should pass through conversation extraction. A declarations file provides a direct, unmediated channel for the user to seed or correct Voku’s model. This solves three problems:
 
@@ -279,6 +289,10 @@ New stance → find semantically similar existing stances (embedding search)
     → UNRELATED: skip
 ```
 
+**Supersession provenance:** SUPERSEDES edges should carry `evidence_conversation_ids` — which conversations contributed to the belief change. Conversation-level extraction already co-extracts events, stances, and intentions with shared provenance. For v0 Phase 3: add the field, populate manually for golden set cases. For v1: automatic evidence linking via temporal proximity + semantic similarity of events to new stance.
+
+**Entrenchment heuristic for resolution:** When both propositions have high entrenchment, surface to user rather than auto-resolving. When one has low entrenchment, auto-resolve. Simple heuristic that improves the pipeline without adding complexity.
+
 **v0 implementation:** This IS the core of Milestone 3 (process engine). Spike S4 validates LLM classification accuracy before building.
 
 ### 6.2 Event Pipeline (v1+)
@@ -308,6 +322,25 @@ New intention → track against subsequent events
 
 **v0 implementation:** Intentions stored but not tracked against events. Gap detection is v1.
 
+### 6.4 Consolidation Scheduler — The "Exhale" (v1)
+
+The breathing architecture: inhale is goal-agnostic (extract and store everything faithfully). Exhale is multi-goal (consolidate through recently-active lenses).
+
+The consolidation scheduler runs periodically and replays accumulated propositions through N most recently active goal contexts (derived from session metadata across recent conversations, weighted by recency and frequency). For each proposition in the consolidation window:
+
+1. Compute activation against each goal context (embedding similarity + connection to other activated propositions)
+2. Propositions exceeding threshold in 3+ contexts → entrenchment boost (empirically cross-domain)
+3. Single-context activation → current entrenchment maintained
+4. Zero-context activation → power-law decay applied
+
+This discovers entrenchment from data rather than requiring manual assignment. "I build tools to help humans see themselves" activates in career, Voku, self-analysis, and relationship contexts → empirically identity-level. "I prefer SQLite over Postgres" activates only in Voku context → empirically preference-level.
+
+Candidate internal nodes emerge from propositions that consistently co-activate across contexts. System suggests clusters; user names, confirms, adjusts boundaries. Collaborative taxonomy, not automatic abstraction.
+
+**Key principle:** Storage is goal-agnostic (ADR_002). Consolidation is multi-goal. The intelligence is in the evaluation, not the filtering. Nothing gets dropped — propositions get scored.
+
+**v0 implementation:** No consolidation. v1 feature requiring enough accumulated data and distinct goal contexts.
+
 ---
 
 ## 7. Retrieval Model
@@ -332,12 +365,16 @@ This circularity is Voku's core value proposition, not a limitation. Every other
 
 ### 7.3 Evaluation (v0, Critical)
 
+**Reframe (Feb 16):** The ablation tests **model accuracy over time**, not retrieval improvement. Retrieval is the measurement instrument. Voku isn't competing with RAG systems. It's demonstrating that temporal organization produces a more accurate representation of who someone is *right now*. Frame for portfolio: "temporal organization produces a more accurate model of evolving self-knowledge, demonstrated through retrieval accuracy as proxy metric."
+
 **Ablation study:** Three-way comparison on golden test set.
 1. No context (baseline)
 2. Flat retrieval (embedding similarity only)
 3. Temporal retrieval (similarity + status + recency)
 
 **Key metric:** Temporal accuracy — % of queries where temporal retrieval returns the *current* correct belief vs flat retrieval returning an outdated one.
+
+**Competitive positioning (from research report):** MemoryStress benchmark found only 21.4% accuracy on contradiction resolution across all systems tested. If Voku achieves even 50% on contradiction/supersession cases, it more than doubles the field's best.
 
 **Go/no-go gate:** End-to-end temporal accuracy must exceed 70% on golden set temporal cases before proceeding to full build. Below 70% → narrow scope or simplify.
 
@@ -437,12 +474,16 @@ Beyond existing tables (propositions, embeddings, edges, thread_surfaces):
 - Extend `source_type` enum: conversation | user_declared | standalone_text
 - Add `message_position` to propositions (integer) — position within conversation, confidence signal (earlier = less AI-mediated)
 - Add `shareable` to propositions (boolean, default true) — privacy gate for MCP serving. User sets via viewer/editor.
+- Add `evidence_conversation_ids` to edges table (JSON array) — which conversations contributed to belief change. Populated manually for golden set in Phase 3, automatic linking in v1.
 
 ### Schema Reserved for v1+ (create tables but don't populate)
 - `abstractions` — internal nodes (leaf → internal → module hierarchy)
 - `contains_edges` — hierarchy relationships
 - `synthesis_nodes` — Voku-generated patterns/gaps/trajectories
 - `conversation_metadata` — opening_mode, trajectory, closing_state per conversation
+- `opening_snapshots` — structured state from first message: time, location, recent_event, stated_intention, inferred_state
+- `session_contexts` — goal contexts active per session, weighted by recency/frequency. Used by consolidation scheduler.
+- `consolidation_runs` — log of exhale cycles: which propositions evaluated, which contexts used, entrenchment changes applied
 
 ---
 
@@ -465,6 +506,17 @@ Seven domains researched: signal detection theory, dynamical systems (cusp catas
 - Belief network connectivity influencing decay behavior
 - Transition detection via variance monitoring (critical slowing down)
 - Feedback loop damping mechanisms (circuit breakers, shadow model)
+- Three-valued belief model: aspirational/operational/acknowledged_tension (requires behavioral pattern detection first)
+
+**Incorporated from Feb 16 deep research report:**
+- Behavioral inference framing: "revealed operational priorities" not "implicit beliefs" (Youyou et al. PNAS: 10 Likes outperform colleague, 300 outperform spouse)
+- Self-report vs behavioral measures correlate r=0.00 to 0.20 (Dang, King, Inzlicht 2020) — validates conversation extraction as limited signal, not ground truth
+- Measurement reactivity: completing questionnaires increased physical activity 20 min/day (French & Sutton) — citable evidence for "interaction is the intervention"
+- MemoryStress benchmark: 21.4% contradiction resolution across all systems — Voku's competitive positioning
+- ACT-R activation function: `Activation = Base-level + Spreading + Noise` with power-law base-level — aligns with existing decay model, adds spreading activation for v1
+- LongMemEval: round-level storage optimal granularity — validates conversation-level extraction (1,758 → 144)
+- Entrenchment heuristic for contradiction resolution: auto-resolve low-entrenchment, surface high-entrenchment to user
+- Go-CLS selective consolidation: only memories aiding generalization should consolidate — informs v1 consolidation scheduler design
 
 **Already present in architecture:**
 - Justification chains (provenance fields since v0)
@@ -485,6 +537,7 @@ Seven domains researched: signal detection theory, dynamical systems (cusp catas
 | Build Sprint | Feb 13-14, 2026 | M1 complete (29/29), golden set database (332 propositions) |
 | Observation Engine | Feb 15, 2026 | Node types 7→3, cognitive operations layer, AI message contamination discovered, Billy feature resurrection |
 | Cross-Domain Research | Feb 15, 2026 | Seven-domain analysis validates architecture, adds power-law decay, eigenform framing |
+| Breathing Architecture | Feb 16, 2026 | Goal-agnostic storage + multi-goal consolidation. Opening messages as telemetry. Supersession provenance. Ablation = model accuracy. Eigenform → collaborative taxonomy. Advisory model rejected. |
 
 ---
 
@@ -504,6 +557,14 @@ Seven domains researched: signal detection theory, dynamical systems (cusp catas
 | Confidence = system certainty | Not belief strength. Absence of evidence increases uncertainty about model accuracy | Feb 15 |
 | Architecture document before implementation | Top-down validation prevents analyzing what exists before questioning whether it's correct | Feb 15 |
 | Demo timeline flexible | "Build the right thing" > hitting March 31. Thesis quality > schedule adherence | Feb 15 |
+| Breathing architecture: goal-agnostic storage, multi-goal consolidation | Inhale stores everything (ADR_002). Exhale evaluates through N recent goal contexts. Intelligence in evaluation, not filtering. | Feb 16 |
+| Multi-context consolidation discovers entrenchment | Cross-context activation replaces manual entrenchment assignment. 3+ contexts = identity-level. 1 context = preference-level. | Feb 16 |
+| Supersession provenance | SUPERSEDES edges carry evidence_conversation_ids. Preserve WHY beliefs changed. v0: manual for golden set. v1: automatic. | Feb 16 |
+| Opening messages as behavioral telemetry | First message = voluntary state snapshot. Extract as structured opening_snapshot. Bridges to structured data (v3). Selection bias: activated states only. | Feb 16 |
+| Ablation framed as model accuracy, not retrieval | Retrieval is measurement instrument. Selling point: temporal org → accurate model of evolving self-knowledge. | Feb 16 |
+| MEM1-style write buffer rejected | Reintroduces goal-relative abstraction loss at storage time. Keep storage goal-agnostic per ADR_002. | Feb 16 |
+| Advisory model rejected | Mirror, not advisor. Curation through revelation, not recommendation. | Feb 16 |
+| Module nodes = collaborative taxonomy | System suggests clusters from co-activation. User names, confirms, adjusts. Not automatic abstraction. | Feb 16 |
 | SQLite + numpy architecture | Single file, no external services, portable. Minimum viable complexity | Feb 11 |
 | Spec-driven development | CONSTRAINTS.md + specs. Tests before implementation | Feb 11 |
 | bge-base over EmbeddingGemma | Spike S2: bge-base wins on retrieval quality, no Ollama dependency | Feb 13 |

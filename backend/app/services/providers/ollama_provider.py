@@ -26,6 +26,7 @@ class OllamaProvider(Provider):
     *,
     system_prompt: Optional[str] = None,
     model: Optional[str] = None,
+    max_tokens: Optional[int] = None,
   ) -> str:
     payload = {
       "model": model or "llama3.1:8b",

@@ -17,6 +17,7 @@ class Provider(ABC):
         *,  # Everything after this must be a keyword argument (ie. caller must explicitly name parameters)
         system_prompt: Optional[str] = None,
         model: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> str:
         """Text completion. For future reasoning tasks."""
         pass

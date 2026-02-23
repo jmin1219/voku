@@ -22,6 +22,8 @@ class StoredProposition:
     created_at: str  # ISO 8601
     supersedable: bool = True  # Can this be replaced by future understanding?
     event_timeframe: Optional[str] = None  # recent | historical | ongoing (events only)
+    superseded_in_conversation: bool = False  # True if position changed within same conversation
+    conversation_summary: Optional[str] = None  # Summary from conversation-level extraction
     session_id: Optional[str] = None
     message_index: Optional[int] = None
     message_position: Optional[int] = None  # Position in conversation (earlier = less AI-mediated)

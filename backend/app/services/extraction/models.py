@@ -28,6 +28,7 @@ class Proposition:
     confidence: float  # 0.0–1.0
     supersedable: bool  # True if this could be replaced by future understanding
     event_timeframe: Optional[str] = None  # recent | historical | ongoing (events only)
+    superseded_in_conversation: bool = False  # True if position changed within same conversation
 
     def __post_init__(self):
         """Validate field values."""
