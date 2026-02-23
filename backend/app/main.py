@@ -33,11 +33,17 @@ app = FastAPI(title="Voku", version="0.4.0", lifespan=lifespan)
 if settings.environment == "development":
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.frontend_url],
+        allow_origins=[settings.frontend_url, "http://localhost:5175"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["X-Conversation-Id"],
     )
+
+
+# Register routes
+from app.routes.chat import router as chat_router
+app.include_router(chat_router)
 
 
 @app.get("/")

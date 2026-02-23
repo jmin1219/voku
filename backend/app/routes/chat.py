@@ -1,14 +1,141 @@
 """
-API routes — will be populated as components are built.
+Chat API routes — live conversation with Anthropic streaming.
 
-Current: placeholder only.
-TODO: Add ingestion endpoint (Component 1.4)
-TODO: Add retrieval endpoint (Component 2.2)
+Build 2: POST /chat streams responses, persists messages.
+         GET /history returns stored conversations.
+Build 3: Context assembly — retrieval injects prior propositions into system prompt.
 """
 
-from fastapi import APIRouter
+import anthropic
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+
+from app.config import settings
+from app.services.conversation.service import ConversationService
+from app.services.storage.sqlite_storage import SQLiteStorage
+from app.services.embedding.bge import BGEBaseEmbedding
+from app.services.retrieval import RetrievalService
 
 router = APIRouter(prefix="/api", tags=["api"])
+
+# Initialize retrieval stack (loaded once at module level)
+_storage = SQLiteStorage(settings.propositions_db_path)
+_embedder = BGEBaseEmbedding()
+_retrieval = RetrievalService(_storage, _embedder)
+
+
+def _build_system_prompt(user_message: str, limit: int = 8) -> str | None:
+    """Retrieve relevant propositions and format as system context."""
+    results = _retrieval.retrieve(
+        query=user_message,
+        limit=limit,
+        temporal_weight=0.0,
+        similarity_threshold=0.3,
+    )
+    if not results:
+        return None
+
+    context_lines = []
+    for r in results:
+        context_lines.append(f"- [{r.node_type}] {r.text} (confidence: {r.confidence:.1f})")
+
+    return (
+        "You are Voku, a personal context engine. You have access to the user's "
+        "prior knowledge — propositions extracted from their past conversations. "
+        "Use this context naturally to inform your responses. Don't list the propositions "
+        "back to the user — weave the knowledge into your response as if you already know them.\n\n"
+        "## Relevant context from prior conversations:\n"
+        + "\n".join(context_lines)
+    )
+
+
+class ChatRequest(BaseModel):
+    conversation_id: str | None = None
+    messages: list[dict]  # [{"role": "user", "content": "..."}]
+
+
+@router.post("/chat")
+async def chat(request: ChatRequest):
+    """Stream a response from Anthropic with retrieved context."""
+    service = ConversationService(settings.db_path)
+
+    # Create or reuse conversation
+    if request.conversation_id is None:
+        conv = service.create_conversation()
+        conversation_id = conv.id
+    else:
+        conversation_id = request.conversation_id
+
+    # Persist user message immediately
+    last_message = request.messages[-1]
+    if last_message.get("role") != "user":
+        raise HTTPException(status_code=400, detail="Last message must be from user")
+    service.add_message(conversation_id, role="user", content=last_message["content"])
+
+    # Build context-aware system prompt from retrieved propositions
+    system_prompt = _build_system_prompt(last_message["content"])
+
+    # Stream from Anthropic, persist assistant message after completion
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+
+    def generate():
+        buffer = []
+        try:
+            stream_kwargs = {
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 1024,
+                "messages": request.messages,
+            }
+            if system_prompt:
+                stream_kwargs["system"] = system_prompt
+
+            with client.messages.stream(**stream_kwargs) as stream:
+                for text in stream.text_stream:
+                    buffer.append(text)
+                    yield text
+            # Stream complete — persist full response
+            full_response = "".join(buffer)
+            service.add_message(
+                conversation_id, role="assistant", content=full_response
+            )
+        finally:
+            service.close()
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/plain",
+        headers={"X-Conversation-Id": conversation_id},
+    )
+
+
+@router.get("/history")
+def history():
+    """Return all conversations with their messages."""
+    service = ConversationService(settings.db_path)
+    try:
+        conversations = service.list_conversations()
+        result = []
+        for conv in conversations:
+            messages = service.get_conversation_messages(conv.id)
+            result.append({
+                "id": conv.id,
+                "created_at": conv.created_at,
+                "updated_at": conv.updated_at,
+                "messages": [
+                    {
+                        "id": msg.id,
+                        "role": msg.role,
+                        "content": msg.content,
+                        "thinking": msg.thinking,
+                        "created_at": msg.created_at,
+                    }
+                    for msg in messages
+                ],
+            })
+        return result
+    finally:
+        service.close()
 
 
 @router.get("/status")
