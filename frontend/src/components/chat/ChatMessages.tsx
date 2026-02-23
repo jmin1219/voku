@@ -2,6 +2,20 @@ import { useRef, useEffect } from "react";
 import { Markdown } from "./Markdown";
 import type { ChatMessage } from "../../pages/Workspace";
 
+/** Format ISO timestamp to "5:42 PM" */
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+/** Format ISO timestamp to "Sun, Feb 22" */
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+}
+
 /**
  * ChatMessages — Scrollable message list with conversation boundaries.
  *
@@ -132,7 +146,7 @@ export function ChatMessages({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {isFocused ? "current" : "previous"}
+                  {isFocused ? `current · ${formatDate(msg.createdAt)}` : formatDate(msg.createdAt)}
                 </span>
                 <div
                   style={{
@@ -184,9 +198,17 @@ export function ChatMessages({
                     fontWeight: 500,
                     letterSpacing: "0.04em",
                     textTransform: "lowercase",
+                    display: "flex",
+                    justifyContent: isUser ? "flex-end" : "flex-start",
+                    gap: "var(--voku-space-2)",
                   }}
                 >
-                  {isUser ? "you" : "claude"}
+                  <span>{isUser ? "you" : "claude"}</span>
+                  {msg.createdAt && (
+                    <span style={{ color: "var(--voku-text-muted)", fontWeight: 400 }}>
+                      {formatTime(msg.createdAt)}
+                    </span>
+                  )}
                 </div>
               )}
               {isUser ? (
