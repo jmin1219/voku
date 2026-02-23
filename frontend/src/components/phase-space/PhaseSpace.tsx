@@ -17,7 +17,7 @@ export function PhaseSpace({ nodes, clusters, relevanceMap, showClusters, layout
         gl={{ alpha: true }}
         style={{ background: "transparent" }}
       >
-        <color attach="background" args={["#eae4da"]} />
+        <color attach="background" args={["#1a1a22"]} />
         <Scene nodes={nodes} clusters={clusters} relevanceMap={relevanceMap}
           showClusters={showClusters} layoutMode={layoutMode} retrievalIds={retrievalIds} />
       </Canvas>

@@ -30,9 +30,9 @@ export function Scene({ nodes, clusters, relevanceMap, showClusters, layoutMode,
 
   return (
     <>
-      <ambientLight intensity={1.2} color="#fff8f0" />
-      <pointLight position={[8, 8, 8]} intensity={0.6} color="#fffaf0" />
-      <pointLight position={[-6, -4, 4]} intensity={0.3} color="#f0e8d8" />
+      <ambientLight intensity={0.4} color="#c8c0d0" />
+      <pointLight position={[8, 8, 8]} intensity={0.8} color="#ffe8d0" />
+      <pointLight position={[-6, -4, 4]} intensity={0.4} color="#d0c8e0" />
       <CameraController nodes={nodes} relevanceMap={relevanceMap} />
       {showClusterShells && clusters.map((c) => (
         <ClusterShell key={c.id} cluster={c} layoutMode={layoutMode} hasActive={hasActive} />

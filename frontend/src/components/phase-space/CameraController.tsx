@@ -16,11 +16,17 @@ export function CameraController({ nodes, relevanceMap, layoutMode }: {
   const isAnimating = useRef(false);
   const layout = layoutMode || "cluster";
 
+  // Set camera up to Z so we can look down Y without gimbal lock
+  useEffect(() => {
+    camera.up.set(0, 0, 1);
+  }, [camera]);
+
   useEffect(() => {
     const activeNodes = nodes.filter((n) => (relevanceMap.get(n.id) || 0) > 0.3);
 
     if (activeNodes.length === 0) {
-      targetPos.current.set(0, 0, 14);
+      // Look down Y axis — X-Z plane has most variance (7.15 + 3.87)
+      targetPos.current.set(0, 14, 0);
       targetLookAt.current.set(0, 0, 0);
     } else {
       const positions = activeNodes.map((n) => getNodePosition(n, layout));
@@ -47,7 +53,7 @@ export function CameraController({ nodes, relevanceMap, layoutMode }: {
       );
       const distance = spread * 1.8 + 2;
 
-      targetPos.current.set(center.x, center.y, center.z + distance);
+      targetPos.current.set(center.x, center.y + distance, center.z);
       targetLookAt.current.copy(center);
     }
 

@@ -321,11 +321,11 @@ export default function Workspace() {
         onMouseDown={handleMouseDown}
         style={{
           width: 4, cursor: "col-resize", flexShrink: 0,
-          background: isDragging ? "var(--voku-accent-gold-dim)" : "var(--voku-border-subtle)",
+          background: isDragging ? "var(--voku-accent-gold-dim)" : "#2a2a32",
           transition: isDragging ? "none" : "background 0.15s ease",
         }}
-        onMouseEnter={(e) => { if (!isDragging) (e.target as HTMLElement).style.background = "var(--voku-border-focus)"; }}
-        onMouseLeave={(e) => { if (!isDragging) (e.target as HTMLElement).style.background = "var(--voku-border-subtle)"; }}
+        onMouseEnter={(e) => { if (!isDragging) (e.target as HTMLElement).style.background = "#3a3a44"; }}
+        onMouseLeave={(e) => { if (!isDragging) (e.target as HTMLElement).style.background = "#2a2a32"; }}
       />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>

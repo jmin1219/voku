@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
@@ -23,6 +23,26 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
   const isActive = relevance > 0.3;
   const isResidual = relevance > 0 && relevance <= 0.3;
 
+  // dimensionRelevance: 0.0 (unassigned/peripheral) → ~1.0 (core belief)
+  // Smooth lerp creates visual hierarchy: dust → body → anchor
+  const dr = node.dimensionRelevance;
+
+  // Breathing: deterministic phase offset from node ID so nodes don't pulse in sync
+  const phaseOffset = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < node.id.length; i++) {
+      hash = ((hash << 5) - hash + node.id.charCodeAt(i)) | 0;
+    }
+    return (Math.abs(hash) % 1000) / 1000 * Math.PI * 2;
+  }, [node.id]);
+
+  // Breathing parameters driven by confidence (dimensionRelevance as proxy)
+  // High confidence → slow deep breath; low → fast shallow
+  const breathPeriod = 3.0 + dr * 3.0;       // 3s (low) → 6s (high)
+  const breathAmplitude = 0.03 + dr * 0.05;   // ±3% (low) → ±8% (high)
+  const emissivePulse = 0.01 + dr * 0.03;     // subtle luminance sync
+
+
   let targetScale: number;
   let targetOpacity: number;
   let targetEmissive: number;
@@ -30,27 +50,29 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
   let targetGlowOpacity: number;
 
   if (isActive) {
-    targetScale = 0.25 + relevance * 0.25;
+    targetScale = 0.45 + relevance * 0.45;
     targetOpacity = 0.95;
     targetEmissive = 0.3 + relevance * 0.4;
     targetGlowScale = targetScale * 2.2;
     targetGlowOpacity = 0.12 + relevance * 0.08;
   } else if (isResidual) {
-    targetScale = 0.12 + relevance * 0.12;
+    targetScale = 0.22 + relevance * 0.22;
     targetOpacity = hasActive ? 0.4 : 0.65 + relevance * 0.2;
     targetEmissive = hasActive ? 0.08 : 0.15 + relevance * 0.2;
     targetGlowScale = 0;
     targetGlowOpacity = 0;
   } else if (hasActive) {
-    targetScale = 0.07;
-    targetOpacity = 0.18;
-    targetEmissive = 0.03;
+    // Dimmed during active retrieval — but preserve size hierarchy
+    targetScale = 0.10 + dr * 0.14;        // 0.10 (dust) → 0.24 (anchor)
+    targetOpacity = 0.15 + dr * 0.08;      // 0.15 → 0.23
+    targetEmissive = 0.02 + dr * 0.04;     // 0.02 → 0.06
     targetGlowScale = 0;
     targetGlowOpacity = 0;
   } else {
-    targetScale = 0.15;
-    targetOpacity = 0.75;
-    targetEmissive = 0.12;
+    // Resting state — size communicates importance to user model
+    targetScale = 0.18 + dr * 0.27;        // 0.18 (dust) → 0.45 (anchor)
+    targetOpacity = 0.55 + dr * 0.30;      // 0.55 → 0.85
+    targetEmissive = 0.06 + dr * 0.12;     // 0.06 → 0.18
     targetGlowScale = 0;
     targetGlowOpacity = 0;
   }
@@ -65,13 +87,24 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
   const showLabel = isActive || (hovered && !hasActive) || (hovered && isActive);
   const labelOpacity = isActive ? 0.85 + relevance * 0.15 : hovered ? 0.75 : 0;
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (!meshRef.current || !materialRef.current) return;
     const lerp = 0.08;
+    const t = clock.getElapsedTime();
+
+    // Breathing: sine wave modulates scale and emissive around their targets
+    // Only breathe in resting/dimmed states — retrieved nodes stay solid
+    const breathActive = !isActive && !isResidual;
+    const breath = breathActive
+      ? Math.sin((t * Math.PI * 2) / breathPeriod + phaseOffset)
+      : 0;
+    const scaleWithBreath = targetScale * (1 + breath * breathAmplitude);
+    const emissiveWithBreath = targetEmissive + breath * emissivePulse;
+
     const s = meshRef.current.scale.x;
-    meshRef.current.scale.setScalar(s + (targetScale - s) * lerp);
+    meshRef.current.scale.setScalar(s + (scaleWithBreath - s) * lerp);
     materialRef.current.opacity += (targetOpacity - materialRef.current.opacity) * lerp;
-    materialRef.current.emissiveIntensity += (targetEmissive - materialRef.current.emissiveIntensity) * lerp;
+    materialRef.current.emissiveIntensity += (emissiveWithBreath - materialRef.current.emissiveIntensity) * lerp;
 
     // Glow ring animation
     if (glowRef.current) {
@@ -81,7 +114,7 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
       gMat.opacity += (targetGlowOpacity - gMat.opacity) * lerp;
     }
 
-    // Animate position transitions between layouts
+    // Animate position transitions between layouts + float
     if (groupRef.current) {
       const target = getNodePosition(node, layoutMode);
       groupRef.current.position.x += (target[0] - groupRef.current.position.x) * lerp;
@@ -124,7 +157,7 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
           ref={materialRef}
           color={color}
           emissive={color}
-          emissiveIntensity={0.05}
+          emissiveIntensity={0.15}
           transparent
           opacity={0.2}
           roughness={0.35}
@@ -136,7 +169,7 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
       {showLabel && (
         <Html position={[0, 0.35, 0]} center distanceFactor={8} style={{ pointerEvents: "none" }}>
           <div style={{
-            color: "#2c2620",
+            color: "#e0dbd0",
             fontSize: isActive ? "11px" : "10px",
             fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
             fontWeight: isActive ? 500 : 400,
@@ -145,12 +178,12 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
             maxWidth: "280px",
             overflow: "hidden",
             textOverflow: "ellipsis",
-            textShadow: "0 1px 4px rgba(245,240,232,0.9), 0 0 8px rgba(245,240,232,0.7)",
+            textShadow: "0 1px 4px rgba(0,0,0,0.6), 0 0 8px rgba(0,0,0,0.4)",
             userSelect: "none",
           }}>
             {node.label}
             <span style={{
-              color: "#99907f",
+              color: "#8a8578",
               fontSize: "9px",
               marginLeft: "6px",
               fontFamily: "'IBM Plex Mono', monospace",

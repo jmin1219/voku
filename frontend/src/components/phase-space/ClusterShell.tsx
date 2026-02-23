@@ -28,7 +28,7 @@ export function ClusterShell({ cluster, layoutMode, hasActive }: {
           color, fontSize: "9px", fontFamily: "'IBM Plex Mono', monospace",
           fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em",
           opacity: hasActive ? 0.3 : 0.65, whiteSpace: "nowrap",
-          textShadow: "0 1px 4px rgba(245,240,232,0.8)", userSelect: "none",
+          textShadow: "0 1px 4px rgba(0,0,0,0.6)", userSelect: "none",
         }}>
           {cluster.label} ({cluster.count})
         </div>

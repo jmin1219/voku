@@ -39,8 +39,11 @@
   --voku-type-event: #4a8a5e;       /* Medium green */
   --voku-type-intention: #a07830;   /* Warm amber */
 
-  /* === Phase space specific === */
-  --voku-phase-bg: #eae4da;         /* Slightly darker than base for depth */
+  /* === Phase space specific (dark) === */
+  --voku-phase-bg: #1a1a22;         /* Dark navy-charcoal */
+  --voku-phase-canvas: #1a1a22;     /* Canvas background match */
+  --voku-phase-label: #e0dbd0;      /* Light label text on dark */
+  --voku-phase-label-shadow: rgba(0, 0, 0, 0.6);
   --voku-cluster-opacity: 0.08;
 
   /* === Divider (draggable) === */

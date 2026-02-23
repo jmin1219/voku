@@ -38,11 +38,11 @@ export function ActiveSummary({ nodes, relevanceMap, retrievalIds }: ActiveSumma
           padding: "0.4rem 1rem",
           background: "var(--voku-phase-bg)",
           border: "none",
-          borderBottom: "1px solid var(--voku-border-subtle)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
           cursor: "pointer",
           fontFamily: "var(--voku-font-mono)",
           fontSize: "0.72rem",
-          color: "var(--voku-text-secondary)",
+          color: "var(--voku-phase-label)",
           textAlign: "left",
         }}
       >
@@ -64,13 +64,13 @@ export function ActiveSummary({ nodes, relevanceMap, retrievalIds }: ActiveSumma
           <span style={{ color: "var(--voku-border-default)" }}>·</span>
         )}
         {relevant.length > 0 && (
-          <span style={{ color: "var(--voku-text-tertiary)" }}>
+          <span style={{ color: "#8a8578" }}>
             {relevant.length} related
           </span>
         )}
         {!expanded && retrieved.length > 0 && (
           <span style={{
-            color: "var(--voku-text-tertiary)",
+            color: "#8a8578",
             marginLeft: "auto",
             maxWidth: "50%",
             overflow: "hidden",
