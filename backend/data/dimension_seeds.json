@@ -1,0 +1,30 @@
+[
+  {
+    "id": "self",
+    "dimension": "self",
+    "subdimension": null,
+    "description": "Identity, values, self-concept, emotional life, psychological patterns, how the person thinks, copes, regulates, and grows. Who they are when no one is watching.",
+    "decay_class": "core"
+  },
+  {
+    "id": "pursuits",
+    "dimension": "pursuits",
+    "subdimension": null,
+    "description": "Career, projects, goals, plans, skills, creative work, learning-in-service-of-doing. What the person is building and working toward.",
+    "decay_class": "preference"
+  },
+  {
+    "id": "relationships",
+    "dimension": "relationships",
+    "subdimension": null,
+    "description": "Connections, family, friends, romantic life, social needs, relational patterns and history. How the person relates to other people.",
+    "decay_class": "preference"
+  },
+  {
+    "id": "body",
+    "dimension": "body",
+    "subdimension": null,
+    "description": "Health, fitness, energy, nutrition, sleep, physical state, limitations, embodied experience. What the body enables and constrains.",
+    "decay_class": "situational"
+  }
+]

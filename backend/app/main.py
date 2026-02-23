@@ -19,9 +19,6 @@ async def lifespan(app: FastAPI):
     db_path = Path(settings.db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # TODO: Initialize SQLite storage (Component 1.2)
-    # TODO: Initialize embedding service (Component 1.3)
-
     yield
 
     # Shutdown cleanup

@@ -24,7 +24,9 @@ export function Scene({ nodes, clusters, relevanceMap, showClusters, layoutMode,
   }, [relevanceMap, retrievalSet]);
 
   // Only show cluster shells in semantic layouts (not time view)
-  const showClusterShells = showClusters && layoutMode !== "time";
+  // Hide cluster shells in time and dimension modes — geometric clusters
+  // don't correspond to temporal or semantic-dimension groupings
+  const showClusterShells = showClusters && layoutMode !== "time" && layoutMode !== "dimension";
 
   return (
     <>

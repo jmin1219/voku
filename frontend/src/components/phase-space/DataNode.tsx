@@ -4,7 +4,8 @@ import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import {
   type PropositionNode, type LayoutMode,
-  TYPE_COLORS, CLUSTER_COLORS, timeColor, getNodePosition,
+  TYPE_COLORS, CLUSTER_COLORS, DIMENSION_COLORS, UNASSIGNED_COLOR,
+  timeColor, getNodePosition,
 } from "../../types/phase-space";
 
 export function DataNode({ node, relevance, layoutMode, hasActive }: {
@@ -89,11 +90,13 @@ export function DataNode({ node, relevance, layoutMode, hasActive }: {
     }
   });
 
-  const color = layoutMode === "time"
-    ? timeColor(node.age)
-    : layoutMode === "cluster"
-      ? (node.cluster >= 0 ? CLUSTER_COLORS[node.cluster % CLUSTER_COLORS.length] : "#999")
-      : (TYPE_COLORS[node.nodeType] || "#888");
+  const color = layoutMode === "dimension"
+    ? (node.dimension ? DIMENSION_COLORS[node.dimension] ?? UNASSIGNED_COLOR : UNASSIGNED_COLOR)
+    : layoutMode === "time"
+      ? timeColor(node.age)
+      : layoutMode === "cluster"
+        ? (node.cluster >= 0 ? CLUSTER_COLORS[node.cluster % CLUSTER_COLORS.length] : "#999")
+        : (TYPE_COLORS[node.nodeType] || "#888");
 
   const initialPos = getNodePosition(node, layoutMode);
 

@@ -1,6 +1,6 @@
 // --- Layout modes ---
 
-export type LayoutMode = "cluster" | "type" | "time";
+export type LayoutMode = "cluster" | "type" | "dimension" | "time";
 
 // --- Interfaces ---
 
@@ -18,6 +18,8 @@ export interface PropositionNode {
   positionTime: [number, number, number];   // 2D UMAP + time Z axis (developmental)
   keywords: string[];
   cluster: number;
+  dimension: string | null;
+  dimensionRelevance: number;
 }
 
 export interface ClusterData {
@@ -62,8 +64,18 @@ export const CLUSTER_COLORS = [
   "#7a5a8a",   // grape
 ];
 
+// --- Dimension colors (user model seeds) ---
+
+export const DIMENSION_COLORS: Record<string, string> = {
+  pursuits:      "#a07830",  // warm amber
+  self:          "#4a78a8",  // medium blue
+  body:          "#4a8a5e",  // medium green
+  relationships: "#8a5080",  // plum
+};
+
+export const UNASSIGNED_COLOR = "#b8b0a0";  // muted stone
+
 // --- Time gradient ---
-// age: 0 = oldest (cool slate) → 1 = newest (warm gold)
 
 export function timeColor(age: number): string {
   const r = Math.round(100 + age * 54);  // 100 → 154

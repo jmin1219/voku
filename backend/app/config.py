@@ -12,9 +12,8 @@ class Settings(BaseSettings):
     # Frontend origin for CORS
     frontend_url: str = "http://localhost:5173"
 
-    # SQLite databases
-    db_path: str = "./data/voku.db"  # conversations + messages
-    propositions_db_path: str = "./data/m2_conversation.db"  # propositions + embeddings
+    # SQLite database (unified — all tables in one file)
+    db_path: str = "./data/voku.db"
 
     class Config:
         env_file = ".env"

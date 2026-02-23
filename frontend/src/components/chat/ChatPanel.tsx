@@ -96,10 +96,10 @@ export function ChatPanel({
               border: `1px solid var(--voku-border-default)`,
               borderRadius: "var(--voku-radius-sm)",
               padding: "2px 10px",
-              color: layoutMode === "time" ? "var(--voku-accent-gold)" : "var(--voku-text-secondary)",
+              color: (layoutMode === "time" || layoutMode === "dimension") ? "var(--voku-accent-gold)" : "var(--voku-text-secondary)",
               fontSize: "11px",
             }}>
-            {layoutMode === "cluster" ? "by cluster" : layoutMode === "type" ? "by type" : "by time"}
+            {layoutMode === "cluster" ? "by cluster" : layoutMode === "type" ? "by type" : layoutMode === "dimension" ? "by dimension" : "by time"}
           </button>
         </div>
       </div>
@@ -251,6 +251,15 @@ export function ChatPanel({
             <span><span style={{ color: "var(--voku-type-stance)" }}>●</span> stance</span>
             <span><span style={{ color: "var(--voku-type-event)" }}>●</span> event</span>
             <span><span style={{ color: "var(--voku-type-intention)" }}>●</span> intention</span>
+          </>
+        ) : layoutMode === "dimension" ? (
+          <>
+            <span><span style={{ color: "#a07830" }}>●</span> pursuits</span>
+            <span><span style={{ color: "#4a78a8" }}>●</span> self</span>
+            <span><span style={{ color: "#4a8a5e" }}>●</span> body</span>
+            <span><span style={{ color: "#8a5080" }}>●</span> relationships</span>
+            <span style={{ color: "#b8b0a0" }}>● unassigned</span>
+            <span style={{ marginLeft: "auto" }}>{nodeCount} nodes</span>
           </>
         ) : layoutMode === "time" ? (
           <>

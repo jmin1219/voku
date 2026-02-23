@@ -163,11 +163,12 @@ export default function Workspace() {
     return map;
   }, [messages, focusStartIndex, nodes]);
 
-  // Layout mode cycling: cluster → type → time (only if active conversation)
+  // Layout mode cycling: cluster → type → dimension → time (if active) → cluster
   const cycleLayoutMode = () => {
     setLayoutMode((prev) => {
       if (prev === "cluster") return "type";
-      if (prev === "type" && hasActiveConversation) return "time";
+      if (prev === "type") return "dimension";
+      if (prev === "dimension" && hasActiveConversation) return "time";
       return "cluster";
     });
   };

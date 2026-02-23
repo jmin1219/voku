@@ -16,6 +16,9 @@ backend/data/
 # Environment
 .env
 
+# Personal dimension overrides
+dimension_seeds.local.json
+
 # IDE
 .vscode/
 
@@ -28,6 +31,7 @@ backend/tests/fixtures/real/
 # Operational docs (private — session tracking, continuation prompts)
 docs/STATE.md
 docs/CONTINUE.md
+docs/private/
 
 # User declarations (personal data)
 *.yaml
