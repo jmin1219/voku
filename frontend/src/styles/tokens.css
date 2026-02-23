@@ -98,9 +98,9 @@
    * Chat width range defines the draggable constraint.
    * Input heights define the textarea growth bounds.
    */
-  --voku-chat-min-w: 320px;
+  --voku-chat-min-w: 420px;
   --voku-chat-max-w: 560px;
-  --voku-chat-default-w: 420px;
+  /* default: 1/3 of viewport, clamped to min/max (computed in JS) */
   --voku-input-min-h: 2.5rem;    /* 40px — single line */
   --voku-input-max-h: 10rem;     /* 160px — ~6 lines, then scroll */
   --voku-header-h: 2.75rem;      /* 44px — chat header */

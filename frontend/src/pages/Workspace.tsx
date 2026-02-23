@@ -16,10 +16,10 @@ export interface ConversationBoundary {
 }
 
 const API_BASE = "http://localhost:8000/api";
-// Chat width bounds — CSS tokens exist but JS needs raw values for drag math
-const MIN_CHAT_WIDTH = 320;
+// Chat width: 1/3 of viewport by default, min 420px, max 560px
+// Default computed on mount via window.innerWidth. Constants for drag bounds.
+const MIN_CHAT_WIDTH = 420;
 const MAX_CHAT_WIDTH = 560;
-const DEFAULT_CHAT_WIDTH = 420;
 const INITIAL_VISIBLE_CONVERSATIONS = 2;
 
 export default function Workspace() {
@@ -31,7 +31,9 @@ export default function Workspace() {
   const [showClusters, setShowClusters] = useState(true);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("cluster");
   const [retrievalIds, setRetrievalIds] = useState<string[]>([]);
-  const [chatWidth, setChatWidth] = useState(DEFAULT_CHAT_WIDTH);
+  const [chatWidth, setChatWidth] = useState(() =>
+    Math.max(MIN_CHAT_WIDTH, Math.min(MAX_CHAT_WIDTH, Math.round(window.innerWidth / 3)))
+  );
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
