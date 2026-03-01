@@ -154,3 +154,62 @@ These connections have been noted but not fully explored:
 - **Node hierarchy** (leaf → internal → module) as analog to neural subspace hierarchy
 - **Spaced repetition vs. narrative learning** — why narrative (intent as container) produces better retention than isolated fact repetition, and implications for how Voku surfaces information
 - **Attractor dynamics and phase transitions** in belief change — when smooth derivative models break down and bistable switching takes over
+
+
+---
+
+## 6. Duality Theory and the Geometric View
+
+**Source:** Sebastian De Haro and Jeremy Butterfield, *The Philosophy and Physics of Duality* (Oxford University Press, 2025). 601-page monograph on duality as isomorphism between physical theories.
+
+A duality is a structure-preserving map (isomorphism) between two theories that share a common core. The two theories look completely different — different states, different quantities, different vocabularies — but there exists a mapping that makes their values match and preserves their dynamics. The common core theory is usually more abstract than either individual model, and the individual models are *representations* of that core, each adding "specific structure" that the other lacks.
+
+The book's Chapter 14 introduces the "geometric view of theories": when multiple quasi-dual descriptions exist, the comprehensive theory is a manifold — each model is a chart (local coordinate system), and duality relations are transition functions between charts. Distinguished quantities called moduli serve as coordinates on this manifold.
+
+**Voku connection:** The phase space implements duality in the formal physics sense:
+- Each layout mode (cluster, dimension, time, type) is a model — a representation adding specific structure to the common core
+- The common core is the propositions and their geometric properties (embeddings, temporal position, conversational context)
+- The re-projection between layout modes is the duality mapping
+- k-NN edges measure intrinsic topology — metric structure that persists regardless of which projection is active
+- "Same data, different projection, different structure" (ANCHOR.md) is not metaphor — it IS duality
+
+The book's treatment of emergence connects directly to "change weights, not add layers": emergence in the Ising model (spontaneous magnetization) only appears above a critical temperature — the phenomenon doesn't exist in the bottom theory at all. Similarly, Voku's emergent properties (self-discovery, goal clarity, belief evolution) only appear above a critical mass of propositions. Below that threshold, the phase space is noise. Above it, structure self-organizes. This is a phase transition, not a feature.
+
+The "successor theory" concept maps to Mode 3 / compressed arc: a deeper theory that explains why the duality exists. In Voku: propositions are the models, their patterns are the common core, and the developmental insight visible only at the full-arc timescale is the successor theory.
+
+---
+
+## 7. Strange Loops and Self-Referential Systems
+
+**Source:** Douglas Hofstadter, *Gödel, Escher, Bach: an Eternal Golden Braid* (1979).
+
+Hofstadter's central thesis: meaning arises from isomorphisms between complex structures, and consciousness is what it feels like to be a system with a sufficiently rich model of itself. A strange loop is a system that, by moving through hierarchical levels, unexpectedly arrives back where it started — the canonical example being Gödel's self-referencing formal statement.
+
+**Voku connection — the strange loop:**
+- User generates data (conversation) — Level 1
+- System models the user (extraction + user model) — Level 2
+- User observes the model (phase space) — Level 3
+- Observation changes what user says — back to Level 1
+- The user is simultaneously subject (generating data), object (being modeled), and observer (interpreting the model)
+
+Making the model *visible* through the phase space is what closes the loop. Without visibility, Voku is a database with good retrieval. With it, Voku is an instrument for self-perception. This is why the VISION.md "subject-to-object transition" (Kegan) works — the phase space literalizes the developmental move by turning beliefs into visible, manipulable objects in space.
+
+**Voku connection — Gödelian incompleteness as design constraint:**
+If Voku tried to formalize "what counts as an insight" — define it, detect it, surface it algorithmically — it would face incompleteness. Any formalization would miss true insights that don't match its template. The architecturally correct response: build the substrate (persistent conversation, intelligent context, visible structure), let the user bring the interpretive capacity no formal system can fully capture. "Don't build self-discovery as a feature" is not design philosophy alone — it's a formal constraint.
+
+**Voku connection — Hofstadter's chunking as DIKW mechanism:**
+Low-level elements (propositions) get recognized, named, and treated as atomic units at a higher level (clusters). Clusters relate to each other and to goals in stable ways (knowledge). The user perceives the trajectory of how chunks formed and evolved (wisdom). Each level emerges from meaningful chunking of the level below, constrained by the isomorphic structure of the data. The linkage maps between levels are non-injective (many-to-one, coarse-graining) and partially structure-preserving — matching De Haro & Butterfield's formal definition of emergence.
+
+---
+
+## 8. Extended Mind and Cognitive Coupling
+
+**Source:** Andy Clark and David Chalmers, "The Extended Mind" (1998). David Kirsh, "Thinking With External Representations" (2010).
+
+Clark and Chalmers' Parity Principle: if an external process functions as a cognitive process that, were it done in the head, we'd count as cognition, then it IS part of the cognitive process. Criteria for cognitive coupling: the tool is (1) reliably accessible, (2) automatically endorsed, (3) directly influences beliefs and actions.
+
+Kirsh identifies seven ways external representations enhance cognitive power. The most relevant: creating persistent referents (concepts stay visible rather than fading from conversational memory), facilitating re-representation (spatial rearrangement reveals new patterns), enabling arbitrarily complex structures (the graph grows beyond working memory limits). His concept of epistemic actions — actions taken to change the world to aid cognition — applies directly: the AI performs epistemic actions by transforming conversation into spatial structure.
+
+**Voku connection:** The phase space satisfies all three coupling criteria when it is always visible (not behind a tab), automatically updated (no manual sync), and directly manipulable (clicking a node injects it into chat). This is why Constraint #2 ("The UI is load-bearing, not decorative") exists — the visualization is not a feature, it's a cognitive coupling surface. Remove it and Voku is just another chatbot with better memory.
+
+Edwin Hutchins' distributed cognition framework positions Voku as a three-agent cognitive system: human (direction, evaluation, meaning-making), AI (pattern recognition, structuring), visualization (persistent external representation). Each contributes capabilities the others lack. The visualization embodies accumulated reasoning — it is the system's long-term memory made visible.

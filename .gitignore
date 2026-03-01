@@ -33,6 +33,9 @@ docs/STATE.md
 docs/CONTINUE.md
 docs/private/
 
+# Personal workflow (not product documentation)
+WORKFLOW.md
+
 # User declarations (personal data)
 *.yaml
 !backend/requirements.yaml

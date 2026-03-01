@@ -1,8 +1,8 @@
 # Voku — Design Strategy
 
 **Created:** 2026-02-21
-**Status:** Living document. Frontend design philosophy, competitive positioning, and demo strategy.
-**Derived from:** Market research (Feb 21), ANCHOR.md, THEORY.md, seven-domain analysis.
+**Status:** Living document. Frontend design philosophy, competitive positioning, and demo strategy. For moment-by-moment interaction specification, see INTERACTION_DESIGN.md.
+**Derived from:** Market research (Feb 21), ANCHOR.md, THEORY.md, seven-domain analysis, duality theory analysis (Feb 22).
 
 ---
 
@@ -36,13 +36,16 @@ Soft halo on every node (opacity 0.02-0.06). No hard edges.
 
 **Calm technology alignment:** Phase space is ambient presence — peripheral, alive, non-demanding. Moves to center of attention only when user engages.
 
-### 2. Proximity Is the Relationship
+### 2. Proximity Is the Primary Relationship; Edges Are Ambient Structure
 
-No edges. No cluster shells. Closeness IS the relationship. UMAP positions encode semantic proximity. The absence of explicit edges is a design statement: meaning lives in topology, not links.
+**Updated Feb 22 (Session 13-15):** Edges and cluster shells are KEPT. k-NN edges (1,582) from cosine similarity in 768d embedding space provide ambient connectivity web. Cluster shells provide soft boundary context. Edges and shells complement: shells = boundary, edges = internal structure. Proximity remains primary — edges are secondary texture, not the organizing principle.
 
-Density = cluster. No container needed. Floating ambient labels near density centers (very low opacity, camera-distance gated).
+Three edge layers (see INTERACTION_DESIGN.md for full visual vocabulary):
+- **Layer 1 (ambient k-NN mesh):** Always visible. Opacity 0.20 × 0.45 intensity floor. The topology.
+- **Layer 2 (retrieval connections):** Bright during conversation. "Voku is thinking" signal.
+- **Layer 3 (dimension radials):** Lines to dimension centroids in dimension mode. Gravitational pull.
 
-**Pair with 2D accessible view** from day one: timeline or card list as companion to 3D. The 3D is the "wow," the 2D is the "I can use this."
+Density = cluster. Floating ambient labels near density centers (very low opacity, camera-distance gated).
 
 ### 3. Attention Reshapes the Landscape
 
@@ -138,32 +141,43 @@ Not a feature — a property of the system working correctly. Two small accelera
 
 ---
 
-## Build Sequence (Updated)
+## Build Sequence (Updated Feb 22)
 
-### Phase A: Node Character (current session)
-1. Size differentiation by dimensionRelevance (3 tiers)
-2. Breathing animation (sine wave, phase offset per node)
-3. Float animation (tiny y-drift)
-4. Luminance pulse (emissive oscillation)
-5. Soft halos on all nodes
+### ~~Phase A: Node Character~~ ✅ DONE
+### ~~Phase B1: ChatPanel decomposition~~ ✅ DONE
+### ~~Phase B2: InstancedMesh + k-NN edges~~ ✅ DONE
 
-### Phase B: Spatial Clarity
-1. Remove cluster shells
-2. Floating density labels (camera-gated)
-3. Fix retrieval glow (server IDs primary, keywords secondary)
-4. Dimension gravitational layout
+### Phase B3: Edge Layers + Co-Cognition Foundation ← NEXT
+1. Selective bloom (UnrealBloomPass + THREE.Layers)
+2. Retrieval activation via SSE event (backend emits nodeIds before response stream)
+3. Edge pulse shader (uTime in fragment for active connections)
+4. Keyword glow (debounced mid-message, ~20 LOC)
+5. Legend overlay + density labels on phase space
 
-### Phase C: Polish + Demo Prep
-1. Birth animation (extraction → particles appear)
-2. Extraction count notification
-3. Dimension narrative labels (not numerical)
-4. 2D companion view (timeline or card list)
+### Phase C1: Demo-Critical — Visible Understanding
+1. Birth animation (spring scale-in + warm glow on extraction)
+2. Extraction summary in chat panel ("✦ 2 new concepts · 1 connection strengthened")
+3. Message block highlighting (retrieval-based phrase coloring)
+4. Onboarding hints + context label
+
+### Phase C2: Exploration Depth
+1. Node popover (proposition text, timestamp, dimension, confidence, "Ask about this", dismiss)
+2. Bidirectional hover bridge (hover text ↔ pulse node)
+3. Camera focus on node click
+4. Extraction trail particle (message → node, ~1s animation)
+
+### Phase C3: Workflow 2
+1. Timeline strip + self-model Sheet
+2. Dimension narrative labels
+3. Theater mode
+4. Layout mode staggered transitions
 
 ### Phase D: Demo Deployment
-1. Synthetic persona generation (20 sessions, 300-400 propositions)
-2. Dockerfile + Railway deployment
-3. Demo mode (read-only exploration + limited live chat)
-4. Pre-seeded voku.db with curated arc
+1. Synthetic persona generation
+2. Dockerfile + Railway
+3. Demo mode, pre-seeded voku.db
+
+**Full interaction lifecycle specification:** see INTERACTION_DESIGN.md
 
 ---
 
@@ -174,7 +188,10 @@ Not a feature — a property of the system working correctly. Two small accelera
 3. **3D phase space visualization** — no competitor uses particle physics / ecology metaphor
 4. **Context engineering as core architecture** — not RAG, not fine-tuning, not prompt engineering
 5. **Local-first product philosophy** — lessons from Dot/Limitless/Pi deaths inform architecture
-6. **166 tests, ablation-ready evaluation** — production engineering, not tutorial project
+6. **181 tests, ablation-ready evaluation** — production engineering, not tutorial project
+7. **Duality theory grounding** — layout modes implement formal duality transformations; emergence follows physics (THEORY.md §6)
+8. **Strange loop architecture** — user is simultaneously subject, object, and observer; visibility closes the loop (THEORY.md §7)
+9. **Co-cognition interaction model** — the phase space shows the system thinking alongside you, not just responding to you (INTERACTION_DESIGN.md)
 
 ---
 

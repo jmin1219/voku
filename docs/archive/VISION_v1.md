@@ -13,9 +13,9 @@ Across 2,400 years of technologies designed for self-knowledge — from Stoic ev
 
 The missing dimension is time — not as a timeline of entries, but as the lived topology of how beliefs form, shift, contradict, deepen, and occasionally collapse.
 
-Voku is a **second-order technology of the self**: an instrument through which a person observes their own cognition across time. It belongs to the lineage of Foucault's *technologies of the self* — from Greek *hupomnemata* to Stoic self-examination to psychotherapy — but introduces a radical discontinuity: it is the first technology of the self that can remember better than the person it models and reveal patterns the person cannot see.
+Voku is a **second-order technology of the self**: an instrument through which a person observes their own cognition across time. It belongs to the lineage of Foucault's *technologies of the self* — from Greek *hupomnemata* to Stoic self-examination to psychotherapy — but introduces a radical discontinuity: it is the first technology of the self that can objectively organize everything a person has said, thought, and revised across time into a persistent, navigable structure.
 
-The closest existing analog is not a technology. It is what a skilled psychotherapist holds in their head after years of sessions: a temporal model of your cognitive patterns, belief evolution, and growth that is queryable, actively updated, and deeply personal. Voku is this model made persistent, externalized, and available at any moment.
+The closest existing analog is not a technology. It is what a skilled psychotherapist holds in their head after years of sessions: a temporal model of your cognitive patterns, belief evolution, and growth that is queryable, actively updated, and deeply personal. Voku is this model made persistent, externalized, and available at any moment. The value is not that it tells you something you don't know — it's that it holds the full picture together when your own memory can't.
 
 ---
 
@@ -47,6 +47,8 @@ Applied:
 ### The convivial test
 
 Illich warns of "radical monopoly" — when a technology reshapes the landscape so that alternatives become impossible. The convivial test for Voku: **does a person who uses it for a year become better at temporal self-perception even without it?** The tool should become less necessary over time, like learning to read — a transformation that persists even when the alphabet is absent.
+
+This test also governs integration decisions. Voku does not auto-ingest calendars, email, or task managers (see ANCHOR.md, "What Voku Is Not"). The act of verbalizing what matters is itself a cognitive operation — interpretation, compression, salience filtering. Auto-integration would replace that operation. Conversation-only input exercises it. A person who uses Voku for a year should be *better* at identifying what matters to them, not more dependent on a system that decides for them. The friction of having to say it is the instrument that trains the capacity.
 
 ---
 
@@ -185,7 +187,7 @@ Research is worse. Findings live in bookmarks, PDFs, conversation logs that clos
 
 This is the DIKW temporal axis applied to education. Not "do you know quicksort?" (static snapshot) but "how did your understanding of sorting develop, and what does that reveal about how you learn?" (temporal trajectory).
 
-**Research as permanent enrichment of the ecology.** When Voku processes a research session — a paper review, a deep research report, a technical exploration — the extracted propositions enter the phase space and interact with everything the user already knows. "Gendlin's felt sense resists premature symbolization" clusters near "Bernstein's motor solutions are generated fresh each time, not memorized" because the embeddings capture the structural similarity. The user didn't file this connection. The topology revealed it.
+**Research as permanent enrichment of the ecology.** When Voku processes a research session — a paper review, a deep research report, a technical exploration — the extracted propositions enter the phase space and interact with everything the user already knows. "Gendlin's felt sense resists premature symbolization" clusters near "Bernstein's motor solutions are generated fresh each time, not memorized" because the embeddings capture the structural similarity. The user didn't file this connection. The organization placed them near each other because they *are* near each other semantically. The structure is already in the material — it just needs a surface to land on.
 
 Unlike a note-taking system: the research findings are retrieved in future conversations not because the user searched for them, but because the affordance structure of the knowledge graph makes them grippable when relevant context appears. Research compounds instead of evaporating.
 
@@ -193,7 +195,7 @@ Unlike a note-taking system: the research findings are retrieved in future conve
 
 This is context engineering (Theory §8) applied to learning: the intelligence is in what gets loaded into cognitive RAM before the learning episode begins.
 
-**Adaptive knowledge gap detection.** Over time, the topology reveals what the user *doesn't* know. Extensive discussion of transformers with no mention of attention head pruning. A whole phase space visualization built with no exploration of accessibility. The gaps are visible in the structure — not as prescribed curriculum but as Alexander's "void," the necessary emptiness where growth wants to happen.
+**Emergent knowledge topology.** Over time, the topology naturally reflects what the user has explored extensively and what they haven't. Extensive discussion of transformers with no mention of attention head pruning. A whole phase space visualization built with no exploration of accessibility. These aren't prescriptive gaps — they're properties of the landscape that become visible as a side effect of faithful organization. The system doesn't diagnose what you're missing. It organizes what you've said thoroughly enough that the shape of the coverage speaks for itself.
 
 ### Three post-demo projections as a coherent system
 
@@ -373,11 +375,15 @@ LLMs are unreliable with numbers. The structured extraction layer must be conser
 
 ## The bigger picture
 
-If the ordinary mirror changed human self-awareness by making appearance visible, Voku's potential is to change it again by making cognitive evolution visible. The physical mirror didn't merely inform; it transformed the relationship humans had with their own identity. Voku would do the same for the relationship humans have with their own understanding.
+The generalist/specialist pendulum is a false binary. Every swing of it loses the same thing: the connective tissue between a person's domains — the links that are actually *who they are*. A person who trains, builds software, reads philosophy, and manages finances is not four separate practitioners. They are one person whose understanding of periodization informs how they think about project phases, whose experience of embodied learning shapes how they design interfaces. Current tools — notes in one app, code in another, spreadsheets in a third — fragment the person into their domains. The connections survive only inside their head, subject to forgetting, mood, and the limits of working memory.
 
-The unnamed category Voku inhabits: a second-order technology of the self — the first instrument that enables a person to observe their own observing across time. The deepest risk is that the map becomes the territory. William James: trying to catch the feeling of a thought "in the middle" is like catching a snowflake in a warm hand. The design challenge is to increase awareness without increasing fixation — to make cognitive evolution visible while preserving the openness that makes evolution possible.
+Voku gives that connective tissue a persistent, organized surface. Not so people can become generalists. Not so they can become specialists. So they can pursue specific skills in multiple fields without losing the connections between them that constitute their actual perspective. The phase space makes domain boundaries porous — propositions from training and philosophy and engineering all live in the same topology, and the structure of their proximity tells you something no single-domain tool ever could.
 
-This is what "change weights, not add layers" demands at its deepest level: an instrument so transparent that it disappears into the act of self-perception, leaving behind only a person who sees more clearly than they did before.
+If the ordinary mirror changed human self-awareness by making appearance visible, Voku's potential is to change it again by making the *organization* of a person's understanding visible — across domains and across time. The physical mirror didn't merely inform; it transformed the relationship humans had with their own identity. Voku would do the same for the relationship humans have with their own knowledge.
+
+The unnamed category Voku inhabits: a second-order technology of the self — the first instrument that objectively organizes a person's cognition across time into a navigable, persistent structure. The deepest risk is that the map becomes the territory. William James: trying to catch the feeling of a thought "in the middle" is like catching a snowflake in a warm hand. The design challenge is to increase organization without increasing fixation — to make the full picture available while preserving the openness that makes evolution possible.
+
+This is what "change weights, not add layers" demands at its deepest level: an instrument so transparent that it disappears into the act of self-perception, leaving behind only a person who can finally see the whole shape of what they already know.
 
 ---
 
