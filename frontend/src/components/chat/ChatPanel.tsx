@@ -9,8 +9,8 @@ import type { ChatMessage } from "../../pages/Workspace";
  * Stacks ChatHeader, ChatMessages, ChatInput in a flex column.
  * No logic of its own — just layout and prop routing.
  *
- * Phase-space controls (layout mode, clusters, legend) are no longer
- * part of this component. They move to a PhaseSpaceOverlay in B3.
+ * v2: Accepts retrievalIds for context marker rendering in messages.
+ * Phase-space controls removed — graph is a separate summonable surface.
  */
 export function ChatPanel({
   messages,
@@ -24,6 +24,7 @@ export function ChatPanel({
   conversationStartIndices,
   hasHiddenConversations,
   onLoadPrevious,
+  retrievalIds,
 }: {
   messages: ChatMessage[];
   inputValue: string;
@@ -36,6 +37,7 @@ export function ChatPanel({
   conversationStartIndices: Set<number>;
   hasHiddenConversations: boolean;
   onLoadPrevious: () => void;
+  retrievalIds: string[];
 }) {
   return (
     <div
@@ -59,6 +61,7 @@ export function ChatPanel({
         conversationStartIndices={conversationStartIndices}
         hasHiddenConversations={hasHiddenConversations}
         onLoadPrevious={onLoadPrevious}
+        retrievalIds={retrievalIds}
       />
       <ChatInput
         value={inputValue}

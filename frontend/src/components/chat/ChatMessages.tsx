@@ -19,9 +19,8 @@ function formatDate(iso: string): string {
 /**
  * ChatMessages — Scrollable message list with conversation boundaries.
  *
- * Lift-and-shift from ChatPanel. Owns the scroll container and auto-scroll ref.
- * Renders conversation separators, role labels, and message bubbles.
- * No behavioral changes from the original — just isolation.
+ * v2: Accepts retrievalIds to show context indicator on assistant messages.
+ * Full ContextMarker component (progressive disclosure) is a separate step.
  */
 export function ChatMessages({
   messages,
@@ -30,6 +29,7 @@ export function ChatMessages({
   conversationStartIndices,
   hasHiddenConversations,
   onLoadPrevious,
+  retrievalIds,
 }: {
   messages: ChatMessage[];
   focusStartIndex: number;
@@ -37,6 +37,7 @@ export function ChatMessages({
   conversationStartIndices: Set<number>;
   hasHiddenConversations: boolean;
   onLoadPrevious: () => void;
+  retrievalIds: string[];
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +55,7 @@ export function ChatMessages({
         padding: "var(--voku-space-3) var(--voku-space-4)",
       }}
     >
-      {/* Load earlier conversations — dashed button at top of scroll */}
+      {/* Load earlier conversations */}
       {hasHiddenConversations && (
         <button
           onClick={onLoadPrevious}
@@ -96,9 +97,11 @@ export function ChatMessages({
             padding: "var(--voku-space-8) var(--voku-space-2)",
           }}
         >
-          Start a conversation with Claude.
+          Start a conversation.
           <br />
-          Your messages will light up related propositions in the phase space.
+          <span style={{ fontSize: "var(--voku-text-sm)", color: "var(--voku-text-tertiary)" }}>
+            Every message becomes a trace in your thinking graph.
+          </span>
         </div>
       )}
 
@@ -111,6 +114,9 @@ export function ChatMessages({
         const isLatest = i === messages.length - 1;
         const isConversationStart =
           conversationStartIndices.has(i) && i > visibleFromIndex;
+
+        // Show retrieval indicator on the latest assistant message
+        const showRetrieval = !isUser && isLatest && isFocused && retrievalIds.length > 0;
 
         return (
           <div key={i}>
@@ -209,12 +215,29 @@ export function ChatMessages({
                       {formatTime(msg.createdAt)}
                     </span>
                   )}
+                  {/* Retrieval indicator — traces were used to inform this response */}
+                  {showRetrieval && (
+                    <span
+                      style={{
+                        color: "var(--voku-accent-gold)",
+                        fontWeight: 500,
+                        fontSize: "var(--voku-text-xs)",
+                        marginLeft: "auto",
+                      }}
+                      title={`${retrievalIds.length} trace${retrievalIds.length > 1 ? "s" : ""} informed this response`}
+                    >
+                      ◆ {retrievalIds.length} trace{retrievalIds.length > 1 ? "s" : ""}
+                    </span>
+                  )}
                 </div>
               )}
               {isUser ? (
                 msg.content
               ) : msg.content ? (
-                <Markdown content={msg.content} />
+                <Markdown
+                  content={msg.content}
+                  retrievalIds={showRetrieval ? retrievalIds : undefined}
+                />
               ) : (
                 <span style={{ color: "var(--voku-accent-gold-dim)" }}>▊</span>
               )}
