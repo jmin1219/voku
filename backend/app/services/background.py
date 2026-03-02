@@ -75,7 +75,9 @@ async def process_traces_background(
             created_at=now,
         ))
 
-    except Exception:
-        # Background failures are silent — traces are already stored,
+    except Exception as e:
+        # Background failures are non-fatal — traces are already stored,
         # annotations and connections are enrichment, not critical path.
-        pass
+        import traceback
+        print(f"[background] Annotation/connection error: {e}")
+        traceback.print_exc()

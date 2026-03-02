@@ -96,10 +96,21 @@ class TestParseResponse:
         assert annotations == []
 
     def test_non_array_json_returns_empty(self):
-        """JSON object (not array) returns empty."""
+        """JSON object without nested list returns empty."""
         service = AnnotationExtractionService(MockProvider())
         annotations = service._parse_response('{"type": "topic"}', "trace-001")
         assert annotations == []
+
+    def test_dict_wrapped_array_unwrapped(self):
+        """Groq json_object mode wraps arrays in a dict — unwrap it."""
+        inner = [{"type": "decision", "key": "rowing", "value": "dropped", "confidence": 0.9}]
+        response = json.dumps({"annotations": inner})
+        service = AnnotationExtractionService(MockProvider())
+
+        annotations = service._parse_response(response, "trace-001")
+        assert len(annotations) == 1
+        assert annotations[0].type == "decision"
+        assert annotations[0].key == "rowing"
 
     def test_caps_at_five_annotations(self):
         """Never returns more than 5 annotations."""

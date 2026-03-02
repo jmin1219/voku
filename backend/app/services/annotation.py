@@ -126,6 +126,16 @@ class AnnotationExtractionService:
         except json.JSONDecodeError:
             return []
 
+        # Groq's json_object mode wraps arrays in an object like {"annotations": [...]}
+        # Unwrap: if raw is a dict, find the first list value inside it
+        if isinstance(raw, dict):
+            for v in raw.values():
+                if isinstance(v, list):
+                    raw = v
+                    break
+            else:
+                return []  # dict with no list value
+
         if not isinstance(raw, list):
             return []
 
