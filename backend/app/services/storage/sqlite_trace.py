@@ -37,6 +37,7 @@ class SQLiteTraceStorage(TraceStorageService):
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._init_pragmas()
+        self._ensure_schema()
         # In-memory embedding cache for fast vector search
         self._embedding_ids: list[str] = []
         self._embedding_matrix: np.ndarray | None = None
@@ -52,6 +53,36 @@ class SQLiteTraceStorage(TraceStorageService):
             PRAGMA foreign_keys=ON;
             PRAGMA cache_size=-64000;
         """)
+
+    def _ensure_schema(self):
+        """Create tables if they don't exist. Runs v2_schema.sql."""
+        from pathlib import Path
+        schema_path = Path(__file__).parent.parent.parent / "migrations" / "v2_schema.sql"
+        if schema_path.exists():
+            self._conn.executescript(schema_path.read_text())
+        else:
+            # Fallback: minimal schema for tests that don't have migrations dir
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS traces (
+                    id TEXT PRIMARY KEY, timestamp TEXT NOT NULL, content TEXT NOT NULL,
+                    conversation_id TEXT, parent_trace_id TEXT, source TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS annotations (
+                    id TEXT PRIMARY KEY, trace_id TEXT NOT NULL, type TEXT NOT NULL,
+                    key TEXT, value TEXT, confidence REAL, extracted_at TEXT NOT NULL, extractor TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS connections (
+                    source_id TEXT NOT NULL, target_id TEXT NOT NULL, type TEXT NOT NULL,
+                    weight REAL, created_at TEXT NOT NULL, PRIMARY KEY (source_id, target_id, type)
+                );
+                CREATE TABLE IF NOT EXISTS resources (
+                    id TEXT PRIMARY KEY, trace_id TEXT NOT NULL, type TEXT NOT NULL,
+                    uri TEXT, relationship TEXT DEFAULT 'encountered', summary TEXT
+                );
+                CREATE TABLE IF NOT EXISTS embeddings (
+                    trace_id TEXT PRIMARY KEY, model TEXT NOT NULL, vector BLOB NOT NULL, computed_at TEXT NOT NULL
+                );
+            """)
 
     def _load_embeddings_cache(self):
         """Load all embeddings into memory for numpy vector search.

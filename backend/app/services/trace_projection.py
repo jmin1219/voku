@@ -167,28 +167,39 @@ def compute_trace_projection(storage: SQLiteTraceStorage) -> dict:
     # --- k-NN edges (768d embedding space) ---
     edges = _compute_knn_edges(X, node_ids)
 
-    # --- UMAP (requires n_neighbors > 1, so n >= 3) ---
+    # --- UMAP (spectral init needs n > n_components + 1, so n >= 5 for 3D) ---
     if n < 5:
-        # Too few traces for UMAP's spectral initialization — assign origin positions
-        # UMAP internally needs k eigenvectors where k > n for small n, causing scipy to crash
-        X_3d_scaled = np.zeros((n, 3), dtype=np.float32)
-        X_2d_scaled = np.zeros((n, 2), dtype=np.float32)
+        # Too few traces for UMAP — assign random jittered positions
+        rng = np.random.default_rng(42)
+        X_3d_scaled = (rng.random((n, 3)) - 0.5).astype(np.float32) * 2
+        X_2d_scaled = (rng.random((n, 2)) - 0.5).astype(np.float32) * 2
     else:
         n_neighbors_3d = min(15, n - 1)
-        reducer_3d = UMAP(
-            n_components=3, n_neighbors=n_neighbors_3d,
-            min_dist=0.3, random_state=42,
-        )
-        X_3d = reducer_3d.fit_transform(X)
-        X_3d_scaled = _scale_positions(X_3d)
+        # Use random init for small n to avoid spectral eigenvalue crash
+        umap_init = "random" if n < 10 else "spectral"
+        try:
+            reducer_3d = UMAP(
+                n_components=3, n_neighbors=n_neighbors_3d,
+                min_dist=0.3, random_state=42, init=umap_init,
+            )
+            X_3d = reducer_3d.fit_transform(X)
+            X_3d_scaled = _scale_positions(X_3d)
+        except Exception:
+            # Fallback if UMAP still fails
+            rng = np.random.default_rng(42)
+            X_3d_scaled = (rng.random((n, 3)) - 0.5).astype(np.float32) * SCALE
 
         n_neighbors_2d = min(15, n - 1)
-        reducer_2d = UMAP(
-            n_components=2, n_neighbors=n_neighbors_2d,
-            min_dist=0.3, random_state=42,
-        )
-        X_2d = reducer_2d.fit_transform(X)
-        X_2d_scaled = _scale_positions(X_2d)
+        try:
+            reducer_2d = UMAP(
+                n_components=2, n_neighbors=n_neighbors_2d,
+                min_dist=0.3, random_state=42, init=umap_init,
+            )
+            X_2d = reducer_2d.fit_transform(X)
+            X_2d_scaled = _scale_positions(X_2d)
+        except Exception:
+            rng = np.random.default_rng(42)
+            X_2d_scaled = (rng.random((n, 2)) - 0.5).astype(np.float32) * SCALE
 
     # Normalize timestamps for Z axis
     ts_min, ts_max = ts_arr.min(), ts_arr.max()
