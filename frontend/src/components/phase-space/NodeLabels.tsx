@@ -21,10 +21,17 @@ interface NodeLabelsProps {
 }
 
 export function NodeLabels({ nodes, focusedId, hoveredId }: NodeLabelsProps) {
+  // Only render labels for hovered or focused nodes — at 200+ nodes,
+  // rendering all labels creates visual chaos and DOM overhead.
+  const activeNodes = nodes.filter(
+    (node) => node.id === focusedId || node.id === hoveredId
+  );
+
+  if (activeNodes.length === 0) return null;
+
   return (
     <>
-      {nodes.map((node) => {
-        const isActive = node.id === focusedId || node.id === hoveredId;
+      {activeNodes.map((node) => {
         const [x, y, z] = node.position;
 
         return (
@@ -40,19 +47,16 @@ export function NodeLabels({ nodes, focusedId, hoveredId }: NodeLabelsProps) {
           >
             <div
               style={{
-                fontSize: isActive ? "11px" : "9px",
+                fontSize: "11px",
                 fontFamily: "var(--voku-font-body)",
-                color: isActive
-                  ? "rgba(224, 219, 208, 0.9)"
-                  : "rgba(224, 219, 208, 0.45)",
+                color: "rgba(224, 219, 208, 0.9)",
                 textShadow: "0 1px 4px rgba(0, 0, 0, 0.8)",
-                transition: "all 0.2s ease",
-                maxWidth: isActive ? "200px" : "120px",
+                maxWidth: "220px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
               }}
             >
-              {truncateLabel(node.label, isActive ? 10 : 5)}
+              {truncateLabel(node.label, 10)}
             </div>
           </Html>
         );
