@@ -160,15 +160,17 @@ class TestBuildSystemPrompt:
         assert len(ids) == 1
         assert ids[0] == results[0].trace.id
 
-    def test_returns_none_when_no_traces(self):
-        """Empty retrieval returns (None, [])."""
+    def test_returns_base_prompt_when_no_traces(self):
+        """Empty retrieval returns base prompt (with date) and empty IDs."""
         mock_retrieval = MagicMock()
         mock_retrieval.retrieve.return_value = []
 
         assembly = TraceContextAssembly(mock_retrieval)
         prompt, ids = assembly.build_system_prompt("any query")
 
-        assert prompt is None
+        assert prompt is not None
+        assert "Voku" in prompt
+        assert "Today is" in prompt
         assert ids == []
 
     def test_prompt_contains_identity_preamble(self):
@@ -180,7 +182,8 @@ class TestBuildSystemPrompt:
         prompt, _ = assembly.build_system_prompt("query")
 
         assert "Voku" in prompt
-        assert "personal context engine" in prompt
+        assert "thinking environment" in prompt
+        assert "Today is" in prompt
 
     def test_prompt_contains_numbered_traces(self):
         """Retrieved traces appear with [1], [2] index markers."""

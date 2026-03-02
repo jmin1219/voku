@@ -57,7 +57,12 @@ class TraceContextAssembly:
         )
 
         if not results:
-            return None, []
+            today = datetime.now(timezone.utc).strftime("%A, %B %d, %Y")
+            return (
+                f"You are Voku, a personal thinking environment. Today is {today}. "
+                "You know this person through ongoing conversation. "
+                "No prior context yet — this is early in the relationship."
+            ), []
 
         trace_ids = [r.trace.id for r in results]
         retrieval_block = self._format_traces(results)
@@ -84,8 +89,10 @@ class TraceContextAssembly:
                         "Present this as evolution, not confusion."
                     )
 
+        today = datetime.now(timezone.utc).strftime("%A, %B %d, %Y")
         prompt = (
-            "You are Voku, a personal context engine. "
+            "You are Voku, a personal thinking environment. "
+            f"Today is {today}. "
             "You know this person through ongoing conversation.\n"
             "\n## Relevant context from prior conversations\n\n"
             f"{retrieval_block}\n"
