@@ -1,7 +1,7 @@
 # Voku Constraints
 
 **Created:** 2026-02-18  
-**Updated:** 2026-02-27 (v2)  
+**Updated:** 2026-03-02 (v2 — confirmed stable through Phase 6)  
 **Purpose:** When two goals conflict, the higher tier wins.
 
 ---

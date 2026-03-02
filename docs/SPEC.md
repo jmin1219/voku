@@ -1,8 +1,9 @@
 # Voku v2 — Spec
 
 **Created:** 2026-02-27  
+**Updated:** 2026-03-02  
 **Author:** Jaymin Chang  
-**Status:** Draft — product definition, data model, UI architecture, build sequence.
+**Status:** Phases 0–6 complete (241 tests, ~116 hours). Phase 7 in progress — real-data strategy, temporal digest, demo prep.
 
 ---
 
@@ -182,11 +183,11 @@ Full-width chat, centered at 720px max. No permanent split panel. Fast for quick
 
 **Trace creation** is invisible. Messages store as traces on send. Annotation extraction runs asynchronously — never blocks the conversation. [BUILT]
 
-**Contradiction surfacing.** When context assembly retrieves conflicting traces, the AI presents them as evolution: "in January you leaned toward X, by March you'd shifted toward Y." Context markers for contradictory traces show a subtle temporal arc indicator — a visual cue that these traces span a range, not a point. [TODO — requires contradiction detection in retrieval]
+**Contradiction surfacing.** When context assembly retrieves conflicting traces, the AI presents them as evolution: "in January you leaned toward X, by March you'd shifted toward Y." Context markers for contradictory traces show a subtle temporal arc indicator — a visual cue that these traces span a range, not a point. [BUILT — backend contradiction detection + evolution cue in system prompt. Visual arc indicator TODO]
 
 **Resource ingestion** through conversation. Drop a file, paste a URL. It becomes a resource trace anchored to this moment. UI shows a small resource chip above the input. [TODO]
 
-**Intention recognition.** When the user expresses intent ("I want to explore...", "I'm trying to decide..."), the system elevates these traces in future retrieval. No UI change — backend classification. Over time the system surfaces gaps between stated intention and actual behavior (YNAB principle: hold intentions, surface alignment/divergence). [TODO]
+**Intention recognition.** When the user expresses intent ("I want to explore...", "I'm trying to decide..."), the system elevates these traces in future retrieval. No UI change — backend classification. Over time the system surfaces gaps between stated intention and actual behavior (YNAB principle: hold intentions, surface alignment/divergence). [BUILT — 1.3x intention boost for traces with intention/commitment annotations]
 
 **Conversation continuity.** New sessions don't recap. The system *uses* prior context naturally and context markers show where it came from. The user feels continuity without being told about it. [BUILT — natural consequence of trace-based retrieval]
 
@@ -274,27 +275,28 @@ Not a separate view. A capability invoked from chat or phase space.
 
 ## Context Assembly
 
-How the AI uses the trace graph to construct personalized responses.
+How the AI uses the trace graph to construct personalized responses. Implements the Context Constructor → Updater → Evaluator pipeline (aligned with Xu et al. 2025 "Everything is Context" architecture).
 
 1. **Embed** the current message.
-2. **Retrieve** relevant traces: vector search weighted by recency (exponential decay). Also retrieve traces connected through intentional links.
-3. **Enrich** with annotations: structured data (measurables, commitments) from retrieved traces.
-4. **Assemble** context: format retrieved traces for LLM. Token budget: ~500–800 tokens.
-5. **Emit** retrieval metadata: SSE event with trace IDs before response stream. Frontend renders as context markers. Phase space highlights corresponding nodes.
-
-No separate user model. No dimension-based inference. The graph IS the understanding.
+2. **Retrieve** relevant traces: vector search weighted by recency (exponential decay). Graph expansion follows temporal + intentional connections (1-hop). Intention/commitment traces boosted 1.3x.
+3. **Detect** contradictions: same annotation key with opposing values across time → evolution cue injected into system prompt.
+4. **Assemble** context: format retrieved traces into system prompt with date, identity, and numbered references. Token budget: ~500–800 tokens.
+5. **Stream** response with metadata: first line is JSON with conversation_id + retrieval_ids. Frontend renders retrieval IDs as context markers. Phase space highlights corresponding nodes.
+6. **Evaluate** (background): after response completes, extract annotations from both user and assistant traces, compute temporal connections. This is the "write-back" loop that enriches the graph for future retrieval.
 
 ---
 
 ## Annotation Pipeline
 
-Asynchronous, non-blocking, re-runnable.
+Asynchronous, non-blocking, re-runnable. Implemented in `background.py` + `annotation.py`.
 
-**When:** After each user trace is stored. Does not block the AI response.
+**When:** After each chat message (both user and assistant traces). Runs as Starlette BackgroundTask — does not block the AI response.
 
-**How:** LLM call with trace content + recent conversation context. Extracts annotations based on speech act analysis. No predefined categories.
+**How:** Groq LLM call (llama-3.3-70b-versatile, json_object mode) with trace content + up to 4 recent conversation context traces. Extracts annotations based on speech act analysis. No predefined categories. Response is a JSON object wrapping an array of annotations — parser unwraps both bare arrays and dict-wrapped arrays (Groq's json_object mode forces object wrapping).
 
-**Output:** Zero or more annotations per trace. Types emerge from content — measurables, commitments, emotions, topics, decisions.
+**Output:** Zero to five annotations per trace. Types emerge from content — measurables, commitments, emotions, topics, decisions, beliefs, questions.
+
+**Downstream consumers:** Contradiction detection (same key, different values), pattern detection (frequency analysis), intention boost (1.3x for intention/commitment annotations in retrieval), cluster metadata (LLM labels from annotation-rich traces).
 
 **Re-extraction:** `python -m scripts.reannotate --model <model> --since <date>` re-annotates traces with a specified model. Old annotations preserved with their `extractor` tag.
 
@@ -302,76 +304,73 @@ Asynchronous, non-blocking, re-runnable.
 
 ## Build Sequence
 
-### Phase 0: Environment Setup (~1 session)
+### Phase 0: Environment Setup ✅
 - Tag current branch as `v1-final`
 - Create `feat/v2-trace-architecture` off main
 - Archive v1 docs, preserve v1 database
 - Create v2 schema migration
 - Verify v1 tests isolated on their branch
 
-### Phase 1: Trace Pipeline (~2–3 sessions)
+### Phase 1: Trace Pipeline ✅
 - Trace storage: conversation endpoint stores messages as traces with parent links
 - Embedding: embed each trace on creation
 - Retrieval: vector search on traces, return top-k weighted by recency
 - Context assembly: format retrieved traces for LLM
 - **Gate:** Conversation quality improves with accumulated trace context
 
-### Phase 2: Annotation Pipeline (~1–2 sessions)
+### Phase 2: Annotation Pipeline ✅
 - Async annotation service
 - Annotation types emerge from extraction (no hardcoded types)
 - Structured data extraction (measurables, commitments, emotions, topics)
 - Re-annotation script for batch processing
 
-### Phase 3: Connections (~1–2 sessions)
+### Phase 3: Connections ✅
 - Semantic connections (k-NN on embeddings)
 - Temporal connections (auto-generated within sessions)
 - Intentional connections (API endpoint)
 - Supersession detection (LLM-based)
 
-### Phase 4: Frontend — Chat + Context Markers (~1–2 sessions)
+### Phase 4: Frontend — Chat + Context Markers ✅
 - Wire chat to trace-based backend
 - Inline context markers with progressive disclosure
 - Resource ingestion through chat
 
-### Phase 5: Backend Enrichment (~2 sessions)
+### Phase 5: Backend Enrichment ✅ (Mar 1)
 - Wire annotation extraction as asyncio task in chat.py
 - Integrate connections into retrieval (graph traversal, not just flat vector search)
 - Contradiction detection in retrieval (embedding similarity + annotation polarity inversion)
 - Intention recognition (classify intent traces, elevate in future retrieval)
-- Resource ingestion endpoint (file/URL → resource trace)
 - Hierarchical clustering: DBSCAN at epsilon=0.3 (fine clusters) + epsilon=0.6 (orientations)
 - Cluster metadata generation: LLM labels + summaries from top-5 central traces per cluster
 - Pattern-opinion generation: scan annotation clusters for recurring tendencies
 - Resolution-aware API: `/api/phase-space` returning trace/cluster/orientation data
 
-### Phase 6: Frontend — Multi-Resolution Phase Space (~3–4 sessions)
-- Phase space container: summonable (⌘+Space), collapsible split or overlay
-- Trace-level rendering: UMAP scatter, shape-encoded source types, recency color, EchoMind focus
-- Cloud-level rendering: soft-edged cluster regions, AI labels, inter-cluster connections
-- Orientation-level rendering: terrain-like broad regions, atmospheric styling
-- Continuous zoom: smooth interpolation between resolution levels
-- Retrieval glow: sync with chat context markers across zoom levels
-- Thread paths: parent chain on selection
-- Contradiction edges: dashed/two-toned for opposing traces
-- Decay visualization: shrink + cool for stale traces
-- Time slider: animated topology change over time
+### Phase 6: Frontend — Multi-Resolution Phase Space ✅ (Mar 1)
+- Phase space container: summonable (⌘+Space), collapsible split
+- Trace-level rendering: InstancedMesh, recency color, EchoMind focus
+- Cloud-level rendering: cluster shells, k-NN edges
+- Retrieval glow: sync with chat context markers
+- OrbitControls + focus animation
+- NodeLabels (hover-only)
+- Unified dark theme
 
-### Phase 7: Temporal Digest + Demo (~2 sessions)
+### Phase 7: Temporal Digest + Demo ← CURRENT
+See `docs/TASKS_PHASE7.md` for detailed task breakdown.
+
+- **Content strategy (revised Mar 2):** Real data from daily Voku use replaces synthetic persona (Mina). Multi-domain conversations (career, academics, training, personal) produce thematic cluster separation organically.
 - Period summary generation (narrative, not list)
 - Period summaries stored as system traces in graph
 - "On This Day" resurfacing in first response of new sessions
-- Synthetic persona with designed 20-session arc for demo content
-- Demo mode deployment (Dockerfile + Railway)
-- Context marker connection-type encoding (visual differentiation)
-- Resource drop UI (chip above input)
+- Demo deployment (Dockerfile + Railway)
+- Demo narrative script + rehearsal
 
-**Estimated total: ~14–18 sessions**
+**Estimated total: ~14–18 sessions. Currently at ~116 hours across 30+ sessions.**
 
 ---
 
 ## Demo Narrative
 
-1. **Open.** Clean chat. No onboarding. The system has been accumulating traces from two months of daily use (synthetic persona data).
+1. **Open.** Clean chat. No onboarding. The system has been accumulating traces from weeks of daily use across multiple domains (career, academics, training, personal).
 2. **Ask something that spans sessions.** "What have I been going back and forth on?" Rich response referencing traces across weeks. Context markers [1] [2] [3] show specific moments. Hover one — see the original thinking. Contradictions presented as evolution.
 3. **Summon the phase space.** ⌘+Space. Clouds appear — 6–7 clusters, warm and cool, different sizes. Referenced clusters pulsing gold.
 4. **Zoom into a cloud.** Click the career cluster. It expands — individual traces, connections, thread paths. Some warm (recent), some cool (weeks old). A dashed connection shows where thinking was in tension.
@@ -386,10 +385,10 @@ Asynchronous, non-blocking, re-runnable.
 ## Portfolio Value
 
 - **System design:** Five-table schema generating emergent structure from minimal primitives. Anti-collapse principle as design test. Decisions grounded in cross-disciplinary research (sheaf theory, quantum cognition, POMDP, ecological dynamics, HCI).
-- **Context engineering:** Sheaf-based contextual translation — local views assembled per context, not global profiles. Trace-based retrieval with annotation enrichment, graph traversal, contradiction detection. Benchmarkable against MemoryArena.
-- **Full-stack implementation:** FastAPI + SQLite + React. Multi-resolution phase space with continuous zoom (trace → cloud → orientation). Chat-first with inline context markers. Real-time retrieval visualization.
+- **Context engineering:** Implements the full context engineering pipeline (Constructor → Updater → Evaluator per Xu et al. 2025) through trace retrieval, streaming context assembly, and annotation extraction with contradiction detection. Bottom-up emergence from three primitives vs. top-down governance infrastructure. Benchmarkable against MemoryArena.
+- **Full-stack implementation:** FastAPI + SQLite + React + Three.js. 241 tests, ~7,600+ LOC. Multi-resolution phase space with InstancedMesh rendering. Chat-first with inline context markers. Real-time retrieval visualization.
 - **HCI research integration:** Design decisions backed by empirical evidence (AAAI 2025, EchoMind CSCW 2025, split-attention literature, calm technology). Theoretical grounding for *why* findings hold (anti-collapse principle).
-- **Product thinking:** Competitive analysis against Claude Cowork, ChatGPT, Kin, Dot. Clear architectural differentiation: the only system that mediates between users and AI tools without collapsing the user into a profile.
+- **Product thinking:** Competitive analysis against Claude memory, ChatGPT memory, Kin, Dot, Mem0, Letta. Addresses "context rot" (Chroma Research) through temporal digest and visual recency encoding. Clear architectural differentiation: the only system that makes the AI's context transparent and navigable.
 - **Novel design principle:** "Known without being boxed" — formalized through sheaf theory and quantum cognition. Every feature passes the test: does this collapse or preserve the cloud?
 
 ---

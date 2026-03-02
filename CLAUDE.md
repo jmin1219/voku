@@ -8,7 +8,7 @@
 
 Voku is a transparent thinking environment where conversations become timestamped traces in a navigable knowledge graph — the personal context layer any AI agent can query.
 
-**Status:** v2 architecture, Phases 0-6 complete. See `docs/STATE.md` for current build phase and next steps.
+**Status:** v2 architecture, Phases 0-6 complete, Phase 7 in progress. See `docs/STATE.md` for current position.
 
 ---
 
@@ -34,10 +34,7 @@ Local-first. No Docker, no cloud database. API keys required for Anthropic (chat
 cd backend
 source venv/bin/activate
 uvicorn app.main:app --reload                # localhost:8000
-
-# Seed data (first time)
-python -m scripts.seed_v2                    # 20 traces across 3 conversations
-curl -X POST http://localhost:8000/api/traces/connections/compute
+# Schema auto-creates on first run. No manual migration needed.
 
 # Frontend
 cd frontend
@@ -46,15 +43,14 @@ npm run dev                                  # localhost:5173
 
 # Tests
 cd backend && source venv/bin/activate
-pytest                                       # 240 tests
+pytest                                       # 241 tests
 pytest tests/test_phase5_*.py -v             # Phase 5 tests only
 ```
 
 ### Known Issues
 
 - `NODE_ENV=production` in `~/.zshrc` causes `npm install` to skip devDependencies. Prefix with `NODE_ENV=development`.
-- UMAP crashes with fewer than 5 traces (spectral layout eigenvector issue). Guard at n < 5 returns origin positions.
-- Phase space needs 100+ traces for meaningful visual structure.
+- Phase space needs ~50+ traces for meaningful visual structure. Fewer than 5 traces get random jittered positions (no UMAP).
 
 ---
 
@@ -122,6 +118,7 @@ src/
 │       ├── PhaseSpaceContainer   Slide-in overlay (⌘+Space toggle)
 │       ├── PhaseSpaceScene       R3F Canvas + lighting + composition
 │       ├── TraceCloud            InstancedMesh nodes (recency color, retrieval glow)
+│       ├── NodeLabels            Hover-only labels (drei Html, billboard)
 │       ├── EdgeMesh              k-NN edges (LineSegments, single draw call)
 │       ├── ClusterCloud          Translucent cluster shells
 │       └── CameraController      OrbitControls + focus animation
@@ -169,6 +166,7 @@ Full hierarchy in `docs/CONSTRAINTS.md`. Key rules:
 |----------|---------|-----------|
 | `docs/STATE.md` | Current build position, next steps | Every session start |
 | `docs/SPEC.md` | v2 product definition, data model, UI, build plan | Entering a build phase |
-| `docs/TASKS_PHASE5.md` | Phase 5 task breakdown with acceptance criteria | Reference (complete) |
-| `docs/TASKS_PHASE6.md` | Phase 6 task breakdown | Reference (complete) |
+| `docs/TASKS_PHASE7.md` | Phase 7 tasks (real-data strategy, temporal digest, demo) | Current phase |
 | `docs/CONSTRAINTS.md` | Decision hierarchy for tradeoffs | Making design decisions |
+| `docs/archive/TASKS_PHASE5.md` | Phase 5 task breakdown (complete) | Reference only |
+| `docs/archive/TASKS_PHASE6.md` | Phase 6 task breakdown (complete) | Reference only |
