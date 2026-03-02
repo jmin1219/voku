@@ -8,7 +8,7 @@
 
 Voku is a transparent thinking environment where conversations become timestamped traces in a navigable knowledge graph — the personal context layer any AI agent can query.
 
-**Status:** v2 architecture. Spec complete. See `docs/STATE.md` for current build phase and next steps.
+**Status:** v2 architecture, Phases 0-6 complete. See `docs/STATE.md` for current build phase and next steps.
 
 ---
 
@@ -18,12 +18,12 @@ Voku is a transparent thinking environment where conversations become timestampe
 |-------|-----------|
 | Backend | Python 3.12, FastAPI, SQLite (single file, WAL mode) |
 | Embeddings | bge-base-en-v1.5 via sentence-transformers, numpy vector search |
-| LLM | Groq (cloud) / Ollama (local) via abstract provider interface |
+| LLM (chat) | Anthropic Claude (streaming via SDK) |
+| LLM (extraction) | Groq (cloud) / Ollama (local) via abstract provider interface |
 | Frontend | React 19, TypeScript, Vite 7, Tailwind v4 |
 | Visualization | Three.js 0.183 via react-three-fiber 9, InstancedMesh rendering |
-| UI Components | shadcn/ui (Radix primitives) |
 
-Local-first. No Docker, no cloud database. Groq API key required only for LLM calls.
+Local-first. No Docker, no cloud database. API keys required for Anthropic (chat) and Groq (annotation extraction).
 
 ---
 
@@ -35,6 +35,10 @@ cd backend
 source venv/bin/activate
 uvicorn app.main:app --reload                # localhost:8000
 
+# Seed data (first time)
+python -m scripts.seed_v2                    # 20 traces across 3 conversations
+curl -X POST http://localhost:8000/api/traces/connections/compute
+
 # Frontend
 cd frontend
 NODE_ENV=development npm install             # see Known Issues
@@ -42,15 +46,15 @@ npm run dev                                  # localhost:5173
 
 # Tests
 cd backend && source venv/bin/activate
-pytest                                       # all tests
-pytest tests/test_storage.py -v              # single file
-pytest -k "test_trace"                       # by pattern
+pytest                                       # 240 tests
+pytest tests/test_phase5_*.py -v             # Phase 5 tests only
 ```
 
 ### Known Issues
 
 - `NODE_ENV=production` in `~/.zshrc` causes `npm install` to skip devDependencies. Prefix with `NODE_ENV=development`.
-- Stale remote branches: `origin/feat/conversation-extraction`, `origin/feat/extraction-v2`.
+- UMAP crashes with fewer than 5 traces (spectral layout eigenvector issue). Guard at n < 5 returns origin positions.
+- Phase space needs 100+ traces for meaningful visual structure.
 
 ---
 
@@ -66,23 +70,63 @@ resources       id, trace_id, type, uri, relationship, summary
 embeddings      trace_id, model, vector, computed_at
 ```
 
-Traces are immutable ground truth. Annotations are computed, re-extractable, category-free — no predefined types at the schema level. Full schema in `docs/SPEC.md`.
+Traces are immutable ground truth. Annotations are computed, re-extractable, category-free. Full schema in `migrations/v2_schema.sql`, design rationale in `docs/SPEC.md`.
 
-### Service Layer Pattern
-
-Services use abstract base classes with concrete implementations:
+### Service Layer
 
 ```
-services/storage/__init__.py     → StorageService (ABC)
-services/storage/sqlite_storage.py → SQLiteStorage(StorageService)
-services/storage/models.py       → dataclass models (StoredProposition, SimilarResult)
+services/
+├── storage/                  SQLite + vector search (ABC + implementation)
+│   ├── __init__.py           TraceStorageService ABC
+│   ├── sqlite_trace.py       SQLiteTraceStorage (traces, annotations, connections, embeddings)
+│   └── models.py             Trace, Annotation, Connection, SimilarTrace dataclasses
+├── embedding/bge.py          bge-base-en-v1.5 embedder
+├── providers/                LLM abstraction (Groq, Ollama)
+├── trace_retrieval.py        Vector search + recency weighting + graph expansion + intention boost
+├── trace_context.py          System prompt assembly from retrieved traces + contradiction cues
+├── annotation.py             LLM-based annotation extraction (async)
+├── background.py             Background task: annotations + temporal connections after chat
+├── connections.py            Temporal + semantic connection computation
+├── contradiction.py          Detect opposing annotations on same key
+├── cluster_metadata.py       LLM labels for clusters (+ keyword fallback)
+├── patterns.py               Frequency pattern detection with provisional language
+├── trace_projection.py       UMAP + hierarchical DBSCAN + k-NN edges
+└── router.py                 Provider routing (Groq/Ollama)
 ```
 
-Shared singletons live in `app/dependencies.py` — storage, embedder, retrieval, and context assembly are instantiated once and injected via FastAPI dependency injection. This ensures the in-memory embedding cache stays consistent across routes.
+### Routes
 
-### Request/Response Pattern
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/chat` | POST | Streaming chat with trace-based context. Background annotation extraction. |
+| `/api/phase-space` | GET | Multi-resolution data: traces + clusters + orientations + edges |
+| `/api/patterns` | GET | Recurring annotation patterns within timeframe |
+| `/api/traces/{id}` | GET | Single trace with annotations and connections |
+| `/api/traces/connections/compute` | POST | Recompute all connections (batch) |
+| `/api/history` | GET | All conversations with traces |
+| `/api/conversations` | POST | Create new conversation |
+| `/api/status` | GET | Health check |
 
-Routes use Pydantic models for request validation. Streaming responses use FastAPI's `StreamingResponse` with SSE (Server-Sent Events) for real-time chat.
+### Frontend
+
+```
+src/
+├── pages/Workspace.tsx           Main layout: chat + summonable phase space
+├── hooks/usePhaseSpace.ts        Lazy data hook for /api/phase-space
+├── types/phase-space.ts          TypeScript interfaces matching backend
+├── components/
+│   ├── chat/                     ChatPanel, ChatMessages, ChatInput, ChatHeader
+│   │   ├── ContextMarker.tsx     Interactive [N] citations with hover tooltips
+│   │   └── Markdown.tsx          Lightweight renderer with citation parsing
+│   └── phase-space/              Summonable 3D visualization
+│       ├── PhaseSpaceContainer   Slide-in overlay (⌘+Space toggle)
+│       ├── PhaseSpaceScene       R3F Canvas + lighting + composition
+│       ├── TraceCloud            InstancedMesh nodes (recency color, retrieval glow)
+│       ├── EdgeMesh              k-NN edges (LineSegments, single draw call)
+│       ├── ClusterCloud          Translucent cluster shells
+│       └── CameraController      OrbitControls + focus animation
+└── styles/tokens.css             Design tokens (colors, typography, spacing)
+```
 
 ---
 
@@ -91,72 +135,19 @@ Routes use Pydantic models for request validation. Streaming responses use FastA
 ### Python (Backend)
 
 - **Type hints everywhere.** Function signatures, return types, variable annotations.
-- **Dataclasses** for domain models (`@dataclass`). Pydantic `BaseModel` for API schemas.
-- **Docstrings** on classes and public methods. Format: one-line summary, optional detail paragraph.
-- **Import order:** stdlib → third-party → app modules. Relative imports within packages (`from . import`), absolute for cross-package (`from app.services.storage import`).
-- **Naming:** `snake_case` for functions/variables, `PascalCase` for classes, `UPPER_CASE` for constants.
-- **SQL:** Raw SQLite via `sqlite3` module, `Row` factory for dict-like access. WAL mode + foreign keys enabled in every connection.
-- **Vectors:** numpy for all embedding operations. `float32` dtype. Cosine similarity computed manually (normalize + dot product).
+- **Dataclasses** for domain models. Pydantic `BaseModel` for API schemas.
+- **Docstrings** on classes and public methods. One-line summary + optional detail.
+- **Import order:** stdlib → third-party → app modules.
+- **SQL:** Raw SQLite via `sqlite3`, `Row` factory, WAL mode + foreign keys.
+- **Vectors:** numpy for all embedding operations. `float32` dtype.
 - **New services** follow the pattern: ABC in `__init__.py`, implementation in named file, models in `models.py`.
+- **Tests:** pytest, mirror source structure, real fixtures in `tests/fixtures/real/`.
 
 ### TypeScript (Frontend)
 
 - **Functional components** with hooks. No class components.
-- **Tailwind v4** for styling. Design tokens in `src/styles/`.
+- **Tailwind v4** for styling. Design tokens in `src/styles/tokens.css`.
 - **Three.js** via react-three-fiber declarative API. InstancedMesh for batch rendering.
-- **shadcn/ui** for standard UI components (dialogs, buttons, labels).
-
-### Testing
-
-- pytest with `conftest.py` for path setup.
-- Test files mirror source: `test_storage.py` tests `storage/`, `test_retrieval.py` tests `retrieval.py`.
-- Real conversation fixtures in `tests/fixtures/real/` (21 conversations).
-- Golden evaluation queries in `tests/golden/`.
-
----
-
-## Directory Structure
-
-```
-voku/
-├── CLAUDE.md              ← this file
-├── backend/
-│   ├── app/
-│   │   ├── main.py            FastAPI entry, CORS, lifespan
-│   │   ├── config.py          Environment settings (Pydantic)
-│   │   ├── dependencies.py    Shared service singletons
-│   │   ├── routes/            API endpoints (chat, extract, propositions)
-│   │   ├── models/            Shared data models
-│   │   ├── services/
-│   │   │   ├── storage/       SQLite + vector search
-│   │   │   ├── embedding/     bge-base-en-v1.5
-│   │   │   ├── extraction/    LLM proposition extraction (v1)
-│   │   │   ├── providers/     Groq / Ollama abstraction
-│   │   │   ├── conversation/  Chat session management
-│   │   │   ├── user_model/    Dimension assignment + context (v1)
-│   │   │   ├── retrieval.py   Temporal-weighted vector search
-│   │   │   └── projection.py  UMAP + DBSCAN clustering
-│   │   └── mcp/               MCP server skeleton
-│   ├── tests/
-│   ├── scripts/               Batch processing, data migration
-│   ├── data/                  SQLite databases
-│   └── migrations/            Schema SQL files
-├── frontend/
-│   └── src/
-│       ├── components/
-│       │   ├── chat/          ChatHeader, ChatInput, ChatMessages
-│       │   ├── phase-space/   NodeCloud, EdgeMesh, Scene, CameraController
-│       │   └── ui/            shadcn/ui components
-│       ├── pages/             Workspace layout
-│       ├── styles/            Design tokens, typography
-│       └── types/             TypeScript type definitions
-└── docs/
-    ├── STATE.md               Current position + session log
-    ├── SPEC.md                v2 product definition + build sequence
-    ├── CARRY_FORWARD.md       v1 → v2 migration file map
-    ├── CONSTRAINTS.md         Decision hierarchy (Tier 0–3)
-    └── archive/v1/            Archived v1 documentation
-```
 
 ---
 
@@ -164,12 +155,11 @@ voku/
 
 Full hierarchy in `docs/CONSTRAINTS.md`. Key rules:
 
-1. **Conversation quality must improve with accumulated context** (Tier 0). If it doesn't, nothing else matters.
-2. **No predefined categories.** Annotation types emerge from extraction, not schema design (Tier 2).
-3. **Vertical slices first.** End-to-end through all layers before broadening (Tier 2).
+1. **Conversation quality must improve with accumulated context** (Tier 0).
+2. **Anti-collapse principle:** features must preserve the cloud, not collapse to point estimates (Tier 0).
+3. **No predefined categories.** Annotation types emerge from extraction (Tier 2).
 4. **Tests define done.** No component ships without tests (Tier 2).
-5. **Single-file SQLite.** No graph databases. Recursive CTEs handle all traversal patterns at scale (Tier 3).
-6. **Interfaces over implementations.** Every service has an ABC. Swapping providers is a config change (Tier 3).
+5. **Single-file SQLite.** Recursive CTEs handle all traversal (Tier 3).
 
 ---
 
@@ -177,7 +167,8 @@ Full hierarchy in `docs/CONSTRAINTS.md`. Key rules:
 
 | Document | Purpose | Read when |
 |----------|---------|-----------|
-| `docs/STATE.md` | Current build position, decisions, next steps | Every session start |
-| `docs/SPEC.md` | v2 product definition, data model, UI architecture, build plan | Entering a build phase |
-| `docs/CARRY_FORWARD.md` | Exact file map: keep / refactor / rebuild / drop | During migration |
-| `docs/CONSTRAINTS.md` | When two design goals conflict, the higher tier wins | Making tradeoff decisions |
+| `docs/STATE.md` | Current build position, next steps | Every session start |
+| `docs/SPEC.md` | v2 product definition, data model, UI, build plan | Entering a build phase |
+| `docs/TASKS_PHASE5.md` | Phase 5 task breakdown with acceptance criteria | Reference (complete) |
+| `docs/TASKS_PHASE6.md` | Phase 6 task breakdown | Reference (complete) |
+| `docs/CONSTRAINTS.md` | Decision hierarchy for tradeoffs | Making design decisions |
