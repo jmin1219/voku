@@ -5,6 +5,7 @@ import { TraceCloud } from "./TraceCloud";
 import { EdgeMesh } from "./EdgeMesh";
 import { ClusterCloud } from "./ClusterCloud";
 import { CameraController } from "./CameraController";
+import { NodeLabels } from "./NodeLabels";
 
 /**
  * PhaseSpaceScene — R3F Canvas with all phase space layers.
@@ -54,7 +55,7 @@ export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         camera={{ position: [0, 8, 12], fov: 50 }}
-        style={{ background: "var(--voku-phase-bg, #1a1a22)" }}
+        style={{ background: "var(--voku-bg-deep)" }}
         onPointerMissed={handleBgClick}
       >
         {/* Lighting — warm/cool split, bright enough for dark bg */}
@@ -80,6 +81,12 @@ export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
         />
 
         <ClusterCloud clusters={data.clusters} />
+
+        <NodeLabels
+          nodes={data.nodes}
+          focusedId={focusedId}
+          hoveredId={hoveredId}
+        />
       </Canvas>
 
       {/* Tooltip overlay */}

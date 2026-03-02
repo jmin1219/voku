@@ -6,47 +6,47 @@
  */
 
 :root {
-  /* === Base surfaces === */
-  --voku-bg-deep: #f5f0e8;          /* Phase space background */
-  --voku-bg-base: #faf7f2;          /* Chat panel background */
-  --voku-bg-raised: #ffffff;         /* Message bubbles, cards */
-  --voku-bg-hover: #f0ebe1;         /* Hover states */
+  /* === Base surfaces (dark) === */
+  --voku-bg-deep: #13131a;          /* Deepest background */
+  --voku-bg-base: #1a1a24;          /* Primary background — chat + phase space */
+  --voku-bg-raised: #22222e;        /* Cards, input fields */
+  --voku-bg-hover: #2a2a38;         /* Hover states */
 
   /* === Borders === */
-  --voku-border-subtle: #e8e0d4;    /* Panel dividers */
-  --voku-border-default: #d6cfc2;   /* Input borders */
-  --voku-border-focus: #b8a88a;     /* Focused inputs */
+  --voku-border-subtle: #2a2a36;    /* Panel dividers */
+  --voku-border-default: #363645;   /* Input borders */
+  --voku-border-focus: #9a7b3c;     /* Focused inputs — gold accent */
 
   /* === Text === */
-  --voku-text-primary: #2c2620;     /* Main text — warm dark brown */
-  --voku-text-secondary: #6b6358;   /* Dimmed text */
-  --voku-text-tertiary: #99907f;    /* Very subtle text, metadata */
-  --voku-text-muted: #c4baa8;       /* Ghost text, placeholders */
+  --voku-text-primary: #e0dbd0;     /* Main text — warm light */
+  --voku-text-secondary: #a09888;   /* Dimmed text */
+  --voku-text-tertiary: #706860;    /* Very subtle text, metadata */
+  --voku-text-muted: #504840;       /* Ghost text, placeholders */
 
   /* === Accents === */
-  --voku-accent-gold: #9a7b3c;      /* Primary accent — warm gold */
-  --voku-accent-gold-dim: #b8a070;  /* Dimmed gold */
-  --voku-accent-gold-glow: #7a6230; /* Dark gold for emphasis */
+  --voku-accent-gold: #c9a23c;      /* Primary accent — warm gold, brighter for dark bg */
+  --voku-accent-gold-dim: #8a7040;  /* Dimmed gold */
+  --voku-accent-gold-glow: #e0b84a; /* Bright gold for emphasis */
 
   /* === Role colors (chat) === */
-  --voku-user-accent: #5a72a0;      /* Muted steel blue for user messages */
-  --voku-user-bg: #f0f2f8;          /* User message background */
-  --voku-assistant-accent: #5a8a5e; /* Sage green for assistant */
-  --voku-assistant-bg: #f0f5f0;     /* Assistant message background */
+  --voku-user-accent: #7a92c0;      /* Muted steel blue */
+  --voku-user-bg: #1e2030;          /* User message — slightly blue-shifted dark */
+  --voku-assistant-accent: #6a9a6e; /* Sage green */
+  --voku-assistant-bg: #1a2420;     /* Assistant message — slightly green-shifted dark */
 
-  /* === Node type colors (phase space — need contrast on light bg) === */
-  --voku-type-stance: #4a78a8;      /* Medium blue */
-  --voku-type-event: #4a8a5e;       /* Medium green */
-  --voku-type-intention: #a07830;   /* Warm amber */
+  /* === Node type colors (phase space) === */
+  --voku-type-stance: #5a8ac0;      /* Medium blue */
+  --voku-type-event: #5a9a6e;       /* Medium green */
+  --voku-type-intention: #c0983a;   /* Warm amber */
 
-  /* === Phase space specific (dark) === */
-  --voku-phase-bg: #1a1a22;         /* Dark navy-charcoal */
-  --voku-phase-canvas: #1a1a22;     /* Canvas background match */
-  --voku-phase-label: #e0dbd0;      /* Light label text on dark */
+  /* === Phase space specific === */
+  --voku-phase-bg: #13131a;         /* Matches bg-deep */
+  --voku-phase-canvas: #13131a;
+  --voku-phase-label: #e0dbd0;
   --voku-phase-label-shadow: rgba(0, 0, 0, 0.6);
   --voku-cluster-opacity: 0.08;
 
-  /* === Divider (draggable) === */
+  /* === Divider === */
   --voku-divider-width: 4px;
   --voku-divider-color: var(--voku-border-subtle);
   --voku-divider-hover: var(--voku-accent-gold-dim);
@@ -65,11 +65,11 @@
    * Tool UI, not reading app. Intentional density without cramping.
    * Each step is ~2px — small enough to feel cohesive, large enough to create hierarchy.
    */
-  --voku-text-xs: 0.6875rem;    /* 11px — metadata, timestamps, mono labels */
-  --voku-text-sm: 0.8125rem;    /* 13px — button text, secondary info */
-  --voku-text-base: 0.9375rem;  /* 15px — body text, messages, input */
-  --voku-text-lg: 1.0625rem;    /* 17px — section headers */
-  --voku-text-xl: 1.25rem;      /* 20px — page title (rare) */
+  --voku-text-xs: 0.75rem;      /* 12px — metadata, timestamps, mono labels */
+  --voku-text-sm: 0.875rem;     /* 14px — button text, secondary info */
+  --voku-text-base: 1rem;       /* 16px — body text, messages, input */
+  --voku-text-lg: 1.125rem;     /* 18px — section headers */
+  --voku-text-xl: 1.375rem;     /* 22px — page title (rare) */
 
   /* === Line Heights ===
    * Leading controls vertical rhythm more than font-size does.
@@ -77,9 +77,9 @@
    * normal: messages where you read in bursts
    * relaxed: long-form where eyes need room to track lines
    */
-  --voku-leading-tight: 1.3;
-  --voku-leading-normal: 1.6;
-  --voku-leading-relaxed: 1.8;
+  --voku-leading-tight: 1.35;
+  --voku-leading-normal: 1.7;
+  --voku-leading-relaxed: 1.85;
 
   /* === Spacing Scale ===
    * Base unit: 4px (0.25rem). Every value is a multiple.
@@ -101,11 +101,11 @@
   --voku-chat-min-w: 420px;
   /* max: 2/3 of viewport (computed dynamically in JS) */
   /* default: 1/3 of viewport, clamped to min (computed in JS) */
-  --voku-input-min-h: 2.5rem;    /* 40px — single line */
+  --voku-input-min-h: 3rem;      /* 48px — single line, comfortable */
   --voku-input-max-h: 10rem;     /* 160px — ~6 lines, then scroll */
   --voku-header-h: 2.75rem;      /* 44px — chat header */
-  --voku-msg-indent: 1.5rem;     /* message left/right offset for role alignment */
-  --voku-msg-max-w: 85%;         /* message bubble max width (unused until responsive) */
+  --voku-msg-indent: 0rem;       /* no indent — use max-width alignment instead */
+  --voku-msg-max-w: 88%;         /* message bubble max width */
 
   /* === Responsive ===
    * Single breakpoint. Below this: chat fullscreen, phase space hidden.

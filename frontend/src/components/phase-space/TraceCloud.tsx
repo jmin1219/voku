@@ -18,7 +18,7 @@ import type { PhaseSpaceNode } from "../../types/phase-space";
 const WARM = new THREE.Color("#e8c84a"); // bright gold — recent
 const COOL = new THREE.Color("#8a9ab0"); // light slate — old
 const GLOW = new THREE.Color("#ffe066"); // vivid gold — retrieved
-const BASE_SIZE = 0.12;
+const BASE_SIZE = 0.22;
 
 interface TraceCloudProps {
   nodes: PhaseSpaceNode[];

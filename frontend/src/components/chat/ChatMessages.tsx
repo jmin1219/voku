@@ -52,7 +52,7 @@ export function ChatMessages({
         flex: 1,
         overflowY: "auto",
         overflowX: "hidden",
-        padding: "var(--voku-space-3) var(--voku-space-4)",
+        padding: "var(--voku-space-4) var(--voku-space-6)",
       }}
     >
       {/* Load earlier conversations */}
@@ -169,66 +169,48 @@ export function ChatMessages({
             {/* Message bubble */}
             <div
               style={{
-                marginBottom: "var(--voku-space-2)",
+                display: "flex",
+                justifyContent: isUser ? "flex-end" : "flex-start",
+                marginBottom: "var(--voku-space-3)",
+              }}
+            >
+            <div
+              style={{
+                maxWidth: "var(--voku-msg-max-w)",
                 fontSize: "var(--voku-text-base)",
                 lineHeight: "var(--voku-leading-normal)",
-                padding: "var(--voku-space-2) var(--voku-space-3)",
+                padding: "var(--voku-space-3) var(--voku-space-4)",
                 background: isFocused
                   ? isUser
                     ? "var(--voku-user-bg)"
                     : "var(--voku-assistant-bg)"
                   : "var(--voku-bg-deep)",
-                borderRadius: "var(--voku-radius-md)",
+                borderRadius: isUser
+                  ? "var(--voku-radius-lg) var(--voku-radius-lg) var(--voku-radius-sm) var(--voku-radius-lg)"
+                  : "var(--voku-radius-lg) var(--voku-radius-lg) var(--voku-radius-lg) var(--voku-radius-sm)",
                 borderLeft: !isUser
                   ? `3px solid ${isFocused ? "var(--voku-assistant-accent)" : "var(--voku-border-subtle)"}`
                   : "none",
-                borderRight: isUser
-                  ? `3px solid ${isFocused ? "var(--voku-user-accent)" : "var(--voku-border-subtle)"}`
-                  : "none",
-                marginLeft: isUser ? "var(--voku-msg-indent)" : "0",
-                marginRight: isUser ? "0" : "var(--voku-msg-indent)",
                 textAlign: isUser ? "right" : "left",
-                opacity: isFocused ? (isLatest ? 1 : 0.85) : 0.5,
+                opacity: isFocused ? (isLatest ? 1 : 0.9) : 0.5,
                 whiteSpace: isUser ? "pre-wrap" : "normal",
                 transition: "opacity 0.3s ease",
               }}
             >
-              {isFocused && (
+              {/* Retrieval indicator — only on assistant messages with context */}
+              {showRetrieval && (
                 <div
                   style={{
                     fontSize: "var(--voku-text-xs)",
-                    color: isUser
-                      ? "var(--voku-user-accent)"
-                      : "var(--voku-assistant-accent)",
-                    marginBottom: "var(--voku-space-1)",
+                    color: "var(--voku-accent-gold)",
+                    marginBottom: "var(--voku-space-2)",
                     fontWeight: 500,
                     letterSpacing: "0.04em",
-                    textTransform: "lowercase",
-                    display: "flex",
-                    justifyContent: isUser ? "flex-end" : "flex-start",
-                    gap: "var(--voku-space-2)",
+                    opacity: 0.7,
                   }}
+                  title={`${retrievalIds.length} trace${retrievalIds.length > 1 ? "s" : ""} informed this response`}
                 >
-                  <span>{isUser ? "you" : "claude"}</span>
-                  {msg.createdAt && (
-                    <span style={{ color: "var(--voku-text-muted)", fontWeight: 400 }}>
-                      {formatTime(msg.createdAt)}
-                    </span>
-                  )}
-                  {/* Retrieval indicator — traces were used to inform this response */}
-                  {showRetrieval && (
-                    <span
-                      style={{
-                        color: "var(--voku-accent-gold)",
-                        fontWeight: 500,
-                        fontSize: "var(--voku-text-xs)",
-                        marginLeft: "auto",
-                      }}
-                      title={`${retrievalIds.length} trace${retrievalIds.length > 1 ? "s" : ""} informed this response`}
-                    >
-                      ◆ {retrievalIds.length} trace{retrievalIds.length > 1 ? "s" : ""}
-                    </span>
-                  )}
+                  ◆ {retrievalIds.length} trace{retrievalIds.length > 1 ? "s" : ""}
                 </div>
               )}
               {isUser ? (
@@ -241,6 +223,7 @@ export function ChatMessages({
               ) : (
                 <span style={{ color: "var(--voku-accent-gold-dim)" }}>▊</span>
               )}
+            </div>
             </div>
           </div>
         );

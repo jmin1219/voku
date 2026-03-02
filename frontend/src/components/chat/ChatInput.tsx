@@ -50,7 +50,7 @@ export function ChatInput({
   return (
     <div
       style={{
-        padding: "var(--voku-space-3) var(--voku-space-4) var(--voku-space-4)",
+        padding: "var(--voku-space-3) var(--voku-space-6) var(--voku-space-4)",
         borderTop: "1px solid var(--voku-border-subtle)",
         background: "var(--voku-bg-base)",
       }}
@@ -68,7 +68,7 @@ export function ChatInput({
           width: "100%",
           minHeight: "var(--voku-input-min-h)",
           maxHeight: "var(--voku-input-max-h)",
-          padding: "var(--voku-space-2) var(--voku-space-3)",
+          padding: "var(--voku-space-3) var(--voku-space-4)",
           background: "var(--voku-bg-raised)",
           border: `1px solid ${isStreaming ? "var(--voku-border-subtle)" : "var(--voku-border-default)"}`,
           borderRadius: "var(--voku-radius-lg)",
@@ -85,7 +85,7 @@ export function ChatInput({
         onFocus={(e) => {
           if (!isStreaming) {
             e.target.style.borderColor = "var(--voku-border-focus)";
-            e.target.style.boxShadow = "0 0 0 3px rgba(154, 123, 60, 0.1)";
+            e.target.style.boxShadow = "0 0 0 3px rgba(201, 162, 60, 0.2)";
           }
         }}
         onBlur={(e) => {

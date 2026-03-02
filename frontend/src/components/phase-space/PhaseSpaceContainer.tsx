@@ -26,12 +26,12 @@ export function PhaseSpaceContainer({
   retrievalIds,
   onFetchData,
 }: PhaseSpaceContainerProps) {
-  // Fetch on first open
+  // Fetch every time panel opens (data may have changed via chat)
   useEffect(() => {
-    if (isOpen && !data && !loading) {
+    if (isOpen && !loading) {
       onFetchData();
     }
-  }, [isOpen, data, loading, onFetchData]);
+  }, [isOpen]);
 
   return (
     <div
@@ -41,8 +41,8 @@ export function PhaseSpaceContainer({
         height: "100%",
         overflow: "hidden",
         transition: "width 0.2s ease-out",
-        background: "var(--voku-phase-bg, #1a1a22)",
-        borderLeft: isOpen ? "1px solid rgba(201, 162, 60, 0.15)" : "none",
+        background: "var(--voku-bg-deep)",
+        borderLeft: isOpen ? "1px solid var(--voku-border-subtle)" : "none",
         flexShrink: 0,
       }}
     >

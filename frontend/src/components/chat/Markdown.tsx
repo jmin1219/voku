@@ -186,7 +186,7 @@ export function Markdown({ content, style, retrievalIds }: MarkdownProps) {
           }}
         >
           {items.map((item, j) => (
-            <li key={j} style={{ margin: "0.15rem 0", lineHeight: 1.5 }}>
+            <li key={j} style={{ margin: "0.25rem 0", lineHeight: 1.65 }}>
               {parseInline(item, retrievalIds)}
             </li>
           ))}
@@ -211,7 +211,7 @@ export function Markdown({ content, style, retrievalIds }: MarkdownProps) {
           }}
         >
           {items.map((item, j) => (
-            <li key={j} style={{ margin: "0.15rem 0", lineHeight: 1.5 }}>
+            <li key={j} style={{ margin: "0.25rem 0", lineHeight: 1.65 }}>
               {parseInline(item, retrievalIds)}
             </li>
           ))}
@@ -222,14 +222,14 @@ export function Markdown({ content, style, retrievalIds }: MarkdownProps) {
 
     // Empty line = paragraph break
     if (line.trim() === "") {
-      elements.push(<div key={key++} style={{ height: "0.4rem" }} />);
+      elements.push(<div key={key++} style={{ height: "0.65rem" }} />);
       i++;
       continue;
     }
 
     // Regular paragraph
     elements.push(
-      <div key={key++} style={{ margin: "0.15rem 0", lineHeight: 1.6 }}>
+      <div key={key++} style={{ margin: "0.2rem 0", lineHeight: 1.7 }}>
         {parseInline(line, retrievalIds)}
       </div>
     );

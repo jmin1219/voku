@@ -130,6 +130,10 @@ async def chat(request: ChatRequest):
                 assistant_trace.id, asst_embedding, embedder.model_name
             )
 
+            # Invalidate phase space cache so next fetch sees new traces
+            from app.routes.traces import invalidate_trace_cache
+            invalidate_trace_cache()
+
             # Pass to background task
             trace_holder["assistant"] = assistant_trace
 

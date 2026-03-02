@@ -119,7 +119,7 @@ export function ContextMarker({
             border: "1px solid var(--voku-border-default)",
             borderLeft: "3px solid var(--voku-accent-gold)",
             borderRadius: "var(--voku-radius-md)",
-            boxShadow: "0 4px 16px rgba(44, 38, 32, 0.12)",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
             zIndex: 1000,
             fontSize: "var(--voku-text-xs)",
             lineHeight: "var(--voku-leading-normal)",
