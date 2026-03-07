@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 
 from app.services.trace_retrieval import TraceRetrievalService, TraceRetrievalResult
 from app.services.contradiction import ContradictionDetector
+from app.services.resurfacing import ResurfacingService
 
 
 # --- Token budget ---
@@ -32,18 +33,26 @@ class TraceContextAssembly:
     No user model. No dimensions. The trace graph IS the understanding.
     """
 
-    def __init__(self, retrieval: TraceRetrievalService, contradiction_detector: ContradictionDetector | None = None):
+    def __init__(
+        self,
+        retrieval: TraceRetrievalService,
+        contradiction_detector: ContradictionDetector | None = None,
+        resurfacing: ResurfacingService | None = None,
+    ):
         self._retrieval = retrieval
         self._contradiction = contradiction_detector
+        self._resurfacing = resurfacing
 
     def build_system_prompt(
-        self, query: str, limit: int = 5
+        self, query: str, limit: int = 5, is_new_conversation: bool = False,
     ) -> tuple[str | None, list[str]]:
         """Build system prompt from retrieved traces.
 
         Args:
             query: The user's current message.
             limit: Max traces to retrieve and include.
+            is_new_conversation: If True and resurfacing is available,
+                include "On This Day" traces in the prompt.
 
         Returns:
             (system_prompt, trace_ids). Prompt is None if no traces found.
@@ -89,6 +98,12 @@ class TraceContextAssembly:
                         "Present this as evolution, not confusion."
                     )
 
+        # Resurfacing: "On This Day" traces for new conversations
+        resurface_block = ""
+        if is_new_conversation and self._resurfacing:
+            candidates = self._resurfacing.find_resurface_candidates()
+            resurface_block = self._resurfacing.format_for_prompt(candidates)
+
         today = datetime.now(timezone.utc).strftime("%A, %B %d, %Y")
         prompt = (
             "You are Voku, a personal thinking environment. "
@@ -101,6 +116,7 @@ class TraceContextAssembly:
             "Reference numbers like [1] correspond to specific past moments "
             "— the user can see which parts of their history you drew from."
             f"{contradiction_cue}"
+            f"{resurface_block}"
         )
 
         return prompt, trace_ids

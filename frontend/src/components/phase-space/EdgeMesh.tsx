@@ -11,8 +11,15 @@ import type { PhaseSpaceNode, PhaseSpaceEdge } from "../../types/phase-space";
 
 const EDGE_COLOR = new THREE.Color("#8a9ab0");
 const EDGE_GLOW = new THREE.Color("#e8c84a");
-const BASE_OPACITY = 0.25;
-const GLOW_OPACITY = 0.5;
+
+// Adaptive opacity: fewer edges = more visible, many edges = subtler web
+function getEdgeOpacity(edgeCount: number, hasRetrieval: boolean): number {
+  const base = edgeCount <= 20 ? 0.35
+    : edgeCount <= 100 ? 0.25
+    : edgeCount <= 500 ? 0.15
+    : 0.08;
+  return hasRetrieval ? Math.min(base * 1.8, 0.5) : base;
+}
 
 interface EdgeMeshProps {
   nodes: PhaseSpaceNode[];
@@ -73,7 +80,7 @@ export function EdgeMesh({ nodes, edges, retrievalIds }: EdgeMeshProps) {
     geom.computeBoundingSphere();
   }, [edges, nodePositions, retrievalSet]);
 
-  const opacity = retrievalIds.length > 0 ? GLOW_OPACITY : BASE_OPACITY;
+  const opacity = getEdgeOpacity(edges.length, retrievalIds.length > 0);
 
   if (edges.length === 0) return null;
 

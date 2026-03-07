@@ -22,13 +22,21 @@ from app.services.annotation import AnnotationExtractionService
 from app.services.connections import ConnectionService
 from app.services.contradiction import ContradictionDetector
 from app.services.router import get_provider
+from app.services.temporal_digest import TemporalDigestService
+from app.services.resurfacing import ResurfacingService
 
 trace_storage = SQLiteTraceStorage(settings.db_path)
 trace_retrieval = TraceRetrievalService(trace_storage, embedder)
 contradiction_detector = ContradictionDetector(trace_storage)
-trace_context = TraceContextAssembly(trace_retrieval, contradiction_detector=contradiction_detector)
+resurfacing_service = ResurfacingService(trace_storage)
+trace_context = TraceContextAssembly(
+    trace_retrieval,
+    contradiction_detector=contradiction_detector,
+    resurfacing=resurfacing_service,
+)
 annotation_service = AnnotationExtractionService(get_provider())
 connection_service = ConnectionService(trace_storage)
+digest_service = TemporalDigestService(trace_storage, embedder, get_provider())
 
 # --- v1 proposition-based singletons (DISABLED — v2 trace architecture) ---
 # Commented out to prevent import crash: v1 StorageService ABC and

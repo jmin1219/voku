@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import type { PhaseSpaceData } from "../types/phase-space";
-
-const API_BASE = "http://localhost:8000/api";
+import { API_BASE } from "../config";
 
 interface UsePhaseSpaceReturn {
   data: PhaseSpaceData | null;

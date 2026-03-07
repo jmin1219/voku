@@ -62,6 +62,7 @@ async def chat(request: ChatRequest):
 
     # Determine parent trace (last trace in this conversation, if any)
     existing_traces = trace_storage.get_traces_by_conversation(conversation_id)
+    is_new_conversation = len(existing_traces) == 0
     parent_id = existing_traces[-1].id if existing_traces else None
 
     # Store user message as trace
@@ -81,7 +82,8 @@ async def chat(request: ChatRequest):
 
     # Build context-aware system prompt from trace graph
     system_prompt, retrieval_ids = trace_context.build_system_prompt(
-        last_message["content"]
+        last_message["content"],
+        is_new_conversation=is_new_conversation,
     )
 
     # Stream from Anthropic

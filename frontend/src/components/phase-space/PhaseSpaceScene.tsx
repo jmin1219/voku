@@ -37,6 +37,18 @@ export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
     return node ? node.position : null;
   }, [focusedId, nodeMap]);
 
+  // Bounding radius: max distance from origin across all nodes
+  const dataRadius = useMemo(() => {
+    if (data.nodes.length === 0) return 0;
+    let maxDist = 0;
+    for (const node of data.nodes) {
+      const [x, y, z] = node.position;
+      const dist = Math.sqrt(x * x + y * y + z * z);
+      if (dist > maxDist) maxDist = dist;
+    }
+    return maxDist;
+  }, [data.nodes]);
+
   const handleNodeClick = useCallback(
     (id: string) => {
       setFocusedId((prev) => (prev === id ? null : id));
@@ -64,7 +76,7 @@ export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
         <pointLight position={[-10, -5, -10]} intensity={0.6} color="#aabbdd" />
         <pointLight position={[0, -10, 5]} intensity={0.4} color="#ddccaa" />
 
-        <CameraController focusPosition={focusPosition} />
+        <CameraController focusPosition={focusPosition} dataRadius={dataRadius} />
 
         <TraceCloud
           nodes={data.nodes}
@@ -145,9 +157,15 @@ export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
           fontSize: "0.6rem",
           fontFamily: "var(--voku-font-mono)",
           color: "rgba(224, 219, 208, 0.4)",
+          textAlign: "right",
         }}
       >
         {data.meta.count} traces · {data.meta.n_clusters} clusters · {data.meta.n_edges} edges
+        {data.meta.count < 20 && (
+          <div style={{ marginTop: 4, color: "rgba(201, 162, 60, 0.4)" }}>
+            structure emerges with more conversations
+          </div>
+        )}
       </div>
     </div>
   );

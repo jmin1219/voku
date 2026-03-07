@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ChatPanel } from "../components/chat/ChatPanel";
 import { PhaseSpaceContainer } from "../components/phase-space/PhaseSpaceContainer";
 import { usePhaseSpace } from "../hooks/usePhaseSpace";
+import { API_BASE } from "../config";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -14,7 +15,6 @@ export interface ConversationBoundary {
   messageCount: number;
 }
 
-const API_BASE = "http://localhost:8000/api";
 const INITIAL_VISIBLE_CONVERSATIONS = 2;
 
 export default function Workspace() {
@@ -119,8 +119,70 @@ export default function Workspace() {
     setRetrievalIds([]);
   };
 
+  // --- Digest handler: /digest [days] or button trigger ---
+  const handleDigest = async (days: number = 30) => {
+    if (isStreaming) return;
+
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: `Summarize my thinking over the last ${days} days`,
+      createdAt: new Date().toISOString(),
+    };
+    const updatedMessages = [...messages, userMessage];
+    setMessages([
+      ...updatedMessages,
+      { role: "assistant", content: "Generating digest...", createdAt: new Date().toISOString() },
+    ]);
+    setInputValue("");
+    setIsStreaming(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/digest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Unknown error" }));
+        throw new Error(err.detail || `Digest failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: data.narrative,
+          createdAt: data.timestamp || new Date().toISOString(),
+        };
+        return updated;
+      });
+    } catch (err: any) {
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: err.message || "[Error: Failed to generate digest]",
+          createdAt: new Date().toISOString(),
+        };
+        return updated;
+      });
+    } finally {
+      setIsStreaming(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!inputValue.trim() || isStreaming) return;
+
+    // Detect /digest slash command
+    const digestMatch = inputValue.trim().match(/^\/digest(?:\s+(\d+))?$/i);
+    if (digestMatch) {
+      const days = digestMatch[1] ? parseInt(digestMatch[1], 10) : 30;
+      handleDigest(days);
+      return;
+    }
 
     const userMessage: ChatMessage = {
       role: "user",
@@ -245,6 +307,7 @@ export default function Workspace() {
             onInputChange={setInputValue}
             onSubmit={handleSubmit}
             onNewConversation={handleNewConversation}
+            onDigest={() => handleDigest(30)}
             isStreaming={isStreaming}
             focusStartIndex={focusStartIndex}
             visibleFromIndex={visibleFromIndex}

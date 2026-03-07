@@ -18,7 +18,24 @@ import type { PhaseSpaceNode } from "../../types/phase-space";
 const WARM = new THREE.Color("#e8c84a"); // bright gold — recent
 const COOL = new THREE.Color("#8a9ab0"); // light slate — old
 const GLOW = new THREE.Color("#ffe066"); // vivid gold — retrieved
-const BASE_SIZE = 0.22;
+const SYSTEM_TINT = new THREE.Color("#b8a0d8"); // soft purple — system/digest traces
+
+// Adaptive sizing: bigger when sparse, smaller when dense.
+// At 6 nodes → 0.30, at 50 → 0.22, at 200 → 0.15, at 500 → 0.12
+function getBaseSize(count: number): number {
+  if (count <= 10) return 0.30;
+  if (count <= 50) return 0.22;
+  if (count <= 150) return 0.17;
+  if (count <= 300) return 0.14;
+  return 0.12;
+}
+
+// Sphere resolution: fewer polys per sphere at higher counts
+function getSphereDetail(count: number): [number, number] {
+  if (count <= 50) return [16, 12];
+  if (count <= 200) return [12, 8];
+  return [8, 6];
+}
 
 interface TraceCloudProps {
   nodes: PhaseSpaceNode[];
@@ -47,6 +64,9 @@ export function TraceCloud({
     targetGlowRef.current = new Float32Array(nodes.length).fill(0);
   }, [nodes.length]);
 
+  const baseSize = useMemo(() => getBaseSize(nodes.length), [nodes.length]);
+  const sphereDetail = useMemo(() => getSphereDetail(nodes.length), [nodes.length]);
+
   // Set instance matrices + colors
   useEffect(() => {
     if (!meshRef.current || nodes.length === 0) return;
@@ -58,15 +78,20 @@ export function TraceCloud({
       const node = nodes[i];
       const [x, y, z] = node.position;
 
-      // Size: assistant slightly smaller
-      const size = node.source === "assistant" ? BASE_SIZE * 0.8 : BASE_SIZE;
+      // Size by source: user full, assistant 0.8x, system 0.7x
+      const sizeMult = node.source === "assistant" ? 0.8
+        : node.source === "system" ? 0.7
+        : 1.0;
       dummy.position.set(x, y, z);
-      dummy.scale.setScalar(size);
+      dummy.scale.setScalar(baseSize * sizeMult);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
 
-      // Color: lerp warm→cool based on age (1=newest=warm, 0=oldest=cool)
+      // Color: age gradient (warm→cool), with source tinting
       color.copy(COOL).lerp(WARM, node.age);
+      if (node.source === "system") {
+        color.lerp(SYSTEM_TINT, 0.4); // purple tint for digests
+      }
       meshRef.current.setColorAt(i, color);
     }
 
@@ -74,7 +99,7 @@ export function TraceCloud({
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
     }
-  }, [nodes]);
+  }, [nodes, baseSize]);
 
   // Update glow targets when retrieval changes
   useEffect(() => {
@@ -156,13 +181,14 @@ export function TraceCloud({
 
   return (
     <instancedMesh
+      key={`traces-${sphereDetail[0]}-${nodes.length}`}
       ref={meshRef}
       args={[undefined, undefined, nodes.length]}
       onPointerMove={handlePointerMove}
       onPointerOut={handlePointerOut}
       onClick={handleClick}
     >
-      <sphereGeometry args={[1, 12, 8]} />
+      <sphereGeometry args={[1, sphereDetail[0], sphereDetail[1]]} />
       <meshStandardMaterial
         vertexColors
         roughness={0.4}

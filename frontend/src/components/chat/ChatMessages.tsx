@@ -2,12 +2,6 @@ import { useRef, useEffect } from "react";
 import { Markdown } from "./Markdown";
 import type { ChatMessage } from "../../pages/Workspace";
 
-/** Format ISO timestamp to "5:42 PM" */
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
 
 /** Format ISO timestamp to "Sun, Feb 22" */
 function formatDate(iso: string): string {

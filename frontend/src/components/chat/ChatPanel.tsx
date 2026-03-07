@@ -18,6 +18,7 @@ export function ChatPanel({
   onInputChange,
   onSubmit,
   onNewConversation,
+  onDigest,
   isStreaming,
   focusStartIndex,
   visibleFromIndex,
@@ -31,6 +32,7 @@ export function ChatPanel({
   onInputChange: (value: string) => void;
   onSubmit: () => void;
   onNewConversation: () => void;
+  onDigest: () => void;
   isStreaming: boolean;
   focusStartIndex: number;
   visibleFromIndex: number;
@@ -52,6 +54,7 @@ export function ChatPanel({
     >
       <ChatHeader
         onNewConversation={onNewConversation}
+        onDigest={onDigest}
         isStreaming={isStreaming}
       />
       <ChatMessages

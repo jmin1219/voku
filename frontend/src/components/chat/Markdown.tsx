@@ -9,7 +9,7 @@
  * No dependencies — just React + regex.
  */
 
-import { type CSSProperties } from "react";
+import { type CSSProperties, type JSX } from "react";
 import { ContextMarker } from "./ContextMarker";
 
 interface MarkdownProps {

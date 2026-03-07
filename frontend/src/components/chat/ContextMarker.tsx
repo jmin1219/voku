@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
-const API_BASE = "http://localhost:8000/api";
+import { API_BASE } from "../../config";
 
 interface TraceDetail {
   id: string;

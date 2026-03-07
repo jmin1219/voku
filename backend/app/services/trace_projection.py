@@ -215,9 +215,10 @@ def compute_trace_projection(storage: SQLiteTraceStorage) -> dict:
     emb_norms = np.linalg.norm(X, axis=1, keepdims=True) + 1e-10
     X_normed = X / emb_norms
 
-    # Fine clusters: eps=0.3 in cosine distance (1 - similarity)
+    # Fine clusters: eps=0.15 in cosine distance (1 - similarity)
+    # Tighter threshold needed for session log data that shares vocabulary
     # DBSCAN with metric='cosine' on normalized vectors
-    db_fine = DBSCAN(eps=0.3, min_samples=3, metric="cosine").fit(X_normed)
+    db_fine = DBSCAN(eps=0.15, min_samples=3, metric="cosine").fit(X_normed)
     labels = db_fine.labels_
     n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
 
@@ -243,7 +244,7 @@ def compute_trace_projection(storage: SQLiteTraceStorage) -> dict:
             C_normed = C / C_norms
 
             db_orient = DBSCAN(
-                eps=0.6, min_samples=1, metric="cosine"
+                eps=0.4, min_samples=1, metric="cosine"
             ).fit(C_normed)
             orient_labels = db_orient.labels_
 

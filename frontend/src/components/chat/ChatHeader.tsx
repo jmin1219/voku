@@ -6,9 +6,11 @@
  */
 export function ChatHeader({
   onNewConversation,
+  onDigest,
   isStreaming,
 }: {
   onNewConversation: () => void;
+  onDigest: () => void;
   isStreaming: boolean;
 }) {
   return (
@@ -33,22 +35,43 @@ export function ChatHeader({
       >
         Voku
       </span>
-      <button
-        onClick={onNewConversation}
-        disabled={isStreaming}
-        style={{
-          background: "transparent",
-          border: "1px solid var(--voku-border-default)",
-          borderRadius: "var(--voku-radius-sm)",
-          padding: "var(--voku-space-1) var(--voku-space-3)",
-          color: "var(--voku-text-tertiary)",
-          fontSize: "var(--voku-text-xs)",
-          opacity: isStreaming ? 0.3 : 1,
-          transition: "all 0.15s ease",
-        }}
-      >
-        + new
-      </button>
+      <div style={{ display: "flex", gap: "var(--voku-space-2)" }}>
+        <button
+          onClick={onNewConversation}
+          disabled={isStreaming}
+          style={{
+            background: "transparent",
+            border: "1px solid var(--voku-border-default)",
+            borderRadius: "var(--voku-radius-sm)",
+            padding: "var(--voku-space-1) var(--voku-space-3)",
+            color: "var(--voku-text-tertiary)",
+            fontSize: "var(--voku-text-xs)",
+            opacity: isStreaming ? 0.3 : 1,
+            cursor: isStreaming ? "default" : "pointer",
+            transition: "all 0.15s ease",
+          }}
+        >
+          + new
+        </button>
+        <button
+          onClick={onDigest}
+          disabled={isStreaming}
+          title="Generate a digest of your recent thinking"
+          style={{
+            background: "transparent",
+            border: "1px solid var(--voku-border-default)",
+            borderRadius: "var(--voku-radius-sm)",
+            padding: "var(--voku-space-1) var(--voku-space-3)",
+            color: "var(--voku-accent-gold)",
+            fontSize: "var(--voku-text-xs)",
+            opacity: isStreaming ? 0.3 : 1,
+            cursor: isStreaming ? "default" : "pointer",
+            transition: "all 0.15s ease",
+          }}
+        >
+          ✱ digest
+        </button>
+      </div>
     </header>
   );
 }

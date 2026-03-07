@@ -22,7 +22,7 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 ## Group A: Real Data Accumulation + DB Prep
 
-### Task 7.1: Clean database + daily use protocol
+### Task 7.1: Clean database + daily use protocol ✅
 
 **What:** Wipe Mina seed data, start fresh v2 database, establish daily Voku usage as the content strategy. No script — this is operational.
 
@@ -48,7 +48,7 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 ---
 
-### Task 7.2: Fix annotation extraction (silent failure)
+### Task 7.2: Fix annotation extraction (silent failure) ✅
 
 **What:** Background annotation extraction runs after each chat message but produces 0 annotations. Groq API key is present. This is blocking the richness of the trace graph — without annotations, contradiction detection, pattern detection, and intention boost all have nothing to work with.
 
@@ -69,7 +69,7 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 ---
 
-### Task 7.3: Fix NodeLabels to hover-only
+### Task 7.3: Fix NodeLabels to hover-only ✅
 
 **What:** NodeLabels currently render always-on for every node. At 200+ nodes this is visual chaos. Switch to hover-only display.
 
@@ -87,7 +87,7 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 ## Group B: Temporal Digest
 
-### Task 7.4: Period summary generation (backend)
+### Task 7.4: Period summary generation (backend) ✅
 
 **What:** Generate AI-synthesized narrative summaries for a time period. "Your thinking this month" — not a list of traces, but a narrative that identifies themes, tracks evolution, and notes contradictions. Summaries are stored as system traces in the graph (themselves retrievable in future context assembly).
 
@@ -123,7 +123,7 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 ---
 
-### Task 7.5: "On This Day" resurfacing
+### Task 7.5: "On This Day" resurfacing ✅
 
 **What:** When a new session starts, check for relevant traces from 1 week / 1 month / 1 quarter ago. If found, include them as extra context in the first response's system prompt. Not as a notification — as natural context that makes the AI feel temporally aware.
 
@@ -152,7 +152,7 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 ---
 
-### Task 7.6: Temporal digest in chat (frontend integration)
+### Task 7.6: Temporal digest in chat (frontend integration) ✅
 
 **What:** User can ask "what have I been thinking about this month?" and get a rich narrative response with context markers pointing to anchor traces. Wire the `/api/digest/evolution` endpoint for topic-specific queries.
 
@@ -175,7 +175,7 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 ## Group C: Demo Polish
 
-### Task 7.7: Phase space visual tuning with real data
+### Task 7.7: Phase space visual tuning with real data ✅ (adaptive infra) / ⏳ (data-dependent verification)
 
 **What:** With 100+ real traces loaded, tune visual parameters. Real multi-domain data should produce better separation than Mina's single-persona content.
 
@@ -300,9 +300,9 @@ Dependency order: Content accumulates organically (ongoing), code tasks are inde
 
 | Window | Tasks | Gate |
 |--------|-------|------|
-| Mon Mar 2 | 7.1 (DB wipe + first real use) + 7.2 (debug annotations) + 7.3 (hover labels) | Voku usable with working annotations |
-| Tue-Fri Mar 3-6 | Daily use accumulates data. 7.4 (digest backend) + 7.5 (resurfacing) when schedule allows | `pytest test_phase7_*` all green |
-| Week of Mar 9-15 | 7.6 (visual tuning with ~100 traces) + 7.7 (Docker prep) | Phase space shows distinct real clusters |
+| Mon Mar 2 | 7.1 ✅ + 7.2 ✅ + 7.3 ✅ + 7.4 ✅ + 7.5 ✅ | Group A + Group B complete. 271 tests. |
+| Tue-Fri Mar 3-6 | Daily use accumulates data. 7.6 ✅ done Mon. | Group B gate: `pytest test_phase7_*` all green ✅ |
+| Week of Mar 9-15 | 7.7 visual verification (when ~100 traces) + 7.8 (Docker prep) | Phase space shows distinct real clusters |
 | Week of Mar 16-22 | 7.8 (deploy) + 7.9 (demo script) | Deployed URL works, script rehearsed |
 | Mar 23-31 | Polish + rehearse | Demo-ready |
 
