@@ -1,0 +1,30 @@
+# Dependencies
+**/node_modules
+**/venv
+**/__pycache__
+**/.pytest_cache
+**/.benchmarks
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+*.swp
+*.swo
+
+# Build artifacts (we rebuild in Docker)
+frontend/dist
+
+# Dev files
+*.pyc
+.env
+.env.local
+backend/.env
+
+# Docs (not needed in image)
+docs/
+CLAUDE.md
+WORKFLOW.md
+LICENSE

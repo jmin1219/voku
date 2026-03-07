@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # Frontend origin for CORS
     frontend_url: str = "http://localhost:5173"
 
+    # Production CORS origins (comma-separated)
+    cors_origins: str = ""
+
     # SQLite database (unified — all tables in one file)
     db_path: str = "./data/voku.db"
 
