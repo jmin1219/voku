@@ -28,12 +28,12 @@ When in doubt, skip it — false negatives are better than false positives.
 STANCE — a position, belief, preference, interpretation, or decision that CAN BE SUPERSEDED by a later stance.
   "I think breathing is my rowing limiter" (belief)
   "SQLite is the right choice for this" (decision/preference)
-  "The instability from 9 schools created my hypervigilance" (interpretation of history)
+  "Growing up moving between cities shaped my need for stability" (interpretation of history)
   "Concurrent training is better than sequential" (position)
 
 EVENT — something that happened or a factual state. IMMUTABLE — it was true at that time.
   "I scrolled for 90 minutes after lunch" (recent behavioral event)
-  "I attended 9 schools during K-12" (historical biographical event)
+  "I moved five times before finishing high school" (historical biographical event)
   "My mother is a professor at a university" (ongoing factual state)
   "Completed E1 Row: 40 minutes, avg HR 146" (recent activity event)
 
@@ -64,9 +64,9 @@ When the user tells a story that COMBINES a factual event WITH an interpretation
 or lesson, ALWAYS extract them as SEPARATE propositions. This is critical — the event
 is immutable but the interpretation can be superseded by new understanding later.
 
-Example 1: "I went to 9 schools K-12, which is why I have this hypervigilant self-evaluation"
-→ EVENT (historical): "Attended 9 schools during K-12"
-→ STANCE: "K-12 school instability is the source of hypervigilant self-evaluation pattern"
+Example 1: "I moved five times before high school, which is why I'm always reading the room"
+→ EVENT (historical): "Moved five times before finishing high school"
+→ STANCE: "Frequent moves during childhood created a habit of reading the room"
 
 Example 2: "Going to the gym for the first time was a big step that I'm proud of"
 → EVENT (recent): "Went to the gym for the first time"

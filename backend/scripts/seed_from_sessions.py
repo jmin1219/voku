@@ -44,7 +44,7 @@ DOMAIN_KEYWORDS = {
     "voku": ["voku", "billy", "trace", "proposition", "embedding", "knowledge graph", "phase space", "annotation", "retrieval"],
     "training": ["training", "rowing", "2k", "bike", "cardio", "harris", "jamieson", "strength", "orthostatic", "breathing", "nutrition", "hrv"],
     "finance": ["finance", "portfolio", "etf", "questrade", "tfsa", "fhsa", "investment", "stock", "spending"],
-    "emotional": ["fear", "loneliness", "monitor", "vulnerability", "시리다", "aching", "shadow", "emotional", "identity", "motherly"],
+    "emotional": ["fear", "loneliness", "monitor", "vulnerability", "aching", "shadow", "emotional", "identity"],
     "technical": ["architecture", "docker", "fastapi", "react", "typescript", "python", "api", "database", "mcp", "llm"],
     "brain-dump": ["brain dump", "externalize", "scope", "framework", "throughline", "consciousness", "cognition"],
 }
