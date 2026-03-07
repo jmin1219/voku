@@ -80,7 +80,7 @@ If the user SAYS something, that does not make it an event. Ask: "Did something 
 ✅ CORRECT: "Abandoned Kuzu graph database and migrated to SQLite" → event
    This actually HAPPENED. It's a fact about what they did. Cannot be un-done.
 
-✅ CORRECT: "Moved to Vancouver in August 2025" → event
+✅ CORRECT: "Moved to a new city in August 2025" → event
    This is a real-world occurrence. Immutable.
 
 The test: "Could a future conversation SUPERSEDE this?" → yes = STANCE, no = EVENT.
@@ -106,9 +106,9 @@ If the position was stable throughout: superseded_in_conversation: false.
 When the user combines a factual event WITH an interpretation, extract them separately.
 The event is immutable. The interpretation can be superseded later.
 
-"I went to 9 schools K-12, which is why I have this hypervigilant self-evaluation"
-→ EVENT (historical): "Attended 9 schools during K-12"
-→ STANCE: "K-12 school instability is the source of hypervigilant self-evaluation pattern"
+"I changed schools frequently as a kid, which is why I'm always scanning for social cues"
+→ EVENT (historical): "Changed schools frequently during childhood"
+→ STANCE: "Frequently changing schools caused a habit of always scanning for social cues"
 
 ## CRITICAL RULES
 
@@ -125,7 +125,7 @@ How explicitly/firmly the user stated this:
 - 0.5–0.6: Tentative, exploring ("I think maybe...")
 - 0.7–0.8: Stated without emphasis ("X is better than Y")
 - 0.85–0.95: Emphatic, committed ("I've decided...", "I believe...")
-- 1.0: Direct factual report ("I ran 5K today", "I live in Vancouver")
+- 1.0: Direct factual report ("I ran 5K today", "I live in Seattle")
 
 ## DENSITY GUIDANCE
 

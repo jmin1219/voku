@@ -34,7 +34,7 @@ STANCE — a position, belief, preference, interpretation, or decision that CAN 
 EVENT — something that happened or a factual state. IMMUTABLE — it was true at that time.
   "I scrolled for 90 minutes after lunch" (recent behavioral event)
   "I attended 9 schools during K-12" (historical biographical event)
-  "My father is CEO of a Korean investment bank" (ongoing factual state)
+  "My mother is a professor at a university" (ongoing factual state)
   "Completed E1 Row: 40 minutes, avg HR 146" (recent activity event)
 
 INTENTION — a stated plan, goal, or commitment. Has a LIFECYCLE (stated → fulfilled/abandoned).
@@ -52,9 +52,9 @@ Classify by what happens to it DOWNSTREAM, not what it looks like:
 ## EVENT TIMEFRAME (events only)
 
 For each EVENT, also classify its timeframe:
-- recent: happened within the current period of the user's life (days, weeks, or a few months ago). Includes new states that started recently even if still true ("I just moved to Vancouver", "I don't know anyone here" — these are recent life changes, not permanent facts)
+- recent: happened within the current period of the user's life (days, weeks, or a few months ago). Includes new states that started recently even if still true ("I just moved to a new city", "I don't know anyone here" — these are recent life changes, not permanent facts)
 - historical: happened in the distant past, before the user's current life phase (years ago, childhood, previous career). The user is recounting history.
-- ongoing: a persistent fact or recurring state with no clear start point, or that has been true for so long it's background context ("My father is CEO", "I have an interest-based nervous system").
+- ongoing: a persistent fact or recurring state with no clear start point, or that has been true for so long it's background context ("My mother is a professor", "I tend to hyperfocus on things").
 
 Rule of thumb: if the user frames it as a CHANGE or NEW situation, it's recent even if still ongoing. If it's background context they've always known, it's ongoing.
 
@@ -212,19 +212,19 @@ Output:
 }
 
 Example 5 — Ongoing fact + stance:
-User: "My dad is CEO of a Korean investment bank. Having that safety net makes my relationship with money weird — it's an awareness problem, not a permission problem."
+User: "My mom is a professor at a university. Growing up around academia shaped how I think about learning — it's about curiosity, not credentials."
 Output:
 {
   "propositions": [
     {
-      "proposition": "Father is CEO of a Korean investment bank",
+      "proposition": "Mother is a professor at a university",
       "node_type": "event",
       "event_timeframe": "ongoing",
       "supersedable": false,
       "confidence": 1.0
     },
     {
-      "proposition": "Relationship with money is an awareness problem, not a permission problem — connected to family financial safety net",
+      "proposition": "Growing up around academia shaped belief that learning is about curiosity, not credentials",
       "node_type": "stance",
       "event_timeframe": null,
       "supersedable": true,
