@@ -38,8 +38,8 @@ COPY backend/migrations ./migrations
 COPY backend/scripts ./scripts
 COPY backend/pytest.ini ./
 
-# Copy pre-seeded database
-COPY backend/data/voku.db ./data/voku.db
+# Create empty data directory (DB auto-creates on first run via _ensure_schema)
+RUN mkdir -p ./data
 
 # Copy built frontend
 COPY --from=frontend-build /app/frontend/dist ./static
