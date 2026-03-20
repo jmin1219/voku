@@ -7,10 +7,11 @@ GET  /api/digest/evolution → trace topic evolution (ephemeral)
 Design: TASKS_PHASE7.md § Task 7.4, Task 7.6
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from app.dependencies import digest_service
+from app.middleware.rate_limit import chat_limiter
 from app.routes.traces import invalidate_trace_cache
 
 
@@ -22,15 +23,16 @@ class DigestRequest(BaseModel):
 
 
 @router.post("/digest")
-async def generate_digest(request: DigestRequest):
+async def generate_digest(request: Request, data: DigestRequest):
     """Generate an AI-synthesized narrative for a time period.
 
     The narrative is stored as a system trace — retrievable in future
     context assembly. Returns the narrative + trace metadata.
     """
+    chat_limiter.check(request)
     try:
         digest_trace = await digest_service.generate_period_summary(
-            days=request.days
+            days=data.days
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

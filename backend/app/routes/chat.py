@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime, timezone
 
 import anthropic
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
@@ -26,6 +26,7 @@ from app.dependencies import (
 )
 from app.services.storage.models import Trace
 from app.services.background import process_traces_background
+from app.middleware.rate_limit import chat_limiter
 
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -37,7 +38,7 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: Request, data: ChatRequest):
     """Stream a response from Anthropic with trace-based context.
 
     Flow:
@@ -47,16 +48,17 @@ async def chat(request: ChatRequest):
       4. Stream response from Anthropic
       5. Store assistant response as trace + embed
     """
+    chat_limiter.check(request)
     now = datetime.now(timezone.utc).isoformat()
 
     # Create or reuse conversation
-    if request.conversation_id is None:
+    if data.conversation_id is None:
         conversation_id = str(uuid.uuid4())
     else:
-        conversation_id = request.conversation_id
+        conversation_id = data.conversation_id
 
     # Validate last message is from user
-    last_message = request.messages[-1]
+    last_message = data.messages[-1]
     if last_message.get("role") != "user":
         raise HTTPException(status_code=400, detail="Last message must be from user")
 
@@ -104,7 +106,7 @@ async def chat(request: ChatRequest):
             stream_kwargs = {
                 "model": "claude-sonnet-4-20250514",
                 "max_tokens": 1024,
-                "messages": request.messages,
+                "messages": data.messages,
             }
             if system_prompt:
                 stream_kwargs["system"] = system_prompt
