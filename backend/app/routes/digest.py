@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from app.dependencies import digest_service
-from app.middleware.rate_limit import chat_limiter
+from app.middleware.rate_limit import digest_limiter
 from app.routes.traces import invalidate_trace_cache
 
 
@@ -29,7 +29,7 @@ async def generate_digest(request: Request, data: DigestRequest):
     The narrative is stored as a system trace — retrievable in future
     context assembly. Returns the narrative + trace metadata.
     """
-    chat_limiter.check(request)
+    digest_limiter.check(request)
     try:
         digest_trace = await digest_service.generate_period_summary(
             days=data.days

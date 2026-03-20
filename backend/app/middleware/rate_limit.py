@@ -1,7 +1,13 @@
 """Simple in-memory IP-based rate limiter. No external dependencies."""
+import os
 import time
 from collections import defaultdict
 from fastapi import Request, HTTPException
+
+# Number of trusted reverse proxies (Railway, Render, etc.)
+# When > 0, uses the Nth-from-right X-Forwarded-For IP.
+# When 0, ignores X-Forwarded-For entirely and uses request.client.host.
+TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "1"))
 
 
 class RateLimiter:
@@ -12,8 +18,11 @@ class RateLimiter:
 
     def _get_client_ip(self, request: Request) -> str:
         forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
+        if TRUSTED_PROXY_COUNT > 0 and forwarded:
+            ips = [ip.strip() for ip in forwarded.split(",")]
+            # Rightmost N IPs are from trusted proxies; client is just before them
+            idx = max(0, len(ips) - TRUSTED_PROXY_COUNT)
+            return ips[idx]
         return request.client.host if request.client else "unknown"
 
     def check(self, request: Request):
@@ -30,3 +39,4 @@ class RateLimiter:
 
 
 chat_limiter = RateLimiter(max_requests=30, window_seconds=3600)
+digest_limiter = RateLimiter(max_requests=10, window_seconds=3600)

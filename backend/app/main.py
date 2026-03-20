@@ -4,24 +4,24 @@ Voku — Personal context engine with temporal belief tracking.
 Backend entry point. Extraction pipeline + SQLite storage + MCP server.
 """
 
+import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("voku")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown events."""
-    from pathlib import Path
-
     db_path = Path(settings.db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    import logging
-    logger = logging.getLogger("voku")
-    logging.basicConfig(level=logging.INFO)
     logger.info("Voku starting up...")
     logger.info(f"Database: {db_path}")
     logger.info(f"Provider: {settings.voku_provider}")

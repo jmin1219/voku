@@ -90,9 +90,6 @@ export function TraceCloud({
   useEffect(() => {
     if (!meshRef.current || nodes.length === 0) return;
 
-    const c0 = getClusterColor(nodes[0].cluster);
-    console.log('[TraceCloud] node 0 color r/g/b:', c0.r.toFixed(3), c0.g.toFixed(3), c0.b.toFixed(3), '| cluster:', nodes[0].cluster, '| baseSize:', baseSize, '| pos:', nodes[0].position);
-
     const dummy = new THREE.Object3D();
     const color = new THREE.Color();
 

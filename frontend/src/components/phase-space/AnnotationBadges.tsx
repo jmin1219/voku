@@ -1,4 +1,4 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PhaseSpaceNode } from "../../types/phase-space";
@@ -53,7 +53,7 @@ export function AnnotationBadges({ nodes, cameraDistance }: AnnotationBadgesProp
   const isVisible = cameraDistance < VISIBILITY_DISTANCE;
 
   // Update instance matrices and colors
-  useMemo(() => {
+  useEffect(() => {
     if (!meshRef.current || annotatedNodes.length === 0) return;
 
     const dummy = new THREE.Object3D();
