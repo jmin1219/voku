@@ -1,67 +1,101 @@
-# Voku — Transparent Thinking Environment for AI Agents
+# Voku
 
-A personal knowledge graph that builds itself from conversation. Every message becomes a timestamped trace. Traces connect through semantic similarity, temporal sequence, and intentional links. The graph that emerges becomes the context layer any AI agent can query — and the user can see exactly what the system knows.
+A conversational knowledge graph with temporal retrieval and 3D visualization.
 
-<!-- TODO: Add screenshots -->
-<!-- ![Phase Space](docs/screenshots/phase-space.png) -->
-<!-- ![Chat with Context Markers](docs/screenshots/chat-context.png) -->
+<!-- TODO: Replace with actual recording -->
+<!-- ![Voku Demo](docs/demo.gif) -->
+
+**[Live Demo](https://voku.example.com)** · **[Architecture](#architecture)** · **[Design Decisions](#design-decisions)** · **[What I Learned](#what-i-learned)**
+
+---
 
 ## What It Does
 
-You talk to an AI. Each message becomes an immutable trace, embedded and stored. Over time, traces cluster into themes. The AI retrieves relevant traces to build contextually rich responses — and shows you exactly which traces it used via inline citations. A 3D phase space lets you explore the topology of your thinking at any resolution.
+You talk to an AI. Every message becomes an immutable **trace** — timestamped, embedded, and stored. Over time, traces connect through semantic similarity, temporal sequence, and intentional links. Clusters emerge through hierarchical DBSCAN. The AI retrieves context by combining vector search with graph expansion, and shows you exactly which traces it used via inline citations. A 3D phase space lets you orbit through the topology of accumulated knowledge.
 
-**869 traces** · **271 tests** · **7,600 LOC** · **~120 hours**
+**271 tests** · **~7,600 LOC** · **Python/FastAPI + React/TypeScript + Three.js** · **Single-file SQLite**
 
 ## Architecture
 
 ```
-traces          Immutable conversational records (timestamp, content, source)
-annotations     LLM-extracted metadata (category-free, re-extractable)
-connections     Typed edges (semantic | temporal | intentional | supersedes)
-resources       External references anchored to introduction moment
-embeddings      bge-base-en-v1.5 vectors (768d, in-memory cosine search)
+┌─────────────────────────────────────────────────┐
+│                   Frontend                       │
+│  React 19 · TypeScript · Tailwind v4             │
+│  ┌─────────────┐  ┌──────────────────────────┐  │
+│  │  Chat Panel  │  │  3D Phase Space          │  │
+│  │  streaming   │  │  Three.js/R3F            │  │
+│  │  context [1] │  │  InstancedMesh (60fps)   │  │
+│  │  /digest cmd │  │  cluster shells, edges   │  │
+│  └─────────────┘  └──────────────────────────┘  │
+└────────────────────────┬────────────────────────┘
+                         │ /api
+┌────────────────────────┴────────────────────────┐
+│                   Backend                        │
+│  FastAPI · Python 3.13                           │
+│                                                  │
+│  Trace Storage ──→ Embedding (bge-base, 768d)    │
+│       │                    │                     │
+│       ▼                    ▼                     │
+│  Connections          Vector Search              │
+│  (temporal,           (numpy cosine,             │
+│   semantic,            in-memory)                │
+│   intentional,              │                    │
+│   supersedes)               ▼                    │
+│       │              Graph Expansion             │
+│       ▼              (1-hop temporal +            │
+│  Annotations          intentional, recency       │
+│  (LLM-extracted,      decay, intention boost)    │
+│   category-free)            │                    │
+│       │                     ▼                    │
+│       ▼              Context Assembly            │
+│  Contradiction       (system prompt with         │
+│  Detection            evolution cues)            │
+│       │                     │                    │
+│       ▼                     ▼                    │
+│  Hierarchical         Temporal Digest            │
+│  Clustering           (period summaries,         │
+│  (DBSCAN, 2-level)     topic evolution)          │
+│                                                  │
+│  ┌──────────────────────────────────────────┐   │
+│  │  SQLite (WAL mode) — single file          │   │
+│  │  traces · annotations · connections ·     │   │
+│  │  embeddings · resources                   │   │
+│  └──────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────┘
 ```
 
-Five tables in a single SQLite file. Traces are permanent ground truth. Everything else is computed and replaceable.
+## Design Decisions
 
-### Stack
+**Traces over propositions.** v1 extracted atomic propositions from conversations. They were lossy — stripping tone, context, and ambiguity. v2 stores raw conversational traces and computes annotations on top. The raw stream is richer than any extraction, and annotations can be recomputed with better models without losing ground truth.
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Python 3.13, FastAPI, SQLite (WAL mode) |
-| Embeddings | bge-base-en-v1.5 via sentence-transformers, numpy cosine search |
-| LLM (chat) | Anthropic Claude (streaming) |
-| LLM (extraction) | Groq llama-3.3-70b (async annotation extraction) |
-| Frontend | React 19, TypeScript, Vite, Tailwind v4 |
-| Visualization | Three.js via react-three-fiber, InstancedMesh rendering |
-| Deployment | Docker (multi-stage build) |
+**SQLite over a vector database.** At sub-10K traces, in-memory numpy cosine search runs in <10ms. No Pinecone, no Kuzu, no server dependency. One file. `cp voku.db backup.db` is the backup strategy. The complexity of external vector services costs more than it buys at this scale.
 
+**Graph expansion follows temporal and intentional connections, not semantic ones.** Semantic expansion creates echo chambers — you retrieve what's similar to what's similar. Temporal expansion retrieves what was said *around the same time*, which captures conversational context. Intentional expansion follows links the user explicitly drew. This produces retrieval that feels contextually grounded rather than topically narrow.
 
-## Key Technical Decisions
+**Category-free annotations.** No predefined taxonomy at the schema level. The LLM extraction model produces whatever types fit the content — decisions, emotions, commitments, measurables. Structure emerges from use, not from developer intuition. This means the system adapts to any domain without schema changes.
 
-**Custom graph over external DB.** At <10K traces, SQLite with in-memory numpy cosine search handles vector retrieval in <10ms. No Pinecone, no Kuzu, no server dependency. Single-file database — `cp voku.db backup.db` is the backup strategy.
+**Anti-collapse.** Every AI memory system I looked at collapses users into point estimates — profiles, summaries, preference vectors. Voku preserves contradictions as coexisting traces. Pattern-opinions use provisional language ("~N decisions about..."). The system never says "you are X." No edit buttons, no regenerate, no forced resolution. Beliefs exist in tension until the user resolves them through conversation.
 
-**Traces over propositions.** v1 extracted propositions (atomic claims) from conversations. v2 stores raw conversational traces and computes annotations on top. The raw stream is richer than any extraction — and annotations can be recomputed with better models without losing ground truth.
-
-**Cosine + graph expansion retrieval.** Vector similarity alone misses temporal context. Retrieval expands 1-hop along temporal and intentional connections, weights by recency (exponential decay), and boosts traces with intention/commitment annotations (1.3x). Contradiction detection surfaces evolving beliefs.
-
-**Hierarchical DBSCAN clustering.** Fine clusters (eps=0.15 cosine distance) capture topic-level groupings. Orientation clusters (eps=0.4 on centroids) reveal broader life themes. No predefined categories — structure emerges from the data.
-
-**Category-free annotations.** No predefined types at the schema level. The LLM extraction model produces whatever types fit the content — measurables, decisions, emotions, commitments, topics. Structure emerges from use, not from developer intuition.
+**Hierarchical DBSCAN over k-means.** Two levels — fine clusters (eps=0.15 cosine distance) for topics, orientation clusters (eps=0.4 on centroids) for life themes. DBSCAN doesn't require specifying k, handles noise gracefully, and produces clusters of varying density. Structure is discovered, not imposed.
 
 ## What I Learned
 
-- **Retrieval dominates write strategy.** Yuan et al. (2025) showed a 20-point accuracy gap from retrieval method vs 3-8 points from write strategy. Voku's cosine-only retrieval is the primary bottleneck — BM25 + hybrid reranking is the highest-leverage next improvement.
-- **Anti-collapse as design principle.** Every AI memory system collapses users into point estimates (profiles, summaries). Voku preserves the cloud — contradictory traces coexist, pattern-opinions are scoped and revisable, the system never says "you are X."
-- **InstancedMesh scales.** 869 nodes + 4,345 edges render at 60fps in a single draw call. Three.js via react-three-fiber makes GPU-accelerated graph visualization accessible.
+**Retrieval dominates write strategy.** Yuan et al. (2025) showed a 20-point accuracy gap from retrieval method versus 3–8 points from write strategy. My initial instinct was to invest in better extraction. The literature says invest in better retrieval. Cosine-only search is the current bottleneck — BM25 hybrid reranking is the highest-leverage next improvement.
 
+**InstancedMesh scales.** 869 nodes + 4,345 edges render at 60fps in a single draw call via Three.js/react-three-fiber. GPU-accelerated graph visualization is more accessible than I expected. The bottleneck is the projection (UMAP), not the rendering.
+
+**The system prompt is underrated as an architecture surface.** Context assembly — deciding what goes into the system prompt and how — is where retrieval quality becomes conversation quality. The system prompt carries contradiction evolution cues, resurfaced traces, and temporal context. It's not an afterthought; it's the primary integration point.
+
+## What I'd Build Next
+
+The deeper question behind Voku is: **how do you model someone who's changing?** Voku preserves the raw material but doesn't model the dynamics. The next step is active inference — a generative model that maintains beliefs about a person, updates them through observation, and acts to reduce uncertainty. The knowledge graph becomes the state space; retrieval becomes inference; the system prompt becomes a policy. That's a different project, grounded in the same question.
 
 ## Run It
 
 ```bash
 # Docker (recommended)
 cp .env.example .env
-# Edit .env with your API keys (Anthropic for chat, Groq for annotations)
+# Add your API keys: ANTHROPIC_API_KEY (chat), GROQ_API_KEY (annotations)
 docker compose up --build
 # Open http://localhost:8000
 ```
@@ -84,24 +118,17 @@ cd backend && source venv/bin/activate
 pytest  # 271 tests
 ```
 
-## Seed Demo Data
+## Stack
 
-The Docker image ships with a pre-seeded database (869 traces). To regenerate from session logs:
-
-```bash
-cd backend && source venv/bin/activate
-python scripts/seed_from_sessions.py \
-  --sessions-dir /path/to/session/logs \
-  --wipe
-```
-
-## Docs
-
-| Document | Purpose |
-|----------|---------|
-| [SPEC.md](docs/SPEC.md) | Architecture, data model, design philosophy |
-| [CONSTRAINTS.md](docs/CONSTRAINTS.md) | Design decision hierarchy |
-| [CLAUDE.md](CLAUDE.md) | Dev context for AI-assisted development |
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python 3.13, FastAPI, SQLite (WAL mode) |
+| Embeddings | bge-base-en-v1.5 (768d), in-memory numpy cosine search |
+| LLM (chat) | Anthropic Claude (streaming) |
+| LLM (extraction) | Groq llama-3.3-70b (async annotation extraction) |
+| Frontend | React 19, TypeScript, Vite, Tailwind v4 |
+| Visualization | Three.js via react-three-fiber, InstancedMesh |
+| Deployment | Docker (multi-stage build) |
 
 ## License
 
@@ -109,4 +136,4 @@ MIT
 
 ---
 
-Built by Jaymin Chang — MSCS @ Northeastern Vancouver
+Built by [Jaymin Chang](https://linkedin.com/in/jaymin-chang-professional) — MS Computer Science, Northeastern University Vancouver
