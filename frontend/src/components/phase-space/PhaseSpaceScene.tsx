@@ -6,6 +6,7 @@ import { EdgeMesh } from "./EdgeMesh";
 import { ClusterCloud } from "./ClusterCloud";
 import { CameraController } from "./CameraController";
 import { NodeLabels } from "./NodeLabels";
+import { NodeHoverCard } from "./NodeHoverCard";
 
 /**
  * PhaseSpaceScene — R3F Canvas with all phase space layers.
@@ -17,9 +18,14 @@ import { NodeLabels } from "./NodeLabels";
 interface PhaseSpaceSceneProps {
   data: PhaseSpaceData;
   retrievalIds: string[];
+  currentConversationId: string | null;
 }
 
-export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
+export function PhaseSpaceScene({
+  data,
+  retrievalIds,
+  currentConversationId,
+}: PhaseSpaceSceneProps) {
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -67,21 +73,20 @@ export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         camera={{ position: [0, 8, 12], fov: 50 }}
-        style={{ background: "var(--voku-bg-deep)" }}
+        style={{ background: "#080810" }}
         onPointerMissed={handleBgClick}
       >
-        {/* Lighting — warm/cool split, bright enough for dark bg */}
-        <ambientLight intensity={0.4} />
-        <pointLight position={[10, 10, 10]} intensity={1.2} color="#ffeedd" />
-        <pointLight position={[-10, -5, -10]} intensity={0.6} color="#aabbdd" />
-        <pointLight position={[0, -10, 5]} intensity={0.4} color="#ddccaa" />
+        {/* meshBasicMaterial — no lights needed, vertex colors render directly */}
 
         <CameraController focusPosition={focusPosition} dataRadius={dataRadius} />
 
         <TraceCloud
           nodes={data.nodes}
+          edges={data.edges}
           retrievalIds={retrievalIds}
+          currentConversationId={currentConversationId}
           focusedId={focusedId}
+          hoveredId={hoveredId}
           onNodeClick={handleNodeClick}
           onNodeHover={setHoveredId}
         />
@@ -99,54 +104,16 @@ export function PhaseSpaceScene({ data, retrievalIds }: PhaseSpaceSceneProps) {
           focusedId={focusedId}
           hoveredId={hoveredId}
         />
-      </Canvas>
 
-      {/* Tooltip overlay */}
-      {hoveredNode && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 12,
-            left: 12,
-            maxWidth: 320,
-            padding: "8px 12px",
-            background: "rgba(26, 26, 34, 0.92)",
-            border: "1px solid rgba(201, 162, 60, 0.3)",
-            borderRadius: 6,
-            color: "#e0dbd0",
-            fontSize: "0.75rem",
-            fontFamily: "var(--voku-font-body)",
-            lineHeight: 1.5,
-            pointerEvents: "none",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "0.65rem",
-              fontFamily: "var(--voku-font-mono)",
-              color: "#c9a23c",
-              marginBottom: 4,
-            }}
-          >
-            {hoveredNode.source} · {hoveredNode.createdAt.slice(0, 10)}
-          </div>
-          <div>{hoveredNode.label}</div>
-          {hoveredNode.annotations.length > 0 && (
-            <div
-              style={{
-                marginTop: 4,
-                fontSize: "0.65rem",
-                color: "#99907f",
-              }}
-            >
-              {hoveredNode.annotations
-                .slice(0, 2)
-                .map((a) => `${a.type}: ${a.key}`)
-                .join(" · ")}
-            </div>
-          )}
-        </div>
-      )}
+        {/* Floating hover card */}
+        {hoveredNode && (
+          <NodeHoverCard
+            node={hoveredNode}
+            clusters={data.clusters}
+            edges={data.edges}
+          />
+        )}
+      </Canvas>
 
       {/* Meta overlay */}
       <div

@@ -14,6 +14,7 @@ Differences from v1:
 Design: SPEC.md § UI/UX Architecture — Phase Space
 """
 
+import asyncio
 from collections import Counter
 from datetime import datetime
 
@@ -22,6 +23,8 @@ from sklearn.cluster import DBSCAN
 from umap import UMAP
 
 from app.services.storage.sqlite_trace import SQLiteTraceStorage
+from app.services.cluster_metadata import ClusterMetadataService
+from app.services.router import get_provider
 
 
 SCALE = 5.0
@@ -315,6 +318,25 @@ def compute_trace_projection(storage: SQLiteTraceStorage) -> dict:
             "trace_ids": member_ids,
             "orientation_id": cluster_orientation_map.get(c, -1),
         })
+
+    # --- Replace keyword labels with LLM-generated labels ---
+    try:
+        provider = get_provider()
+        meta_service = ClusterMetadataService(provider)
+        embeddings_dict = {trace_ids[i]: vectors[i] for i in range(len(vectors))}
+        all_traces_list = [traces_by_id[tid] for tid in trace_ids if tid in traces_by_id]
+
+        cluster_input = [{"id": c["id"], "trace_ids": c["trace_ids"]} for c in clusters]
+        cluster_metas = asyncio.run(meta_service.generate_labels(
+            cluster_input, all_traces_list, embeddings_dict
+        ))
+        meta_by_id = {m.cluster_id: m for m in cluster_metas}
+
+        for c in clusters:
+            if c["id"] in meta_by_id:
+                c["label"] = meta_by_id[c["id"]].label
+    except Exception as e:
+        print(f"[cluster labels] LLM labeling failed, using keywords: {e}")
 
     # --- Build orientation metadata ---
     orient_ids_set = set(cluster_orientation_map.values()) - {-1}

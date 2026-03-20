@@ -15,6 +15,7 @@ interface PhaseSpaceContainerProps {
   loading: boolean;
   error: string | null;
   retrievalIds: string[];
+  currentConversationId: string | null;
   onFetchData: () => void;
 }
 
@@ -24,6 +25,7 @@ export function PhaseSpaceContainer({
   loading,
   error,
   retrievalIds,
+  currentConversationId,
   onFetchData,
 }: PhaseSpaceContainerProps) {
   // Fetch every time panel opens (data may have changed via chat)
@@ -41,8 +43,8 @@ export function PhaseSpaceContainer({
         height: "100%",
         overflow: "hidden",
         transition: "width 0.2s ease-out",
-        background: "var(--voku-bg-deep)",
-        borderLeft: isOpen ? "1px solid var(--voku-border-subtle)" : "none",
+        background: "#080810",
+        borderLeft: isOpen ? "1px solid rgba(201, 162, 60, 0.15)" : "none",
         flexShrink: 0,
       }}
     >
@@ -81,7 +83,11 @@ export function PhaseSpaceContainer({
             </div>
           )}
           {data && (
-            <PhaseSpaceScene data={data} retrievalIds={retrievalIds} />
+            <PhaseSpaceScene
+              data={data}
+              retrievalIds={retrievalIds}
+              currentConversationId={currentConversationId}
+            />
           )}
         </>
       )}

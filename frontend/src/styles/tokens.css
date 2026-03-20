@@ -1,50 +1,49 @@
 /*
- * Voku Design Tokens — Warm Daylight
+ * Voku Design Tokens — Warm Daylight (true light mode)
  *
- * Warm cream/parchment base with soft navy and gold accents.
- * Journaling-app warmth, light mode.
+ * Warm cream/parchment base with dark ink text and gold accents.
  */
 
 :root {
-  /* === Base surfaces (dark) === */
-  --voku-bg-deep: #13131a;          /* Deepest background */
-  --voku-bg-base: #1a1a24;          /* Primary background — chat + phase space */
-  --voku-bg-raised: #22222e;        /* Cards, input fields */
-  --voku-bg-hover: #2a2a38;         /* Hover states */
+  /* === Base surfaces === */
+  --voku-bg-deep: #ede8df;          /* Slightly darker parchment — phase space canvas */
+  --voku-bg-base: #f7f3ec;          /* Primary background — chat panel */
+  --voku-bg-raised: #ffffff;        /* Cards, input fields */
+  --voku-bg-hover: #ede8df;         /* Hover states */
 
   /* === Borders === */
-  --voku-border-subtle: #2a2a36;    /* Panel dividers */
-  --voku-border-default: #363645;   /* Input borders */
+  --voku-border-subtle: #ddd8cc;    /* Panel dividers */
+  --voku-border-default: #c8c0b0;   /* Input borders */
   --voku-border-focus: #9a7b3c;     /* Focused inputs — gold accent */
 
   /* === Text === */
-  --voku-text-primary: #e0dbd0;     /* Main text — warm light */
-  --voku-text-secondary: #a09888;   /* Dimmed text */
-  --voku-text-tertiary: #706860;    /* Very subtle text, metadata */
-  --voku-text-muted: #504840;       /* Ghost text, placeholders */
+  --voku-text-primary: #1c1814;     /* Main text — near-black warm */
+  --voku-text-secondary: #4a4038;   /* Dimmed text */
+  --voku-text-tertiary: #7a7060;    /* Metadata, timestamps */
+  --voku-text-muted: #a09080;       /* Ghost text, placeholders */
 
   /* === Accents === */
-  --voku-accent-gold: #c9a23c;      /* Primary accent — warm gold, brighter for dark bg */
-  --voku-accent-gold-dim: #8a7040;  /* Dimmed gold */
-  --voku-accent-gold-glow: #e0b84a; /* Bright gold for emphasis */
+  --voku-accent-gold: #8a6820;      /* Primary accent — dark gold, legible on light */
+  --voku-accent-gold-dim: #b8922c;  /* Mid gold */
+  --voku-accent-gold-glow: #c9a23c; /* Bright gold for emphasis */
 
   /* === Role colors (chat) === */
-  --voku-user-accent: #7a92c0;      /* Muted steel blue */
-  --voku-user-bg: #1e2030;          /* User message — slightly blue-shifted dark */
-  --voku-assistant-accent: #6a9a6e; /* Sage green */
-  --voku-assistant-bg: #1a2420;     /* Assistant message — slightly green-shifted dark */
+  --voku-user-accent: #4a6a9a;      /* Steel blue */
+  --voku-user-bg: #eef1f8;          /* User message — slight blue tint */
+  --voku-assistant-accent: #3a7a4a; /* Forest green */
+  --voku-assistant-bg: #eef5f0;     /* Assistant message — slight green tint */
 
   /* === Node type colors (phase space) === */
-  --voku-type-stance: #5a8ac0;      /* Medium blue */
-  --voku-type-event: #5a9a6e;       /* Medium green */
-  --voku-type-intention: #c0983a;   /* Warm amber */
+  --voku-type-stance: #3a6aa0;      /* Dark blue */
+  --voku-type-event: #3a7a4a;       /* Dark green */
+  --voku-type-intention: #8a6820;   /* Dark amber */
 
   /* === Phase space specific === */
-  --voku-phase-bg: #13131a;         /* Matches bg-deep */
-  --voku-phase-canvas: #13131a;
-  --voku-phase-label: #e0dbd0;
-  --voku-phase-label-shadow: rgba(0, 0, 0, 0.6);
-  --voku-cluster-opacity: 0.08;
+  --voku-phase-bg: #e8e3d8;         /* Warm off-white canvas */
+  --voku-phase-canvas: #e8e3d8;
+  --voku-phase-label: #1c1814;
+  --voku-phase-label-shadow: rgba(255, 255, 255, 0.7);
+  --voku-cluster-opacity: 0.12;
 
   /* === Divider === */
   --voku-divider-width: 4px;

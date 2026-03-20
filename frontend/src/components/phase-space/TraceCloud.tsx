@@ -1,36 +1,49 @@
 import { useRef, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import type { PhaseSpaceNode } from "../../types/phase-space";
+import type { PhaseSpaceNode, PhaseSpaceEdge } from "../../types/phase-space";
 
 /**
  * TraceCloud — InstancedMesh rendering for all trace nodes.
  *
- * Single draw call for all nodes. Per-instance:
- *   - Position from UMAP
- *   - Color from recency (gold → slate)
- *   - Scale from source type (user=sphere implicit, all same geometry)
- *   - Emissive boost for retrieved traces (glow)
- *
- * Performance: 500 nodes = 1 draw call, 60fps.
+ * meshBasicMaterial: ignores lighting, vertex colors render at full value.
+ * Color = cluster membership. Brightness = age (older = dimmer). Glow = retrieval.
+ * Static at rest — no ambient animation.
  */
 
-const WARM = new THREE.Color("#e8c84a"); // bright gold — recent
-const COOL = new THREE.Color("#8a9ab0"); // light slate — old
-const GLOW = new THREE.Color("#ffe066"); // vivid gold — retrieved
-const SYSTEM_TINT = new THREE.Color("#b8a0d8"); // soft purple — system/digest traces
+// Cluster-based colors — BRIGHT, designed for dark background
+// These need to be light enough to read against #080810
+const CLUSTER_COLORS = [
+  "#7eb8d4", // bright sky blue
+  "#e8934a", // vivid orange
+  "#72c47a", // bright green
+  "#c47ab0", // bright rose
+  "#a8b85a", // bright olive
+  "#6aaed4", // cornflower blue
+  "#d4944a", // amber
+  "#5ac8c8", // bright teal
+  "#a87ad4", // bright violet
+  "#88c460", // lime green
+  "#d45880", // hot rose
+  "#60a880", // seafoam
+].map(hex => new THREE.Color(hex));
 
-// Adaptive sizing: bigger when sparse, smaller when dense.
-// At 6 nodes → 0.30, at 50 → 0.22, at 200 → 0.15, at 500 → 0.12
-function getBaseSize(count: number): number {
-  if (count <= 10) return 0.30;
-  if (count <= 50) return 0.22;
-  if (count <= 150) return 0.17;
-  if (count <= 300) return 0.14;
-  return 0.12;
+const NOISE_COLOR = new THREE.Color("#6a6a7a"); // ungrouped — medium grey
+const GLOW = new THREE.Color("#ffe066"); // vivid gold — retrieved
+
+function getClusterColor(cluster: number): THREE.Color {
+  if (cluster === -1) return NOISE_COLOR;
+  return CLUSTER_COLORS[cluster % CLUSTER_COLORS.length];
 }
 
-// Sphere resolution: fewer polys per sphere at higher counts
+function getBaseSize(count: number): number {
+  if (count <= 10) return 0.45;
+  if (count <= 50) return 0.35;
+  if (count <= 150) return 0.28;
+  if (count <= 300) return 0.22;
+  return 0.18; // 800+ nodes — still clearly visible
+}
+
 function getSphereDetail(count: number): [number, number] {
   if (count <= 50) return [16, 12];
   if (count <= 200) return [12, 8];
@@ -39,16 +52,22 @@ function getSphereDetail(count: number): [number, number] {
 
 interface TraceCloudProps {
   nodes: PhaseSpaceNode[];
+  edges: PhaseSpaceEdge[];
   retrievalIds: string[];
+  currentConversationId: string | null;
   focusedId: string | null;
+  hoveredId: string | null;
   onNodeClick?: (id: string) => void;
   onNodeHover?: (id: string | null) => void;
 }
 
 export function TraceCloud({
   nodes,
+  edges: _edges, // accepted but not used at rest — reserved for hover ripple
   retrievalIds,
+  currentConversationId,
   focusedId,
+  hoveredId: _hoveredId, // accepted but not used at rest
   onNodeClick,
   onNodeHover,
 }: TraceCloudProps) {
@@ -71,27 +90,26 @@ export function TraceCloud({
   useEffect(() => {
     if (!meshRef.current || nodes.length === 0) return;
 
+    const c0 = getClusterColor(nodes[0].cluster);
+    console.log('[TraceCloud] node 0 color r/g/b:', c0.r.toFixed(3), c0.g.toFixed(3), c0.b.toFixed(3), '| cluster:', nodes[0].cluster, '| baseSize:', baseSize, '| pos:', nodes[0].position);
+
     const dummy = new THREE.Object3D();
     const color = new THREE.Color();
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const [x, y, z] = node.position;
+      const isCurrentSession = node.conversationId === currentConversationId;
 
-      // Size by source: user full, assistant 0.8x, system 0.7x
-      const sizeMult = node.source === "assistant" ? 0.8
-        : node.source === "system" ? 0.7
-        : 1.0;
+      // Current session nodes are 1.3x bigger
+      const sizeMult = isCurrentSession ? 1.3 : 1.0;
       dummy.position.set(x, y, z);
       dummy.scale.setScalar(baseSize * sizeMult);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
 
-      // Color: age gradient (warm→cool), with source tinting
-      color.copy(COOL).lerp(WARM, node.age);
-      if (node.source === "system") {
-        color.lerp(SYSTEM_TINT, 0.4); // purple tint for digests
-      }
+      // Color by cluster — same brightness for all, current session is larger
+      color.copy(getClusterColor(node.cluster));
       meshRef.current.setColorAt(i, color);
     }
 
@@ -99,7 +117,7 @@ export function TraceCloud({
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
     }
-  }, [nodes, baseSize]);
+  }, [nodes, baseSize, currentConversationId]);
 
   // Update glow targets when retrieval changes
   useEffect(() => {
@@ -129,25 +147,24 @@ export function TraceCloud({
         needsUpdate = true;
       }
 
-      // Focus dimming
-      const focusDim =
-        focusedId && focusedId !== nodes[i].id ? 0.25 : 1.0;
+      const node = nodes[i];
+      const isCurrentSession = node.conversationId === currentConversationId;
+      const focusDim = focusedId && focusedId !== node.id ? 0.25 : 1.0;
 
-      // Base color from age
-      color.copy(COOL).lerp(WARM, nodes[i].age);
+      // Color by cluster — flat brightness, size differentiates current session
+      color.copy(getClusterColor(node.cluster));
 
-      // Add glow
+      // Retrieval glow overrides base color toward gold
       if (next > 0.01) {
-        color.lerp(GLOW, next * 0.6);
+        color.lerp(GLOW, next * 0.7);
       }
 
-      // Apply focus dimming
       color.multiplyScalar(focusDim);
 
       meshRef.current.setColorAt(i, color);
     }
 
-    if (needsUpdate && meshRef.current.instanceColor) {
+    if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
     }
   });
@@ -189,13 +206,7 @@ export function TraceCloud({
       onClick={handleClick}
     >
       <sphereGeometry args={[1, sphereDetail[0], sphereDetail[1]]} />
-      <meshStandardMaterial
-        vertexColors
-        roughness={0.4}
-        metalness={0.2}
-        emissive="#c9a23c"
-        emissiveIntensity={0.6}
-      />
+      <meshBasicMaterial vertexColors />
     </instancedMesh>
   );
 }

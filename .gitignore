@@ -38,6 +38,12 @@ docs/private/
 # Personal workflow (not product documentation)
 WORKFLOW.md
 
+# Dev screenshots
+phase-space-*.png
+
+# Playwright MCP logs
+.playwright-mcp/
+
 # User declarations (personal data)
 *.yaml
 !backend/requirements.yaml

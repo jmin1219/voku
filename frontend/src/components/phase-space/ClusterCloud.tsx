@@ -1,61 +1,71 @@
-import { useMemo } from "react";
-import * as THREE from "three";
+import { Html } from "@react-three/drei";
 import type { PhaseSpaceCluster } from "../../types/phase-space";
 
 /**
- * ClusterCloud — Translucent shells around cluster boundaries.
+ * ClusterLabels — Floating text labels at each cluster center.
  *
- * Soft spheres at cluster centers, radius from API.
- * Hover shows label + count. Visual grouping without hard borders.
+ * Replaces translucent sphere shells. Labels float in 3D space,
+ * always face the camera, show the cluster keyword summary + count.
+ * Only renders clusters with a real LLM-generated label (not noise).
  */
-
-const CLUSTER_COLORS = [
-  "#6b8cae", "#8a7b6b", "#7a9a6b", "#9a7b8a", "#8a9a6b",
-  "#6b7a9a", "#9a8a6b", "#6b9a8a", "#8a6b9a", "#6b8a6b",
-];
 
 interface ClusterCloudProps {
   clusters: PhaseSpaceCluster[];
-  onClusterHover?: (id: number | null) => void;
-  onClusterClick?: (id: number) => void;
 }
 
-export function ClusterCloud({
-  clusters,
-  onClusterHover,
-  onClusterClick,
-}: ClusterCloudProps) {
-  const shells = useMemo(
-    () =>
-      clusters.map((cluster) => ({
-        ...cluster,
-        color: new THREE.Color(
-          CLUSTER_COLORS[cluster.id % CLUSTER_COLORS.length]
-        ),
-      })),
-    [clusters]
+export function ClusterCloud({ clusters }: ClusterCloudProps) {
+  // Only show clusters with a meaningful label and enough members
+  const labeled = clusters.filter(
+    (c) => c.label && c.label.trim().length > 0 && c.count >= 3
   );
 
   return (
     <group>
-      {shells.map((shell) => (
-        <mesh
-          key={shell.id}
-          position={shell.center}
-          onPointerEnter={() => onClusterHover?.(shell.id)}
-          onPointerLeave={() => onClusterHover?.(null)}
-          onClick={() => onClusterClick?.(shell.id)}
+      {labeled.map((cluster) => (
+        <Html
+          key={cluster.id}
+          position={[
+            cluster.center[0],
+            cluster.center[1] + cluster.radius + 0.4,
+            cluster.center[2],
+          ]}
+          center
+          style={{ pointerEvents: "none" }}
         >
-          <sphereGeometry args={[shell.radius, 16, 12]} />
-          <meshStandardMaterial
-            color={shell.color}
-            transparent
-            opacity={0.1}
-            roughness={1}
-            depthWrite={false}
-            side={THREE.BackSide}
-          />
-        </mesh>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              userSelect: "none",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "10px",
+                fontFamily: "var(--voku-font-mono, monospace)",
+                color: "rgba(201, 162, 60, 0.7)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+                textShadow: "0 0 8px rgba(201, 162, 60, 0.4)",
+              }}
+            >
+              {cluster.label}
+            </div>
+            <div
+              style={{
+                fontSize: "9px",
+                fontFamily: "var(--voku-font-mono, monospace)",
+                color: "rgba(201, 162, 60, 0.35)",
+                letterSpacing: "0.05em",
+              }}
+            >
+              {cluster.count}
+            </div>
+          </div>
+        </Html>
       ))}
     </group>
   );

@@ -27,6 +27,30 @@ from app.services.embedding.bge import BGEBaseEmbedding
 from app.services.providers.base import Provider
 
 
+def _unwrap_json_narrative(text: str) -> str:
+    """Extract plain text from JSON-wrapped LLM responses.
+
+    Some models (e.g. Groq/Llama) ignore 'no JSON' instructions and return
+    {"reflection": "..."} or {"narrative": "..."} instead of plain text.
+    This strips the wrapper and returns just the text content.
+    """
+    import json
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            # Try common keys in order of likelihood
+            for key in ("reflection", "narrative", "text", "content", "summary"):
+                if key in parsed and isinstance(parsed[key], str):
+                    return parsed[key].strip()
+            # Fallback: join all string values
+            values = [v for v in parsed.values() if isinstance(v, str)]
+            if values:
+                return " ".join(values).strip()
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return text
+
+
 SUMMARY_PROMPT = """You are writing a temporal digest for a personal thinking environment called Voku.
 
 Given clusters of a person's thinking traces over a time period, write a SHORT narrative synthesis (3-5 paragraphs). This should read like a thoughtful journal reflection, not a report.
@@ -115,6 +139,9 @@ class TemporalDigestService:
         if not narrative:
             raise RuntimeError("LLM returned empty narrative")
 
+        # Unwrap JSON if LLM ignored "no JSON" instruction (common with Groq)
+        narrative = _unwrap_json_narrative(narrative)
+
         # Store as system trace
         now = datetime.now(timezone.utc)
         date_label = now.strftime("%Y-%m-%d")
@@ -193,6 +220,7 @@ class TemporalDigestService:
         if not narrative:
             raise RuntimeError("LLM returned empty evolution narrative")
 
+        narrative = _unwrap_json_narrative(narrative)
         return narrative
 
     # ------------------------------------------------------------------

@@ -326,6 +326,7 @@ export default function Workspace() {
         loading={phaseSpace.loading}
         error={phaseSpace.error}
         retrievalIds={retrievalIds}
+        currentConversationId={conversationId}
         onFetchData={phaseSpace.fetch}
       />
     </div>

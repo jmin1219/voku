@@ -14,7 +14,7 @@ import * as THREE from "three";
 const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
 const LERP_SPEED = 0.05;
 const MIN_DISTANCE = 4;
-const FRAMING_MARGIN = 1.6; // multiplier on bounding radius
+const FRAMING_MARGIN = 2.2; // multiplier on bounding radius — pull back to show full cloud
 
 interface CameraControllerProps {
   focusPosition: [number, number, number] | null;

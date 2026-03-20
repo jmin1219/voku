@@ -3,6 +3,27 @@ import { Markdown } from "./Markdown";
 import type { ChatMessage } from "../../pages/Workspace";
 
 
+/**
+ * Unwrap JSON-wrapped narrative content.
+ * Some stored digest traces contain {"reflection": "..."} or {"text": "..."}
+ * instead of plain text, due to LLMs ignoring no-JSON instructions.
+ */
+function unwrapContent(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith("{")) return content;
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (typeof parsed === "object" && parsed !== null) {
+      for (const key of ["reflection", "narrative", "text", "content", "summary"]) {
+        if (typeof parsed[key] === "string") return parsed[key].trim();
+      }
+      const vals = Object.values(parsed).filter((v): v is string => typeof v === "string");
+      if (vals.length > 0) return vals.join(" ").trim();
+    }
+  } catch { /* not JSON, return as-is */ }
+  return content;
+}
+
 /** Format ISO timestamp to "Sun, Feb 22" */
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -211,7 +232,7 @@ export function ChatMessages({
                 msg.content
               ) : msg.content ? (
                 <Markdown
-                  content={msg.content}
+                  content={unwrapContent(msg.content)}
                   retrievalIds={showRetrieval ? retrievalIds : undefined}
                 />
               ) : (
