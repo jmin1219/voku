@@ -19,6 +19,17 @@ async def lifespan(app: FastAPI):
     db_path = Path(settings.db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
+    import logging
+    logger = logging.getLogger("voku")
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Voku starting up...")
+    logger.info(f"Database: {db_path}")
+    logger.info(f"Provider: {settings.voku_provider}")
+    logger.info(f"Environment: {settings.environment}")
+
+    from app.dependencies import embedder
+    logger.info(f"Embedding model loaded: {embedder.model_name} ({embedder.dimensions}d)")
+
     yield
 
     # Shutdown cleanup
