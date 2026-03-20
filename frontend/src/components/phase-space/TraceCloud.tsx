@@ -133,8 +133,6 @@ export function TraceCloud({
     if (nodes.length === 0) return;
 
     const color = new THREE.Color();
-    let needsUpdate = false;
-
     for (let i = 0; i < nodes.length; i++) {
       const target = targetGlowRef.current[i];
       const current = glowRef.current[i];
@@ -144,11 +142,9 @@ export function TraceCloud({
       const next = current + (target - current) * speed;
       if (Math.abs(next - current) > 0.001) {
         glowRef.current[i] = next;
-        needsUpdate = true;
       }
 
       const node = nodes[i];
-      const isCurrentSession = node.conversationId === currentConversationId;
       const focusDim = focusedId && focusedId !== node.id ? 0.25 : 1.0;
 
       // Color by cluster — flat brightness, size differentiates current session

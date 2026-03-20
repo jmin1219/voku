@@ -69,6 +69,29 @@ export function PhaseSpaceScene({
   // Hovered node tooltip
   const hoveredNode = hoveredId ? nodeMap.get(hoveredId) : null;
 
+  // Empty state — no traces yet
+  if (!data.nodes || data.nodes.length === 0) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#080810",
+          color: "var(--voku-text-muted)",
+          fontFamily: "var(--voku-font-body)",
+          fontSize: "var(--voku-text-sm)",
+          padding: "2rem",
+          textAlign: "center",
+        }}
+      >
+        Start a conversation to see your knowledge graph emerge
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
