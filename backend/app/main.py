@@ -1,7 +1,7 @@
 """
-Voku — Personal context engine with temporal belief tracking.
+Voku — a conversational knowledge graph with temporal retrieval and 3D visualization.
 
-Backend entry point. Extraction pipeline + SQLite storage + MCP server.
+Backend entry point. Trace ingestion + BGE embedding + graph/clustering + phase-space projection.
 """
 
 import logging
