@@ -45,8 +45,10 @@ function getBaseSize(count: number): number {
 }
 
 function getSphereDetail(count: number): [number, number] {
-  if (count <= 50) return [16, 12];
-  if (count <= 200) return [12, 8];
+  // High detail is trivially cheap up to a few hundred instances; only drop to
+  // low-poly for very large graphs where the per-node screen size is tiny.
+  if (count <= 300) return [32, 24];
+  if (count <= 800) return [16, 12];
   return [8, 6];
 }
 
@@ -142,7 +144,9 @@ export function TraceCloud({
       }
 
       const node = nodes[i];
-      const focusDim = focusedId && focusedId !== node.id ? 0.25 : 1.0;
+      // Selected node emphasis: dim the rest, but keep them clearly readable
+      // (0.25 blacked out bright cluster colours on the dark background).
+      const focusDim = focusedId && focusedId !== node.id ? 0.6 : 1.0;
 
       // Color by cluster — flat brightness, size differentiates current session
       color.copy(getClusterColor(node.cluster));
@@ -199,7 +203,10 @@ export function TraceCloud({
       onClick={handleClick}
     >
       <sphereGeometry args={[1, sphereDetail[0], sphereDetail[1]]} />
-      <meshBasicMaterial vertexColors />
+      {/* No `vertexColors`: InstancedMesh per-instance colour comes from
+          `instanceColor` (setColorAt). With `vertexColors` the shader reads the
+          geometry's (absent) colour attribute and multiplies every node to black. */}
+      <meshBasicMaterial />
     </instancedMesh>
   );
 }
