@@ -50,4 +50,5 @@ ENV VOKU_PROVIDER=groq
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so $PORT (injected by Railway/host) expands; falls back to 8000 locally.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
