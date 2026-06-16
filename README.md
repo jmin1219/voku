@@ -2,10 +2,9 @@
 
 A conversational knowledge graph with temporal retrieval and 3D visualization.
 
-<!-- TODO: Replace with actual recording -->
-<!-- ![Voku Demo](docs/demo.gif) -->
+**[Architecture](#architecture)** · **[Design Decisions](#design-decisions)** · **[What I Learned](#what-i-learned)** · **[Run It](#run-it)**
 
-**[Live Demo](https://voku.example.com)** · **[Architecture](#architecture)** · **[Design Decisions](#design-decisions)** · **[What I Learned](#what-i-learned)**
+> **Status:** Research prototype, v2 complete. Runs locally via `docker compose up`. No hosted demo — the system was built as a thinking environment to use personally, not as a SaaS. Walkthrough available on request.
 
 ---
 
