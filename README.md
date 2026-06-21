@@ -1,3 +1,13 @@
+---
+title: Voku
+emoji: 🕸️
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # Voku
 
 A conversational knowledge graph with temporal retrieval and 3D visualization.

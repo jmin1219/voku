@@ -38,8 +38,11 @@ COPY backend/migrations ./migrations
 COPY backend/scripts ./scripts
 COPY backend/pytest.ini ./
 
-# Create empty data directory (DB auto-creates on first run via _ensure_schema)
-RUN mkdir -p ./data
+# Seed a SYNTHETIC demo DB into the image at build time — offline (local BGE, no API keys),
+# all data invented ("Mina Park"), safe to deploy publicly. App reads ./data/voku.db (default db_path),
+# so a fresh ephemeral deploy (HF Spaces) boots with a populated graph instead of an empty demo.
+RUN mkdir -p ./data \
+ && python scripts/seed_demo.py --db-path ./data/voku.db
 
 # Copy built frontend
 COPY --from=frontend-build /app/frontend/dist ./static
