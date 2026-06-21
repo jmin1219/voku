@@ -16,8 +16,8 @@ import type { PhaseSpaceNode, PhaseSpaceEdge } from "../../types/phase-space";
 // Base edge colors by connection type
 const EDGE_TEMPORAL     = new THREE.Color("#c9a23c"); // warm amber — conversation flow
 const EDGE_TEMPORAL_MID = new THREE.Color("#e8c84a"); // brighter amber at arc peak
-const EDGE_SEMANTIC     = new THREE.Color("#2a3a50"); // cool blue — similarity (default k-NN)
-const EDGE_SEMANTIC_MID = new THREE.Color("#1a2535"); // darker at midpoint
+const EDGE_SEMANTIC     = new THREE.Color("#4d6b9a"); // cool blue — similarity (default k-NN); lifted so the graph is visible on the dark bg
+const EDGE_SEMANTIC_MID = new THREE.Color("#6d8fc0"); // brighter at arc midpoint so connections read as structure
 const EDGE_GLOW         = new THREE.Color("#ffe066"); // vivid gold — retrieved (brightest)
 const EDGE_GLOW_MID     = new THREE.Color("#fff4b3"); // brightest gold at arc peak
 
@@ -28,10 +28,10 @@ const CURVE_SEGMENTS = 4; // points per bezier = 5, segments = 4
 
 // Adaptive opacity — tuned for dark background
 function getEdgeOpacity(edgeCount: number, hasRetrieval: boolean): number {
-  const base = edgeCount <= 50  ? 0.55
-    : edgeCount <= 200  ? 0.40
-    : edgeCount <= 1000 ? 0.28
-    : 0.20;
+  const base = edgeCount <= 50  ? 0.6
+    : edgeCount <= 200  ? 0.48
+    : edgeCount <= 1000 ? 0.42
+    : 0.3;
   return hasRetrieval ? Math.min(base * 2.0, 0.75) : base;
 }
 

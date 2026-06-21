@@ -102,8 +102,16 @@ export function TraceCloud({
 
       // Current session nodes are 1.3x bigger
       const sizeMult = isCurrentSession ? 1.3 : 1.0;
-      dummy.position.set(x, y, z);
-      dummy.scale.setScalar(baseSize * sizeMult);
+      // Deterministic per-node jitter (hash of index → stable, no flicker) so
+      // co-located same-cluster traces separate into distinct, countable spheres
+      // instead of merging into one mushy blob.
+      const hsh = (i * 2654435761) >>> 0;
+      const jit = baseSize * 2.6;
+      const jx = ((hsh & 0xff) / 255 - 0.5) * jit;
+      const jy = (((hsh >> 8) & 0xff) / 255 - 0.5) * jit;
+      const jz = (((hsh >> 16) & 0xff) / 255 - 0.5) * jit;
+      dummy.position.set(x + jx, y + jy, z + jz);
+      dummy.scale.setScalar(baseSize * sizeMult * 0.62);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
 
